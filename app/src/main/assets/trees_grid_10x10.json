@@ -1,0 +1,3323 @@
+{
+  "grid_version": "2.0",
+  "description": "Procedural 10x10 Stochastic L-System Tree Forest Matrix",
+  "grid_dimensions": {
+    "columns": 10,
+    "rows": 10,
+    "total_cells": 100,
+    "cell_size_meters": 1.0,
+    "total_field_size_meters": [
+      10.0,
+      10.0
+    ],
+    "total_area_m2": 100.0,
+    "coordinate_bounds": {
+      "min_x_meters": -4.5,
+      "max_x_meters": 4.5,
+      "min_z_meters": -4.5,
+      "max_z_meters": 4.5
+    }
+  },
+  "cells": [
+    {
+      "sector_id": "FOREST_00_00",
+      "grid_row": 0,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.08,
+        -4.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [0,0]",
+      "dimensions_meters": [
+        0.722,
+        0.807,
+        0.722
+      ],
+      "volume_m3": 0.0279,
+      "mass_kg": 20.1,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 888,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,0. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_01",
+      "grid_row": 0,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.097,
+        -4.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [0,1]",
+      "dimensions_meters": [
+        0.747,
+        0.705,
+        0.747
+      ],
+      "volume_m3": 0.0306,
+      "mass_kg": 17.7,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 907,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,1. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_02",
+      "grid_row": 0,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.052,
+        -4.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [0,2]",
+      "dimensions_meters": [
+        0.561,
+        0.845,
+        0.561
+      ],
+      "volume_m3": 0.0208,
+      "mass_kg": 11.6,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 926,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,2. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_03",
+      "grid_row": 0,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.108,
+        -4.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [0,3]",
+      "dimensions_meters": [
+        0.821,
+        0.674,
+        0.821
+      ],
+      "volume_m3": 0.0394,
+      "mass_kg": 30.7,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 945,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,3. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_04",
+      "grid_row": 0,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.063,
+        -4.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [0,4]",
+      "dimensions_meters": [
+        0.456,
+        0.762,
+        0.456
+      ],
+      "volume_m3": 0.0121,
+      "mass_kg": 7.9,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 964,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,4. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_05",
+      "grid_row": 0,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.08,
+        -4.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [0,5]",
+      "dimensions_meters": [
+        0.786,
+        0.879,
+        0.786
+      ],
+      "volume_m3": 0.0343,
+      "mass_kg": 24.7,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 983,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,5. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_06",
+      "grid_row": 0,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.097,
+        -4.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [0,6]",
+      "dimensions_meters": [
+        0.733,
+        0.693,
+        0.733
+      ],
+      "volume_m3": 0.031,
+      "mass_kg": 18.0,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1002,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,6. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_07",
+      "grid_row": 0,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.052,
+        -4.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [0,7]",
+      "dimensions_meters": [
+        0.542,
+        0.817,
+        0.542
+      ],
+      "volume_m3": 0.0216,
+      "mass_kg": 12.1,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1021,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,7. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_08",
+      "grid_row": 0,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.127,
+        -4.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [0,8]",
+      "dimensions_meters": [
+        0.874,
+        0.717,
+        0.874
+      ],
+      "volume_m3": 0.0398,
+      "mass_kg": 31.0,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1040,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,8. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_00_09",
+      "grid_row": 0,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.173,
+        -4.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [0,9]",
+      "dimensions_meters": [
+        0.437,
+        0.732,
+        0.437
+      ],
+      "volume_m3": 0.0124,
+      "mass_kg": 8.1,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1059,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 0,9. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_00",
+      "grid_row": 1,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.063,
+        -3.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [1,0]",
+      "dimensions_meters": [
+        0.827,
+        0.679,
+        0.827
+      ],
+      "volume_m3": 0.0357,
+      "mass_kg": 27.8,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 931,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,0. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_01",
+      "grid_row": 1,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.139,
+        -3.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [1,1]",
+      "dimensions_meters": [
+        0.518,
+        0.866,
+        0.518
+      ],
+      "volume_m3": 0.0168,
+      "mass_kg": 10.9,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 950,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,1. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_02",
+      "grid_row": 1,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.162,
+        -3.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [1,2]",
+      "dimensions_meters": [
+        0.753,
+        0.841,
+        0.753
+      ],
+      "volume_m3": 0.0334,
+      "mass_kg": 24.0,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 969,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,2. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_03",
+      "grid_row": 1,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.177,
+        -3.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [1,3]",
+      "dimensions_meters": [
+        0.775,
+        0.732,
+        0.775
+      ],
+      "volume_m3": 0.0362,
+      "mass_kg": 21.0,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 988,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,3. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_04",
+      "grid_row": 1,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.092,
+        -3.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [1,4]",
+      "dimensions_meters": [
+        0.596,
+        0.899,
+        0.596
+      ],
+      "volume_m3": 0.0198,
+      "mass_kg": 11.1,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1007,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,4. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_05",
+      "grid_row": 1,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.063,
+        -3.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [1,5]",
+      "dimensions_meters": [
+        0.871,
+        0.715,
+        0.871
+      ],
+      "volume_m3": 0.0407,
+      "mass_kg": 31.7,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1026,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,5. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_06",
+      "grid_row": 1,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.104,
+        -3.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [1,6]",
+      "dimensions_meters": [
+        0.476,
+        0.796,
+        0.476
+      ],
+      "volume_m3": 0.0161,
+      "mass_kg": 10.5,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1045,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,6. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_07",
+      "grid_row": 1,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.156,
+        -3.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [1,7]",
+      "dimensions_meters": [
+        0.692,
+        0.773,
+        0.692
+      ],
+      "volume_m3": 0.0305,
+      "mass_kg": 22.0,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1064,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,7. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_08",
+      "grid_row": 1,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.196,
+        -3.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [1,8]",
+      "dimensions_meters": [
+        0.747,
+        0.706,
+        0.747
+      ],
+      "volume_m3": 0.0295,
+      "mass_kg": 17.1,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1083,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,8. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_01_09",
+      "grid_row": 1,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.241,
+        -3.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [1,9]",
+      "dimensions_meters": [
+        0.567,
+        0.856,
+        0.567
+      ],
+      "volume_m3": 0.0194,
+      "mass_kg": 10.9,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1102,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 1,9. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_00",
+      "grid_row": 2,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.108,
+        -2.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [2,0]",
+      "dimensions_meters": [
+        0.754,
+        0.712,
+        0.754
+      ],
+      "volume_m3": 0.03,
+      "mass_kg": 17.4,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 974,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,0. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_01",
+      "grid_row": 2,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.203,
+        -2.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [2,1]",
+      "dimensions_meters": [
+        0.526,
+        0.794,
+        0.526
+      ],
+      "volume_m3": 0.0169,
+      "mass_kg": 9.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 993,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,1. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_02",
+      "grid_row": 2,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.168,
+        -2.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [2,2]",
+      "dimensions_meters": [
+        0.772,
+        0.634,
+        0.772
+      ],
+      "volume_m3": 0.0336,
+      "mass_kg": 26.2,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1012,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,2. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_03",
+      "grid_row": 2,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.101,
+        -2.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [2,3]",
+      "dimensions_meters": [
+        0.452,
+        0.757,
+        0.452
+      ],
+      "volume_m3": 0.0166,
+      "mass_kg": 10.8,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1031,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,3. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_04",
+      "grid_row": 2,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.129,
+        -2.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [2,4]",
+      "dimensions_meters": [
+        0.669,
+        0.748,
+        0.669
+      ],
+      "volume_m3": 0.0241,
+      "mass_kg": 17.4,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1050,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,4. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_05",
+      "grid_row": 2,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.108,
+        -2.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [2,5]",
+      "dimensions_meters": [
+        0.75,
+        0.708,
+        0.75
+      ],
+      "volume_m3": 0.0309,
+      "mass_kg": 17.9,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1069,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,5. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_06",
+      "grid_row": 2,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.1,
+        -2.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [2,6]",
+      "dimensions_meters": [
+        0.528,
+        0.795,
+        0.528
+      ],
+      "volume_m3": 0.0187,
+      "mass_kg": 10.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1088,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,6. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_07",
+      "grid_row": 2,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.151,
+        -2.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [2,7]",
+      "dimensions_meters": [
+        0.867,
+        0.712,
+        0.867
+      ],
+      "volume_m3": 0.0436,
+      "mass_kg": 34.0,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1107,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,7. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_08",
+      "grid_row": 2,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.103,
+        -2.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [2,8]",
+      "dimensions_meters": [
+        0.482,
+        0.806,
+        0.482
+      ],
+      "volume_m3": 0.0134,
+      "mass_kg": 8.7,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1126,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,8. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_02_09",
+      "grid_row": 2,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.148,
+        -2.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [2,9]",
+      "dimensions_meters": [
+        0.747,
+        0.834,
+        0.747
+      ],
+      "volume_m3": 0.0312,
+      "mass_kg": 22.5,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1145,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 2,9. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_00",
+      "grid_row": 3,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.052,
+        -1.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [3,0]",
+      "dimensions_meters": [
+        0.46,
+        0.769,
+        0.46
+      ],
+      "volume_m3": 0.0123,
+      "mass_kg": 8.0,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1017,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,0. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_01",
+      "grid_row": 3,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.128,
+        -1.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [3,1]",
+      "dimensions_meters": [
+        0.684,
+        0.765,
+        0.684
+      ],
+      "volume_m3": 0.0264,
+      "mass_kg": 19.0,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1036,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,1. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_02",
+      "grid_row": 3,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.076,
+        -1.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [3,2]",
+      "dimensions_meters": [
+        0.831,
+        0.785,
+        0.831
+      ],
+      "volume_m3": 0.0392,
+      "mass_kg": 22.7,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1055,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,2. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_03",
+      "grid_row": 3,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.01,
+        -1.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [3,3]",
+      "dimensions_meters": [
+        0.533,
+        0.804,
+        0.533
+      ],
+      "volume_m3": 0.021,
+      "mass_kg": 11.8,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1074,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,3. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_04",
+      "grid_row": 3,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.067,
+        -1.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [3,4]",
+      "dimensions_meters": [
+        0.786,
+        0.645,
+        0.786
+      ],
+      "volume_m3": 0.0323,
+      "mass_kg": 25.2,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1093,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,4. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_05",
+      "grid_row": 3,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.052,
+        -1.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [3,5]",
+      "dimensions_meters": [
+        0.508,
+        0.85,
+        0.508
+      ],
+      "volume_m3": 0.0162,
+      "mass_kg": 10.5,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1112,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,5. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_06",
+      "grid_row": 3,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.025,
+        -1.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [3,6]",
+      "dimensions_meters": [
+        0.693,
+        0.775,
+        0.693
+      ],
+      "volume_m3": 0.0286,
+      "mass_kg": 20.6,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1131,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,6. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_07",
+      "grid_row": 3,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.058,
+        -1.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [3,7]",
+      "dimensions_meters": [
+        0.765,
+        0.722,
+        0.765
+      ],
+      "volume_m3": 0.0354,
+      "mass_kg": 20.5,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1150,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,7. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_08",
+      "grid_row": 3,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.01,
+        -1.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [3,8]",
+      "dimensions_meters": [
+        0.564,
+        0.85,
+        0.564
+      ],
+      "volume_m3": 0.0178,
+      "mass_kg": 10.0,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1169,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,8. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_03_09",
+      "grid_row": 3,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.067,
+        -1.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [3,9]",
+      "dimensions_meters": [
+        0.765,
+        0.628,
+        0.765
+      ],
+      "volume_m3": 0.0317,
+      "mass_kg": 24.7,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1188,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 3,9. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_00",
+      "grid_row": 4,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.097,
+        -0.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [4,0]",
+      "dimensions_meters": [
+        0.566,
+        0.854,
+        0.566
+      ],
+      "volume_m3": 0.0179,
+      "mass_kg": 10.0,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1060,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,0. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_01",
+      "grid_row": 4,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.028,
+        -0.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [4,1]",
+      "dimensions_meters": [
+        0.809,
+        0.664,
+        0.809
+      ],
+      "volume_m3": 0.0353,
+      "mass_kg": 27.5,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1079,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,1. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_02",
+      "grid_row": 4,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        -0.024,
+        -0.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [4,2]",
+      "dimensions_meters": [
+        0.429,
+        0.718,
+        0.429
+      ],
+      "volume_m3": 0.0135,
+      "mass_kg": 8.8,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1098,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,2. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_03",
+      "grid_row": 4,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.017,
+        -0.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [4,3]",
+      "dimensions_meters": [
+        0.752,
+        0.841,
+        0.752
+      ],
+      "volume_m3": 0.0354,
+      "mass_kg": 25.5,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1117,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,3. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_04",
+      "grid_row": 4,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.13,
+        -0.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [4,4]",
+      "dimensions_meters": [
+        0.776,
+        0.733,
+        0.776
+      ],
+      "volume_m3": 0.0318,
+      "mass_kg": 18.4,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1136,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,4. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_05",
+      "grid_row": 4,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.097,
+        -0.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [4,5]",
+      "dimensions_meters": [
+        0.509,
+        0.768,
+        0.509
+      ],
+      "volume_m3": 0.0159,
+      "mass_kg": 8.9,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1155,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,5. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_06",
+      "grid_row": 4,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        -0.007,
+        -0.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [4,6]",
+      "dimensions_meters": [
+        0.846,
+        0.694,
+        0.846
+      ],
+      "volume_m3": 0.0399,
+      "mass_kg": 31.1,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1174,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,6. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_07",
+      "grid_row": 4,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        -0.029,
+        -0.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [4,7]",
+      "dimensions_meters": [
+        0.473,
+        0.79,
+        0.473
+      ],
+      "volume_m3": 0.0179,
+      "mass_kg": 11.6,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1193,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,7. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_08",
+      "grid_row": 4,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.017,
+        -0.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [4,8]",
+      "dimensions_meters": [
+        0.707,
+        0.79,
+        0.707
+      ],
+      "volume_m3": 0.0268,
+      "mass_kg": 19.3,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1212,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,8. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_04_09",
+      "grid_row": 4,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.13,
+        -0.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [4,9]",
+      "dimensions_meters": [
+        0.796,
+        0.751,
+        0.796
+      ],
+      "volume_m3": 0.0346,
+      "mass_kg": 20.1,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1231,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 4,9. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_00",
+      "grid_row": 5,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.08,
+        0.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [5,0]",
+      "dimensions_meters": [
+        0.722,
+        0.807,
+        0.722
+      ],
+      "volume_m3": 0.0279,
+      "mass_kg": 20.1,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1103,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,0. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_01",
+      "grid_row": 5,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        -0.013,
+        0.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [5,1]",
+      "dimensions_meters": [
+        0.821,
+        0.776,
+        0.821
+      ],
+      "volume_m3": 0.0367,
+      "mass_kg": 21.3,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1122,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,1. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_02",
+      "grid_row": 5,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.033,
+        0.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [5,2]",
+      "dimensions_meters": [
+        0.586,
+        0.883,
+        0.586
+      ],
+      "volume_m3": 0.0224,
+      "mass_kg": 12.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1141,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,2. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_03",
+      "grid_row": 5,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.127,
+        0.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [5,3]",
+      "dimensions_meters": [
+        0.809,
+        0.664,
+        0.809
+      ],
+      "volume_m3": 0.0384,
+      "mass_kg": 30.0,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1160,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,3. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_04",
+      "grid_row": 5,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.173,
+        0.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [5,4]",
+      "dimensions_meters": [
+        0.483,
+        0.808,
+        0.483
+      ],
+      "volume_m3": 0.0135,
+      "mass_kg": 8.8,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1179,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,4. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_05",
+      "grid_row": 5,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.08,
+        0.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [5,5]",
+      "dimensions_meters": [
+        0.691,
+        0.772,
+        0.691
+      ],
+      "volume_m3": 0.0269,
+      "mass_kg": 19.4,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1198,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,5. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_06",
+      "grid_row": 5,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        -0.013,
+        0.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [5,6]",
+      "dimensions_meters": [
+        0.761,
+        0.719,
+        0.761
+      ],
+      "volume_m3": 0.0333,
+      "mass_kg": 19.3,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1217,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,6. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_07",
+      "grid_row": 5,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.033,
+        0.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [5,7]",
+      "dimensions_meters": [
+        0.504,
+        0.76,
+        0.504
+      ],
+      "volume_m3": 0.0192,
+      "mass_kg": 10.8,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1236,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,7. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_08",
+      "grid_row": 5,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.127,
+        0.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [5,8]",
+      "dimensions_meters": [
+        0.795,
+        0.652,
+        0.795
+      ],
+      "volume_m3": 0.0331,
+      "mass_kg": 25.8,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1255,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,8. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_05_09",
+      "grid_row": 5,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.173,
+        0.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [5,9]",
+      "dimensions_meters": [
+        0.523,
+        0.874,
+        0.523
+      ],
+      "volume_m3": 0.0171,
+      "mass_kg": 11.1,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1274,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 5,9. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_00",
+      "grid_row": 6,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.063,
+        1.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [6,0]",
+      "dimensions_meters": [
+        0.787,
+        0.646,
+        0.787
+      ],
+      "volume_m3": 0.0324,
+      "mass_kg": 25.3,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1146,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,0. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_01",
+      "grid_row": 6,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.005,
+        1.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [6,1]",
+      "dimensions_meters": [
+        0.443,
+        0.742,
+        0.443
+      ],
+      "volume_m3": 0.0127,
+      "mass_kg": 8.3,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1165,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,1. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_02",
+      "grid_row": 6,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.072,
+        1.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [6,2]",
+      "dimensions_meters": [
+        0.757,
+        0.846,
+        0.757
+      ],
+      "volume_m3": 0.0337,
+      "mass_kg": 24.3,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1184,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,2. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_03",
+      "grid_row": 6,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.112,
+        1.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [6,3]",
+      "dimensions_meters": [
+        0.723,
+        0.683,
+        0.723
+      ],
+      "volume_m3": 0.0319,
+      "mass_kg": 18.5,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1203,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,3. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_04",
+      "grid_row": 6,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.108,
+        1.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [6,4]",
+      "dimensions_meters": [
+        0.579,
+        0.872,
+        0.579
+      ],
+      "volume_m3": 0.0187,
+      "mass_kg": 10.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1222,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,4. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_05",
+      "grid_row": 6,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.063,
+        1.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [6,5]",
+      "dimensions_meters": [
+        0.803,
+        0.66,
+        0.803
+      ],
+      "volume_m3": 0.0348,
+      "mass_kg": 27.1,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1241,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,5. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_06",
+      "grid_row": 6,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.04,
+        1.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [6,6]",
+      "dimensions_meters": [
+        0.447,
+        0.748,
+        0.447
+      ],
+      "volume_m3": 0.0145,
+      "mass_kg": 9.4,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1260,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,6. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_07",
+      "grid_row": 6,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.077,
+        1.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [6,7]",
+      "dimensions_meters": [
+        0.752,
+        0.841,
+        0.752
+      ],
+      "volume_m3": 0.0354,
+      "mass_kg": 25.5,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1279,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,7. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_08",
+      "grid_row": 6,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.112,
+        1.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [6,8]",
+      "dimensions_meters": [
+        0.691,
+        0.653,
+        0.691
+      ],
+      "volume_m3": 0.0254,
+      "mass_kg": 14.7,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1298,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,8. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_06_09",
+      "grid_row": 6,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.108,
+        1.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [6,9]",
+      "dimensions_meters": [
+        0.54,
+        0.814,
+        0.54
+      ],
+      "volume_m3": 0.0178,
+      "mass_kg": 10.0,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1317,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 6,9. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_00",
+      "grid_row": 7,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.108,
+        2.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [7,0]",
+      "dimensions_meters": [
+        0.777,
+        0.734,
+        0.777
+      ],
+      "volume_m3": 0.0318,
+      "mass_kg": 18.4,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1189,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,0. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_01",
+      "grid_row": 7,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.069,
+        2.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [7,1]",
+      "dimensions_meters": [
+        0.526,
+        0.793,
+        0.526
+      ],
+      "volume_m3": 0.0169,
+      "mass_kg": 9.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1208,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,1. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_02",
+      "grid_row": 7,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.079,
+        2.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [7,2]",
+      "dimensions_meters": [
+        0.824,
+        0.676,
+        0.824
+      ],
+      "volume_m3": 0.038,
+      "mass_kg": 29.6,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1227,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,2. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_03",
+      "grid_row": 7,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.013,
+        2.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [7,3]",
+      "dimensions_meters": [
+        0.467,
+        0.782,
+        0.467
+      ],
+      "volume_m3": 0.0175,
+      "mass_kg": 11.4,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1246,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,3. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_04",
+      "grid_row": 7,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.008,
+        2.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [7,4]",
+      "dimensions_meters": [
+        0.741,
+        0.828,
+        0.741
+      ],
+      "volume_m3": 0.0293,
+      "mass_kg": 21.1,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1265,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 38,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,4. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_05",
+      "grid_row": 7,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.108,
+        2.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [7,5]",
+      "dimensions_meters": [
+        0.698,
+        0.659,
+        0.698
+      ],
+      "volume_m3": 0.0269,
+      "mass_kg": 15.6,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1284,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,5. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_06",
+      "grid_row": 7,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.172,
+        2.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [7,6]",
+      "dimensions_meters": [
+        0.583,
+        0.879,
+        0.583
+      ],
+      "volume_m3": 0.0222,
+      "mass_kg": 12.4,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1303,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,6. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_07",
+      "grid_row": 7,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.096,
+        2.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [7,7]",
+      "dimensions_meters": [
+        0.81,
+        0.665,
+        0.81
+      ],
+      "volume_m3": 0.0385,
+      "mass_kg": 30.0,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1322,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,7. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_08",
+      "grid_row": 7,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.013,
+        2.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [7,8]",
+      "dimensions_meters": [
+        0.466,
+        0.779,
+        0.466
+      ],
+      "volume_m3": 0.0126,
+      "mass_kg": 8.2,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1341,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,8. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_07_09",
+      "grid_row": 7,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.008,
+        2.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [7,9]",
+      "dimensions_meters": [
+        0.663,
+        0.741,
+        0.663
+      ],
+      "volume_m3": 0.0249,
+      "mass_kg": 17.9,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1360,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 7,9. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_00",
+      "grid_row": 8,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.052,
+        3.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [8,0]",
+      "dimensions_meters": [
+        0.429,
+        0.718,
+        0.429
+      ],
+      "volume_m3": 0.0108,
+      "mass_kg": 7.0,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1232,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 33,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,0. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_01",
+      "grid_row": 8,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.061,
+        3.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [8,1]",
+      "dimensions_meters": [
+        0.661,
+        0.738,
+        0.661
+      ],
+      "volume_m3": 0.0247,
+      "mass_kg": 17.8,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1251,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 28,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,1. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_02",
+      "grid_row": 8,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.148,
+        3.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [8,2]",
+      "dimensions_meters": [
+        0.68,
+        0.642,
+        0.68
+      ],
+      "volume_m3": 0.027,
+      "mass_kg": 15.7,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1270,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 39,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,2. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_03",
+      "grid_row": 8,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.081,
+        3.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [8,3]",
+      "dimensions_meters": [
+        0.555,
+        0.837,
+        0.555
+      ],
+      "volume_m3": 0.0225,
+      "mass_kg": 12.6,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1289,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 34,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,3. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_04",
+      "grid_row": 8,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        -0.006,
+        3.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [8,4]",
+      "dimensions_meters": [
+        0.829,
+        0.681,
+        0.829
+      ],
+      "volume_m3": 0.0359,
+      "mass_kg": 28.0,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1308,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 29,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,4. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_05",
+      "grid_row": 8,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.052,
+        3.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [8,5]",
+      "dimensions_meters": [
+        0.454,
+        0.76,
+        0.454
+      ],
+      "volume_m3": 0.0133,
+      "mass_kg": 8.6,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1327,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,5. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_06",
+      "grid_row": 8,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.156,
+        3.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [8,6]",
+      "dimensions_meters": [
+        0.729,
+        0.815,
+        0.729
+      ],
+      "volume_m3": 0.0314,
+      "mass_kg": 22.6,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1346,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,6. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_07",
+      "grid_row": 8,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.151,
+        3.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [8,7]",
+      "dimensions_meters": [
+        0.767,
+        0.724,
+        0.767
+      ],
+      "volume_m3": 0.0356,
+      "mass_kg": 20.6,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1365,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,7. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_08",
+      "grid_row": 8,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.059,
+        3.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [8,8]",
+      "dimensions_meters": [
+        0.516,
+        0.778,
+        0.516
+      ],
+      "volume_m3": 0.0151,
+      "mass_kg": 8.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1384,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,8. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_08_09",
+      "grid_row": 8,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        -0.017,
+        3.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [8,9]",
+      "dimensions_meters": [
+        0.827,
+        0.679,
+        0.827
+      ],
+      "volume_m3": 0.0368,
+      "mass_kg": 28.7,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1403,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 8,9. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_00",
+      "grid_row": 9,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.097,
+        4.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [9,0]",
+      "dimensions_meters": [
+        0.588,
+        0.887,
+        0.588
+      ],
+      "volume_m3": 0.0193,
+      "mass_kg": 10.8,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1275,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 40,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,0. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_01",
+      "grid_row": 9,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.127,
+        4.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [9,1]",
+      "dimensions_meters": [
+        0.857,
+        0.704,
+        0.857
+      ],
+      "volume_m3": 0.0395,
+      "mass_kg": 30.8,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1294,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 35,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,1. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_02",
+      "grid_row": 9,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.158,
+        4.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [9,2]",
+      "dimensions_meters": [
+        0.447,
+        0.747,
+        0.447
+      ],
+      "volume_m3": 0.0145,
+      "mass_kg": 9.4,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1313,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 30,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,2. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_03",
+      "grid_row": 9,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.185,
+        4.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [9,3]",
+      "dimensions_meters": [
+        0.783,
+        0.875,
+        0.783
+      ],
+      "volume_m3": 0.0381,
+      "mass_kg": 27.4,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1332,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 25,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,3. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_04",
+      "grid_row": 9,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.155,
+        4.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [9,4]",
+      "dimensions_meters": [
+        0.846,
+        0.799,
+        0.846
+      ],
+      "volume_m3": 0.0376,
+      "mass_kg": 21.8,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1351,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 36,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,4. Weeping Willow rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_05",
+      "grid_row": 9,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.097,
+        4.5
+      ],
+      "archetype_id": "tree_pine",
+      "tree_title": "Scotch Pine [9,5]",
+      "dimensions_meters": [
+        0.556,
+        0.838,
+        0.556
+      ],
+      "volume_m3": 0.0187,
+      "mass_kg": 10.5,
+      "timber_density_kg_m3": 560.0,
+      "accent_color": "#00E5FF",
+      "botanical_parameters": {
+        "seed": 1370,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 31,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,5. Scotch Pine rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_06",
+      "grid_row": 9,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.104,
+        4.5
+      ],
+      "archetype_id": "tree_acacia",
+      "tree_title": "Umbrella Acacia [9,6]",
+      "dimensions_meters": [
+        0.777,
+        0.638,
+        0.777
+      ],
+      "volume_m3": 0.034,
+      "mass_kg": 26.5,
+      "timber_density_kg_m3": 780.0,
+      "accent_color": "#FF9900",
+      "botanical_parameters": {
+        "seed": 1389,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 26,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,6. Umbrella Acacia rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_07",
+      "grid_row": 9,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.1,
+        4.5
+      ],
+      "archetype_id": "tree_birch",
+      "tree_title": "Silver Birch [9,7]",
+      "dimensions_meters": [
+        0.484,
+        0.809,
+        0.484
+      ],
+      "volume_m3": 0.0186,
+      "mass_kg": 12.1,
+      "timber_density_kg_m3": 650.0,
+      "accent_color": "#FFCC00",
+      "botanical_parameters": {
+        "seed": 1408,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 37,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.8
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,7. Silver Birch rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_08",
+      "grid_row": 9,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.031,
+        4.5
+      ],
+      "archetype_id": "tree_oak",
+      "tree_title": "English Oak [9,8]",
+      "dimensions_meters": [
+        0.7,
+        0.783,
+        0.7
+      ],
+      "volume_m3": 0.0263,
+      "mass_kg": 18.9,
+      "timber_density_kg_m3": 720.0,
+      "accent_color": "#39FF14",
+      "botanical_parameters": {
+        "seed": 1427,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 32,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.9
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,8. English Oak rooted in soil bedrock."
+    },
+    {
+      "sector_id": "FOREST_09_09",
+      "grid_row": 9,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.068,
+        4.5
+      ],
+      "archetype_id": "tree_willow",
+      "tree_title": "Weeping Willow [9,9]",
+      "dimensions_meters": [
+        0.816,
+        0.77,
+        0.816
+      ],
+      "volume_m3": 0.0363,
+      "mass_kg": 21.1,
+      "timber_density_kg_m3": 580.0,
+      "accent_color": "#00F0FF",
+      "botanical_parameters": {
+        "seed": 1446,
+        "lsystem_iterations": 3,
+        "branching_angle_deg": 27,
+        "leonardo_ratio": 0.707,
+        "leaf_coverage": 0.7
+      },
+      "geological_notes": "1m\u00b2 woodland sector 9,9. Weeping Willow rooted in soil bedrock."
+    }
+  ]
+}

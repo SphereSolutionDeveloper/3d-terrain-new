@@ -1,0 +1,18 @@
+{
+  "shader_model": "PBR Metallic-Roughness (Burley Bark + Leaf Subsurface)",
+  "base_color_factor": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "metallic_factor": 0.02,
+  "roughness_factor": 0.88,
+  "emissive_factor": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "emissive_strength": 0.0,
+  "normal_scale": 1.45
+}

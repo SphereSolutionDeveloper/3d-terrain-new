@@ -1,0 +1,23 @@
+{
+  "mass_kg": 20.1,
+  "center_of_mass": [
+    0.0,
+    0.585,
+    0.0
+  ],
+  "bounding_box": {
+    "min": [
+      -0.5061,
+      0.0,
+      -0.5352
+    ],
+    "max": [
+      0.2109,
+      1.2997,
+      0.3922
+    ]
+  },
+  "friction_coefficient": 0.65,
+  "restitution": 0.08,
+  "collider_type": "Botanical Trunk & Canopy Convex Hull (1m Boundary)"
+}

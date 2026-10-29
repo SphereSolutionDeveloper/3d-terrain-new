@@ -1,0 +1,10 @@
+{
+  "model_code": "EX-303 TITAN",
+  "class": "Lunar & Martian Surface Heavy Explorer",
+  "propulsion": "Independent 6x6 In-Wheel Brushless Flux Motors",
+  "top_velocity": "45 km/h over 40-degree rough regolith terrain",
+  "shielding": "Radiation Shielded Aerogel & Titanium Skin",
+  "power_plant": "Radioisotope Thermoelectric Generator (RTG) + Solar Deck",
+  "avionics": "Autonomous Hazard Avoidance & Ground-Penetrating Radar",
+  "payload": "Sample Extraction Robotic Arm & Analytical Mass Spectrometer"
+}

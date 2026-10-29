@@ -1,0 +1,41 @@
+{
+  "model_code": "ARROW-X MK-IV",
+  "title": "Arrow Interceptor",
+  "manufacturer": "Aethelred Space Industries",
+  "schematic_type": "Technical Schematic (Top View)",
+  "speed": "1,200 Mhm/h",
+  "crew_size": 3,
+  "operational_range": "36 - 10,000 Light-Years (Multi-Sector Range)",
+  "propulsion": "Primary Fusion Engine Cluster (Hyper-Wave Drive)",
+  "armor_hull": "Faceted Armor Wings (Aegis Alloy Construction)",
+  "cockpit": "Reinforced Tranquility Canopy Command Module (Crew of 3)",
+  "defense_shielding": "Rear Aegis Shield Emitter & Refueling Port (Aft Point)",
+  "offensive_armament": [
+    "Retractable High-Output Beam Cannon Port (Dual Flank Mounts)",
+    "External Armor-Plated Missile Silos (Conformal Shoulder Bays)"
+  ],
+  "maneuvering_systems": "Wingtip Maneuvering Thrusters & Canted Stabilizer Fins",
+  "refinery_plant": "Fuel Reservoir & Arrised Distillation Plant (Deuterium/Helium-3)",
+  "communications": "Deep-Space Communication & Phased-Array Data Uplink Dish",
+  "access_systems": "Crew Access Hatch & Standardized Docking Adapter",
+  "avionics_matrix": [
+    "Long-Range Targeting & Forward Optical Sensor Array",
+    "Internal Superconducting Power Conduit Matrix (Cutaway Overlay)",
+    "ARROW Identity Etching Matrix (Dorsal Spine Alignment)"
+  ],
+  "subsystems": {
+    "callout_1": "Cockpit and Command Module (Reinforced Tranquility Canopy)",
+    "callout_2": "Long-Range Targeting and Sensor Array",
+    "callout_3": "Faceted Armor Wings (Aegis Alloy Construction)",
+    "callout_4": "Primary Fusion Engine Cluster (Hyper-Wave Drive)",
+    "callout_5": "Aft Point (Rear Aegis Shield Emitter & Refueling Port)",
+    "callout_6": "Retractable High-Output Beam Cannon Port",
+    "callout_7": "Missile Silo (External, Armor-Plated)",
+    "callout_8": "Maneuvering Thrusters (Wingtip Canted Fins)",
+    "callout_9": "Fuel Reservoir Arrised Distillation Plant",
+    "callout_10": "Deep-Space Communication & Data Uplink Dish",
+    "callout_11": "Crew Access Hatch and Docking Adapter",
+    "callout_12": "Internal Power Conduit Matrix (Cutaway View)",
+    "callout_13": "'ARROW' Identity Etching Matrix (Dorsal Spine)"
+  }
+}

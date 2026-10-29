@@ -1,0 +1,18 @@
+{
+  "model_code": "GEO-1M-ROCK_BASALT",
+  "grid_cell_size": "1.0m x 1.0m",
+  "dimensions_meters": "0.429m (W) x 0.692m (H) x 0.429m (D)",
+  "mineral_classification": "Extrusive Mafic Volcanic Basalt",
+  "noise_generator": "Perlin + FBM + Worley Voronoi Facets + Strata",
+  "fracture_cleavage": "Basal and Prismatic Planar Fracture Networks",
+  "geological_origin": "Igneous / Metamorphic / Planetary Impact",
+  "weathering_index": "Sub-aerial Thermal Spallation Grade IV",
+  "volume_diagram_breakdown": {
+    "total_volume_m3": 0.0662,
+    "components": [
+      "Basal Bedrock Footing",
+      "Primary Boulder Lithosphere",
+      "Weathered Crag Crest"
+    ]
+  }
+}

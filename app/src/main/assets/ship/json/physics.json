@@ -1,0 +1,22 @@
+{
+  "mass_kg": 8500.0,
+  "center_of_mass": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "bounding_box": {
+    "min": [
+      -3.2,
+      -0.3,
+      -2.2
+    ],
+    "max": [
+      3.2,
+      1.2,
+      2.5
+    ]
+  },
+  "drag_coefficient": 0.24,
+  "collider_type": "CONVEX_HULL_HYBRID"
+}

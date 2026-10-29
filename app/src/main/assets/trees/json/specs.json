@@ -1,0 +1,18 @@
+{
+  "model_code": "BOT-1M-TREES",
+  "grid_cell_size": "1.0m x 1.0m",
+  "dimensions_meters": "1.09m (W) x 0.86m (H) x 0.654m (D)",
+  "botanical_classification": "Broadleaf Deciduous Tree",
+  "generator_algorithm": "3D Stochastic L-System + Turtle Graphics (Stojanovic 2016)",
+  "branch_conservation_rule": "Leonardo da Vinci Postulate (w_r = 0.707)",
+  "branching_angle_range": "Stochastic 25 deg - 40 deg with randomized roll",
+  "foliage_distribution": "Terminal Node Diametral Leaf Quads",
+  "volume_diagram_breakdown": {
+    "total_volume_m3": 0.0381,
+    "components": [
+      "Bole Trunk Base (1m Cell)",
+      "Primary Scaffold Boughs",
+      "Foliage Crown & Terminal Leaves"
+    ]
+  }
+}

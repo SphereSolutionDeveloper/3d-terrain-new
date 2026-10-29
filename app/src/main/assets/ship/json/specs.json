@@ -1,0 +1,23 @@
+{
+  "model_code": "SF-94X VALKYRIE",
+  "class": "Interceptor / Tactical Strike",
+  "propulsion": "Twin Pulse-Detonation Ion Drives (Thrust: 480 kN)",
+  "top_velocity": "Mach 12.8 Sub-Orbital / 0.18c Deep Space",
+  "shielding": "Multi-Phase Harmonic Deflector Matrix (Class IV)",
+  "power_plant": "Quantum Micro-Singularity Core (9.4 GW)",
+  "avionics": "Neural-Linked Fly-By-Light HUD & Holographic Reticle",
+  "hardpoints": [
+    {
+      "mount": "Wing Tip Alpha",
+      "weapon": "Dual Heavy Plasma Repeaters"
+    },
+    {
+      "mount": "Wing Tip Beta",
+      "weapon": "Dual Heavy Plasma Repeaters"
+    },
+    {
+      "mount": "Ventral Bay",
+      "weapon": "Proton Torpedo Launcher x4"
+    }
+  ]
+}

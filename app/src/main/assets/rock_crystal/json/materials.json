@@ -1,0 +1,18 @@
+{
+  "shader_model": "PBR Metallic-Roughness (Burley Specular GGX)",
+  "base_color_factor": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "metallic_factor": 0.04,
+  "roughness_factor": 0.45,
+  "emissive_factor": [
+    0.0,
+    0.85,
+    1.0
+  ],
+  "emissive_strength": 2.5,
+  "normal_scale": 1.25
+}

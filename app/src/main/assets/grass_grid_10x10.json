@@ -1,0 +1,3515 @@
+{
+  "grid_version": "2.0",
+  "description": "10x10 Responsive B\u00e9zier Grass Meadow Grid (1m x 1m Cells)",
+  "grid_dimensions": {
+    "total_cells": 100,
+    "cell_size_meters": 1.0,
+    "total_field_size_meters": [
+      10.0,
+      10.0
+    ],
+    "total_area_m2": 100.0
+  },
+  "cells": [
+    {
+      "sector_id": "G_0_0",
+      "grid_row": 0,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.37,
+        0.0,
+        -4.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.08,
+        0.45
+      ],
+      "volume_m3": 0.068,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 100,
+        "blade_count": 240,
+        "stiffness_coefficient": 0.8,
+        "wind_recovery_hz": 2.42,
+        "bezier_bend_ratio": 0.32,
+        "height_meters": 0.085
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.0cm Sward)"
+    },
+    {
+      "sector_id": "G_0_1",
+      "grid_row": 0,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.43,
+        0.0,
+        -4.63
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.097,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.52,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 101,
+        "blade_count": 616,
+        "stiffness_coefficient": 0.83,
+        "wind_recovery_hz": 2.08,
+        "bezier_bend_ratio": 0.32,
+        "height_meters": 0.097
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.7cm Sward)"
+    },
+    {
+      "sector_id": "G_0_2",
+      "grid_row": 0,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.4,
+        0.0,
+        -4.55
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.083,
+        0.45
+      ],
+      "volume_m3": 0.078,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 102,
+        "blade_count": 992,
+        "stiffness_coefficient": 0.76,
+        "wind_recovery_hz": 2.4,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.109
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.3cm Sward)"
+    },
+    {
+      "sector_id": "G_0_3",
+      "grid_row": 0,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.42,
+        0.0,
+        -4.46
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.1,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.72,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 103,
+        "blade_count": 568,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.36,
+        "bezier_bend_ratio": 0.22,
+        "height_meters": 0.095
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.0cm Sward)"
+    },
+    {
+      "sector_id": "G_0_4",
+      "grid_row": 0,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.51,
+        0.0,
+        -4.5
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.086,
+        0.45
+      ],
+      "volume_m3": 0.052,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 104,
+        "blade_count": 944,
+        "stiffness_coefficient": 0.62,
+        "wind_recovery_hz": 2.04,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.107
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.6cm Sward)"
+    },
+    {
+      "sector_id": "G_0_5",
+      "grid_row": 0,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.46,
+        0.0,
+        -4.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.103,
+        0.45
+      ],
+      "volume_m3": 0.058,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 105,
+        "blade_count": 520,
+        "stiffness_coefficient": 0.84,
+        "wind_recovery_hz": 2.18,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.094
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.3cm Sward)"
+    },
+    {
+      "sector_id": "G_0_6",
+      "grid_row": 0,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.64,
+        0.0,
+        -4.45
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.089,
+        0.45
+      ],
+      "volume_m3": 0.058,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 106,
+        "blade_count": 896,
+        "stiffness_coefficient": 0.62,
+        "wind_recovery_hz": 2.21,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.106
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.9cm Sward)"
+    },
+    {
+      "sector_id": "G_0_7",
+      "grid_row": 0,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.57,
+        0.0,
+        -4.58
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.106,
+        0.45
+      ],
+      "volume_m3": 0.078,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 107,
+        "blade_count": 472,
+        "stiffness_coefficient": 0.82,
+        "wind_recovery_hz": 1.93,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.092
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.6cm Sward)"
+    },
+    {
+      "sector_id": "G_0_8",
+      "grid_row": 0,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.41,
+        0.0,
+        -4.46
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.092,
+        0.45
+      ],
+      "volume_m3": 0.07,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 108,
+        "blade_count": 848,
+        "stiffness_coefficient": 0.66,
+        "wind_recovery_hz": 1.93,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.104
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.2cm Sward)"
+    },
+    {
+      "sector_id": "G_0_9",
+      "grid_row": 0,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.57,
+        0.0,
+        -4.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.109,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 109,
+        "blade_count": 424,
+        "stiffness_coefficient": 0.61,
+        "wind_recovery_hz": 2.43,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.091
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.9cm Sward)"
+    },
+    {
+      "sector_id": "G_1_0",
+      "grid_row": 1,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.56,
+        0.0,
+        -3.46
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.091,
+        0.45
+      ],
+      "volume_m3": 0.064,
+      "mass_kg": 0.52,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 110,
+        "blade_count": 488,
+        "stiffness_coefficient": 0.56,
+        "wind_recovery_hz": 2.44,
+        "bezier_bend_ratio": 0.24,
+        "height_meters": 0.093
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.1cm Sward)"
+    },
+    {
+      "sector_id": "G_1_1",
+      "grid_row": 1,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.48,
+        0.0,
+        -3.63
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.108,
+        0.45
+      ],
+      "volume_m3": 0.077,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 111,
+        "blade_count": 864,
+        "stiffness_coefficient": 0.6,
+        "wind_recovery_hz": 2.53,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.105
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.8cm Sward)"
+    },
+    {
+      "sector_id": "G_1_2",
+      "grid_row": 1,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.59,
+        0.0,
+        -3.64
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.094,
+        0.45
+      ],
+      "volume_m3": 0.051,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 112,
+        "blade_count": 440,
+        "stiffness_coefficient": 0.63,
+        "wind_recovery_hz": 2.09,
+        "bezier_bend_ratio": 0.22,
+        "height_meters": 0.091
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.4cm Sward)"
+    },
+    {
+      "sector_id": "G_1_3",
+      "grid_row": 1,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.54,
+        0.0,
+        -3.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.08,
+        0.45
+      ],
+      "volume_m3": 0.06,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 113,
+        "blade_count": 816,
+        "stiffness_coefficient": 0.85,
+        "wind_recovery_hz": 2.02,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.103
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.0cm Sward)"
+    },
+    {
+      "sector_id": "G_1_4",
+      "grid_row": 1,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.0,
+        -3.48
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.097,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.48,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 114,
+        "blade_count": 392,
+        "stiffness_coefficient": 0.65,
+        "wind_recovery_hz": 1.91,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.09
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.7cm Sward)"
+    },
+    {
+      "sector_id": "G_1_5",
+      "grid_row": 1,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.4,
+        0.0,
+        -3.63
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.083,
+        0.45
+      ],
+      "volume_m3": 0.06,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 115,
+        "blade_count": 768,
+        "stiffness_coefficient": 0.76,
+        "wind_recovery_hz": 2.08,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.102
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.3cm Sward)"
+    },
+    {
+      "sector_id": "G_1_6",
+      "grid_row": 1,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.46,
+        0.0,
+        -3.63
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.1,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 116,
+        "blade_count": 344,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.41,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.088
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.0cm Sward)"
+    },
+    {
+      "sector_id": "G_1_7",
+      "grid_row": 1,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.51,
+        0.0,
+        -3.55
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.086,
+        0.45
+      ],
+      "volume_m3": 0.069,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 117,
+        "blade_count": 720,
+        "stiffness_coefficient": 0.67,
+        "wind_recovery_hz": 2.33,
+        "bezier_bend_ratio": 0.28,
+        "height_meters": 0.1
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.6cm Sward)"
+    },
+    {
+      "sector_id": "G_1_8",
+      "grid_row": 1,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.39,
+        0.0,
+        -3.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.103,
+        0.45
+      ],
+      "volume_m3": 0.057,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 118,
+        "blade_count": 296,
+        "stiffness_coefficient": 0.73,
+        "wind_recovery_hz": 2.24,
+        "bezier_bend_ratio": 0.33,
+        "height_meters": 0.087
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.3cm Sward)"
+    },
+    {
+      "sector_id": "G_1_9",
+      "grid_row": 1,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.59,
+        0.0,
+        -3.51
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.089,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 119,
+        "blade_count": 672,
+        "stiffness_coefficient": 0.67,
+        "wind_recovery_hz": 2.13,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.099
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.9cm Sward)"
+    },
+    {
+      "sector_id": "G_2_0",
+      "grid_row": 2,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.47,
+        0.0,
+        -2.44
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.102,
+        0.45
+      ],
+      "volume_m3": 0.055,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 120,
+        "blade_count": 736,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.46,
+        "bezier_bend_ratio": 0.26,
+        "height_meters": 0.101
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.2cm Sward)"
+    },
+    {
+      "sector_id": "G_2_1",
+      "grid_row": 2,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.54,
+        0.0,
+        -2.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.088,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 121,
+        "blade_count": 312,
+        "stiffness_coefficient": 0.83,
+        "wind_recovery_hz": 2.46,
+        "bezier_bend_ratio": 0.26,
+        "height_meters": 0.087
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.8cm Sward)"
+    },
+    {
+      "sector_id": "G_2_2",
+      "grid_row": 2,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.6,
+        0.0,
+        -2.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.105,
+        0.45
+      ],
+      "volume_m3": 0.053,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 122,
+        "blade_count": 688,
+        "stiffness_coefficient": 0.8,
+        "wind_recovery_hz": 1.82,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.099
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.5cm Sward)"
+    },
+    {
+      "sector_id": "G_2_3",
+      "grid_row": 2,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.65,
+        0.0,
+        -2.64
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.091,
+        0.45
+      ],
+      "volume_m3": 0.064,
+      "mass_kg": 0.48,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 123,
+        "blade_count": 264,
+        "stiffness_coefficient": 0.78,
+        "wind_recovery_hz": 2.32,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.086
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.1cm Sward)"
+    },
+    {
+      "sector_id": "G_2_4",
+      "grid_row": 2,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.38,
+        0.0,
+        -2.44
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.108,
+        0.45
+      ],
+      "volume_m3": 0.049,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 124,
+        "blade_count": 640,
+        "stiffness_coefficient": 0.55,
+        "wind_recovery_hz": 2.01,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.098
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.8cm Sward)"
+    },
+    {
+      "sector_id": "G_2_5",
+      "grid_row": 2,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.57,
+        0.0,
+        -2.37
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.094,
+        0.45
+      ],
+      "volume_m3": 0.06,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 125,
+        "blade_count": 1016,
+        "stiffness_coefficient": 0.72,
+        "wind_recovery_hz": 2.54,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.109
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.4cm Sward)"
+    },
+    {
+      "sector_id": "G_2_6",
+      "grid_row": 2,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.56,
+        0.0,
+        -2.57
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.08,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 126,
+        "blade_count": 592,
+        "stiffness_coefficient": 0.6,
+        "wind_recovery_hz": 2.24,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.096
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.0cm Sward)"
+    },
+    {
+      "sector_id": "G_2_7",
+      "grid_row": 2,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.52,
+        0.0,
+        -2.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.097,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 127,
+        "blade_count": 968,
+        "stiffness_coefficient": 0.78,
+        "wind_recovery_hz": 2.01,
+        "bezier_bend_ratio": 0.33,
+        "height_meters": 0.108
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.7cm Sward)"
+    },
+    {
+      "sector_id": "G_2_8",
+      "grid_row": 2,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.54,
+        0.0,
+        -2.37
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.083,
+        0.45
+      ],
+      "volume_m3": 0.053,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 128,
+        "blade_count": 544,
+        "stiffness_coefficient": 0.64,
+        "wind_recovery_hz": 2.09,
+        "bezier_bend_ratio": 0.28,
+        "height_meters": 0.095
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.3cm Sward)"
+    },
+    {
+      "sector_id": "G_2_9",
+      "grid_row": 2,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.53,
+        0.0,
+        -2.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.1,
+        0.45
+      ],
+      "volume_m3": 0.062,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 129,
+        "blade_count": 920,
+        "stiffness_coefficient": 0.63,
+        "wind_recovery_hz": 2.21,
+        "bezier_bend_ratio": 0.22,
+        "height_meters": 0.106
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.0cm Sward)"
+    },
+    {
+      "sector_id": "G_3_0",
+      "grid_row": 3,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.56,
+        0.0,
+        -1.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.082,
+        0.45
+      ],
+      "volume_m3": 0.056,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 130,
+        "blade_count": 984,
+        "stiffness_coefficient": 0.83,
+        "wind_recovery_hz": 2.08,
+        "bezier_bend_ratio": 0.33,
+        "height_meters": 0.108
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.2cm Sward)"
+    },
+    {
+      "sector_id": "G_3_1",
+      "grid_row": 3,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.46,
+        0.0,
+        -1.4
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.099,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 131,
+        "blade_count": 560,
+        "stiffness_coefficient": 0.65,
+        "wind_recovery_hz": 2.5,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.095
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.9cm Sward)"
+    },
+    {
+      "sector_id": "G_3_2",
+      "grid_row": 3,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.65,
+        0.0,
+        -1.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.085,
+        0.45
+      ],
+      "volume_m3": 0.054,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 132,
+        "blade_count": 936,
+        "stiffness_coefficient": 0.56,
+        "wind_recovery_hz": 1.9,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.107
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.5cm Sward)"
+    },
+    {
+      "sector_id": "G_3_3",
+      "grid_row": 3,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.57,
+        0.0,
+        -1.6
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.102,
+        0.45
+      ],
+      "volume_m3": 0.055,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 133,
+        "blade_count": 512,
+        "stiffness_coefficient": 0.6,
+        "wind_recovery_hz": 2.5,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.093
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.2cm Sward)"
+    },
+    {
+      "sector_id": "G_3_4",
+      "grid_row": 3,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.36,
+        0.0,
+        -1.5
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.088,
+        0.45
+      ],
+      "volume_m3": 0.049,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 134,
+        "blade_count": 888,
+        "stiffness_coefficient": 0.65,
+        "wind_recovery_hz": 1.89,
+        "bezier_bend_ratio": 0.22,
+        "height_meters": 0.105
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.8cm Sward)"
+    },
+    {
+      "sector_id": "G_3_5",
+      "grid_row": 3,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.53,
+        0.0,
+        -1.36
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.105,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 135,
+        "blade_count": 464,
+        "stiffness_coefficient": 0.72,
+        "wind_recovery_hz": 2.0,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.092
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.5cm Sward)"
+    },
+    {
+      "sector_id": "G_3_6",
+      "grid_row": 3,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.0,
+        -1.52
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.091,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.48,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 136,
+        "blade_count": 840,
+        "stiffness_coefficient": 0.63,
+        "wind_recovery_hz": 2.43,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.104
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.1cm Sward)"
+    },
+    {
+      "sector_id": "G_3_7",
+      "grid_row": 3,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.4,
+        0.0,
+        -1.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.108,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 137,
+        "blade_count": 416,
+        "stiffness_coefficient": 0.63,
+        "wind_recovery_hz": 2.07,
+        "bezier_bend_ratio": 0.22,
+        "height_meters": 0.091
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.8cm Sward)"
+    },
+    {
+      "sector_id": "G_3_8",
+      "grid_row": 3,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.53,
+        0.0,
+        -1.37
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.094,
+        0.45
+      ],
+      "volume_m3": 0.071,
+      "mass_kg": 0.52,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 138,
+        "blade_count": 792,
+        "stiffness_coefficient": 0.78,
+        "wind_recovery_hz": 1.94,
+        "bezier_bend_ratio": 0.24,
+        "height_meters": 0.102
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.4cm Sward)"
+    },
+    {
+      "sector_id": "G_3_9",
+      "grid_row": 3,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.41,
+        0.0,
+        -1.52
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.08,
+        0.45
+      ],
+      "volume_m3": 0.071,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 139,
+        "blade_count": 368,
+        "stiffness_coefficient": 0.81,
+        "wind_recovery_hz": 2.27,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.089
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.0cm Sward)"
+    },
+    {
+      "sector_id": "G_4_0",
+      "grid_row": 4,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.48,
+        0.0,
+        -0.55
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.093,
+        0.45
+      ],
+      "volume_m3": 0.068,
+      "mass_kg": 0.72,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 140,
+        "blade_count": 432,
+        "stiffness_coefficient": 0.71,
+        "wind_recovery_hz": 2.55,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.091
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.3cm Sward)"
+    },
+    {
+      "sector_id": "G_4_1",
+      "grid_row": 4,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.0,
+        -0.51
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (11.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.11,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 141,
+        "blade_count": 808,
+        "stiffness_coefficient": 0.65,
+        "wind_recovery_hz": 2.14,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.103
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 11.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (11.0cm Sward)"
+    },
+    {
+      "sector_id": "G_4_2",
+      "grid_row": 4,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.52,
+        0.0,
+        -0.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.096,
+        0.45
+      ],
+      "volume_m3": 0.056,
+      "mass_kg": 0.48,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 142,
+        "blade_count": 384,
+        "stiffness_coefficient": 0.72,
+        "wind_recovery_hz": 1.91,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.09
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.6cm Sward)"
+    },
+    {
+      "sector_id": "G_4_3",
+      "grid_row": 4,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.56,
+        0.0,
+        -0.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.082,
+        0.45
+      ],
+      "volume_m3": 0.057,
+      "mass_kg": 0.72,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 143,
+        "blade_count": 760,
+        "stiffness_coefficient": 0.73,
+        "wind_recovery_hz": 2.12,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.101
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.2cm Sward)"
+    },
+    {
+      "sector_id": "G_4_4",
+      "grid_row": 4,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.47,
+        0.0,
+        -0.42
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.099,
+        0.45
+      ],
+      "volume_m3": 0.073,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 144,
+        "blade_count": 336,
+        "stiffness_coefficient": 0.57,
+        "wind_recovery_hz": 2.02,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.088
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.9cm Sward)"
+    },
+    {
+      "sector_id": "G_4_5",
+      "grid_row": 4,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.57,
+        0.0,
+        -0.58
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.085,
+        0.45
+      ],
+      "volume_m3": 0.065,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 145,
+        "blade_count": 712,
+        "stiffness_coefficient": 0.75,
+        "wind_recovery_hz": 2.25,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.1
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.5cm Sward)"
+    },
+    {
+      "sector_id": "G_4_6",
+      "grid_row": 4,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.51,
+        0.0,
+        -0.64
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.102,
+        0.45
+      ],
+      "volume_m3": 0.054,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 146,
+        "blade_count": 288,
+        "stiffness_coefficient": 0.58,
+        "wind_recovery_hz": 2.1,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.087
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.2cm Sward)"
+    },
+    {
+      "sector_id": "G_4_7",
+      "grid_row": 4,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.49,
+        0.0,
+        -0.51
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.088,
+        0.45
+      ],
+      "volume_m3": 0.075,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 147,
+        "blade_count": 664,
+        "stiffness_coefficient": 0.58,
+        "wind_recovery_hz": 2.34,
+        "bezier_bend_ratio": 0.26,
+        "height_meters": 0.098
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.8cm Sward)"
+    },
+    {
+      "sector_id": "G_4_8",
+      "grid_row": 4,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.49,
+        0.0,
+        -0.58
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.105,
+        0.45
+      ],
+      "volume_m3": 0.072,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 148,
+        "blade_count": 240,
+        "stiffness_coefficient": 0.81,
+        "wind_recovery_hz": 2.2,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.085
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.5cm Sward)"
+    },
+    {
+      "sector_id": "G_4_9",
+      "grid_row": 4,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.56,
+        0.0,
+        -0.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.091,
+        0.45
+      ],
+      "volume_m3": 0.07,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 149,
+        "blade_count": 616,
+        "stiffness_coefficient": 0.73,
+        "wind_recovery_hz": 2.12,
+        "bezier_bend_ratio": 0.24,
+        "height_meters": 0.097
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.1cm Sward)"
+    },
+    {
+      "sector_id": "G_5_0",
+      "grid_row": 5,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.49,
+        0.0,
+        0.39
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.104,
+        0.45
+      ],
+      "volume_m3": 0.05,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 150,
+        "blade_count": 680,
+        "stiffness_coefficient": 0.68,
+        "wind_recovery_hz": 2.11,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.099
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.4cm Sward)"
+    },
+    {
+      "sector_id": "G_5_1",
+      "grid_row": 5,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.54,
+        0.0,
+        0.55
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.09,
+        0.45
+      ],
+      "volume_m3": 0.073,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 151,
+        "blade_count": 256,
+        "stiffness_coefficient": 0.63,
+        "wind_recovery_hz": 2.47,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.086
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.0cm Sward)"
+    },
+    {
+      "sector_id": "G_5_2",
+      "grid_row": 5,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.54,
+        0.0,
+        0.43
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.107,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.72,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 152,
+        "blade_count": 632,
+        "stiffness_coefficient": 0.82,
+        "wind_recovery_hz": 2.55,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.097
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.7cm Sward)"
+    },
+    {
+      "sector_id": "G_5_3",
+      "grid_row": 5,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.53,
+        0.0,
+        0.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.093,
+        0.45
+      ],
+      "volume_m3": 0.058,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 153,
+        "blade_count": 1008,
+        "stiffness_coefficient": 0.67,
+        "wind_recovery_hz": 2.41,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.109
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.3cm Sward)"
+    },
+    {
+      "sector_id": "G_5_4",
+      "grid_row": 5,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.36,
+        0.0,
+        0.65
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (11.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.11,
+        0.45
+      ],
+      "volume_m3": 0.07,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 154,
+        "blade_count": 584,
+        "stiffness_coefficient": 0.64,
+        "wind_recovery_hz": 2.36,
+        "bezier_bend_ratio": 0.24,
+        "height_meters": 0.096
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 11.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (11.0cm Sward)"
+    },
+    {
+      "sector_id": "G_5_5",
+      "grid_row": 5,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.53,
+        0.0,
+        0.61
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.096,
+        0.45
+      ],
+      "volume_m3": 0.052,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 155,
+        "blade_count": 960,
+        "stiffness_coefficient": 0.73,
+        "wind_recovery_hz": 2.21,
+        "bezier_bend_ratio": 0.33,
+        "height_meters": 0.108
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.6cm Sward)"
+    },
+    {
+      "sector_id": "G_5_6",
+      "grid_row": 5,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.58,
+        0.0,
+        0.62
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.082,
+        0.45
+      ],
+      "volume_m3": 0.058,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 156,
+        "blade_count": 536,
+        "stiffness_coefficient": 0.82,
+        "wind_recovery_hz": 2.38,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.094
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.2cm Sward)"
+    },
+    {
+      "sector_id": "G_5_7",
+      "grid_row": 5,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.61,
+        0.0,
+        0.61
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.099,
+        0.45
+      ],
+      "volume_m3": 0.079,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 157,
+        "blade_count": 912,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.04,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.106
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.9cm Sward)"
+    },
+    {
+      "sector_id": "G_5_8",
+      "grid_row": 5,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.49,
+        0.0,
+        0.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.085,
+        0.45
+      ],
+      "volume_m3": 0.06,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 158,
+        "blade_count": 488,
+        "stiffness_coefficient": 0.84,
+        "wind_recovery_hz": 2.01,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.093
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.5cm Sward)"
+    },
+    {
+      "sector_id": "G_5_9",
+      "grid_row": 5,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.45,
+        0.0,
+        0.39
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.102,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 159,
+        "blade_count": 864,
+        "stiffness_coefficient": 0.68,
+        "wind_recovery_hz": 1.88,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.105
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.2cm Sward)"
+    },
+    {
+      "sector_id": "G_6_0",
+      "grid_row": 6,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.56,
+        0.0,
+        1.59
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.084,
+        0.45
+      ],
+      "volume_m3": 0.076,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 160,
+        "blade_count": 928,
+        "stiffness_coefficient": 0.59,
+        "wind_recovery_hz": 2.48,
+        "bezier_bend_ratio": 0.33,
+        "height_meters": 0.107
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.4cm Sward)"
+    },
+    {
+      "sector_id": "G_6_1",
+      "grid_row": 6,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.52,
+        0.0,
+        1.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.101,
+        0.45
+      ],
+      "volume_m3": 0.057,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 161,
+        "blade_count": 504,
+        "stiffness_coefficient": 0.64,
+        "wind_recovery_hz": 1.86,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.093
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.1cm Sward)"
+    },
+    {
+      "sector_id": "G_6_2",
+      "grid_row": 6,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.39,
+        0.0,
+        1.47
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.087,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 162,
+        "blade_count": 880,
+        "stiffness_coefficient": 0.79,
+        "wind_recovery_hz": 2.29,
+        "bezier_bend_ratio": 0.26,
+        "height_meters": 0.105
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.7cm Sward)"
+    },
+    {
+      "sector_id": "G_6_3",
+      "grid_row": 6,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.61,
+        0.0,
+        1.35
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.104,
+        0.45
+      ],
+      "volume_m3": 0.076,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 163,
+        "blade_count": 456,
+        "stiffness_coefficient": 0.84,
+        "wind_recovery_hz": 1.86,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.092
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.4cm Sward)"
+    },
+    {
+      "sector_id": "G_6_4",
+      "grid_row": 6,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.51,
+        0.0,
+        1.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.09,
+        0.45
+      ],
+      "volume_m3": 0.051,
+      "mass_kg": 0.6,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 164,
+        "blade_count": 832,
+        "stiffness_coefficient": 0.84,
+        "wind_recovery_hz": 2.34,
+        "bezier_bend_ratio": 0.32,
+        "height_meters": 0.104
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.0cm Sward)"
+    },
+    {
+      "sector_id": "G_6_5",
+      "grid_row": 6,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.43,
+        0.0,
+        1.4
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.107,
+        0.45
+      ],
+      "volume_m3": 0.057,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 165,
+        "blade_count": 408,
+        "stiffness_coefficient": 0.56,
+        "wind_recovery_hz": 2.28,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.09
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.7cm Sward)"
+    },
+    {
+      "sector_id": "G_6_6",
+      "grid_row": 6,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.39,
+        0.0,
+        1.56
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.093,
+        0.45
+      ],
+      "volume_m3": 0.052,
+      "mass_kg": 0.52,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 166,
+        "blade_count": 784,
+        "stiffness_coefficient": 0.75,
+        "wind_recovery_hz": 1.84,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.102
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.3cm Sward)"
+    },
+    {
+      "sector_id": "G_6_7",
+      "grid_row": 6,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.0,
+        1.52
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (11.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.11,
+        0.45
+      ],
+      "volume_m3": 0.078,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 167,
+        "blade_count": 360,
+        "stiffness_coefficient": 0.82,
+        "wind_recovery_hz": 1.98,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.089
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 11.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (11.0cm Sward)"
+    },
+    {
+      "sector_id": "G_6_8",
+      "grid_row": 6,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.59,
+        0.0,
+        1.61
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.096,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 168,
+        "blade_count": 736,
+        "stiffness_coefficient": 0.77,
+        "wind_recovery_hz": 2.43,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.101
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.6cm Sward)"
+    },
+    {
+      "sector_id": "G_6_9",
+      "grid_row": 6,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.57,
+        0.0,
+        1.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.082,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 169,
+        "blade_count": 312,
+        "stiffness_coefficient": 0.56,
+        "wind_recovery_hz": 2.31,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.087
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.2cm Sward)"
+    },
+    {
+      "sector_id": "G_7_0",
+      "grid_row": 7,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.37,
+        0.0,
+        2.5
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.095,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.6,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 170,
+        "blade_count": 376,
+        "stiffness_coefficient": 0.68,
+        "wind_recovery_hz": 1.96,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.089
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.5cm Sward)"
+    },
+    {
+      "sector_id": "G_7_1",
+      "grid_row": 7,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.43,
+        0.0,
+        2.55
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.081,
+        0.45
+      ],
+      "volume_m3": 0.052,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 171,
+        "blade_count": 752,
+        "stiffness_coefficient": 0.71,
+        "wind_recovery_hz": 1.94,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.101
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.1cm Sward)"
+    },
+    {
+      "sector_id": "G_7_2",
+      "grid_row": 7,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.62,
+        0.0,
+        2.48
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.098,
+        0.45
+      ],
+      "volume_m3": 0.073,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 172,
+        "blade_count": 328,
+        "stiffness_coefficient": 0.67,
+        "wind_recovery_hz": 2.11,
+        "bezier_bend_ratio": 0.26,
+        "height_meters": 0.088
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.8cm Sward)"
+    },
+    {
+      "sector_id": "G_7_3",
+      "grid_row": 7,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.63,
+        0.0,
+        2.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.084,
+        0.45
+      ],
+      "volume_m3": 0.076,
+      "mass_kg": 0.64,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 173,
+        "blade_count": 704,
+        "stiffness_coefficient": 0.7,
+        "wind_recovery_hz": 2.01,
+        "bezier_bend_ratio": 0.31,
+        "height_meters": 0.1
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.4cm Sward)"
+    },
+    {
+      "sector_id": "G_7_4",
+      "grid_row": 7,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.53,
+        0.0,
+        2.38
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.101,
+        0.45
+      ],
+      "volume_m3": 0.053,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 174,
+        "blade_count": 280,
+        "stiffness_coefficient": 0.66,
+        "wind_recovery_hz": 1.85,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.086
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.1cm Sward)"
+    },
+    {
+      "sector_id": "G_7_5",
+      "grid_row": 7,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.55,
+        0.0,
+        2.48
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.087,
+        0.45
+      ],
+      "volume_m3": 0.065,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 175,
+        "blade_count": 656,
+        "stiffness_coefficient": 0.61,
+        "wind_recovery_hz": 2.11,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.098
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.7cm Sward)"
+    },
+    {
+      "sector_id": "G_7_6",
+      "grid_row": 7,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.42,
+        0.0,
+        2.44
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.104,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 176,
+        "blade_count": 1032,
+        "stiffness_coefficient": 0.64,
+        "wind_recovery_hz": 2.04,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.11
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.4cm Sward)"
+    },
+    {
+      "sector_id": "G_7_7",
+      "grid_row": 7,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.41,
+        0.0,
+        2.39
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.0cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.09,
+        0.45
+      ],
+      "volume_m3": 0.069,
+      "mass_kg": 0.52,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 177,
+        "blade_count": 608,
+        "stiffness_coefficient": 0.66,
+        "wind_recovery_hz": 2.32,
+        "bezier_bend_ratio": 0.21,
+        "height_meters": 0.097
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.0cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.0cm Sward)"
+    },
+    {
+      "sector_id": "G_7_8",
+      "grid_row": 7,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.43,
+        0.0,
+        2.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.107,
+        0.45
+      ],
+      "volume_m3": 0.052,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 178,
+        "blade_count": 984,
+        "stiffness_coefficient": 0.84,
+        "wind_recovery_hz": 2.18,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.108
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.7cm Sward)"
+    },
+    {
+      "sector_id": "G_7_9",
+      "grid_row": 7,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.39,
+        0.0,
+        2.58
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.093,
+        0.45
+      ],
+      "volume_m3": 0.074,
+      "mass_kg": 0.92,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 179,
+        "blade_count": 560,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.32,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.095
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.3cm Sward)"
+    },
+    {
+      "sector_id": "G_8_0",
+      "grid_row": 8,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.53,
+        0.0,
+        3.4
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.106,
+        0.45
+      ],
+      "volume_m3": 0.056,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 180,
+        "blade_count": 624,
+        "stiffness_coefficient": 0.74,
+        "wind_recovery_hz": 2.54,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.097
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.6cm Sward)"
+    },
+    {
+      "sector_id": "G_8_1",
+      "grid_row": 8,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.35,
+        0.0,
+        3.56
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.092,
+        0.45
+      ],
+      "volume_m3": 0.066,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 181,
+        "blade_count": 1000,
+        "stiffness_coefficient": 0.61,
+        "wind_recovery_hz": 2.06,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.109
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.2cm Sward)"
+    },
+    {
+      "sector_id": "G_8_2",
+      "grid_row": 8,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.38,
+        0.0,
+        3.45
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.109,
+        0.45
+      ],
+      "volume_m3": 0.056,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 182,
+        "blade_count": 576,
+        "stiffness_coefficient": 0.81,
+        "wind_recovery_hz": 2.27,
+        "bezier_bend_ratio": 0.32,
+        "height_meters": 0.096
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.9cm Sward)"
+    },
+    {
+      "sector_id": "G_8_3",
+      "grid_row": 8,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.49,
+        0.0,
+        3.6
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.095,
+        0.45
+      ],
+      "volume_m3": 0.062,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 183,
+        "blade_count": 952,
+        "stiffness_coefficient": 0.68,
+        "wind_recovery_hz": 2.6,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.107
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.5cm Sward)"
+    },
+    {
+      "sector_id": "G_8_4",
+      "grid_row": 8,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.45,
+        0.0,
+        3.47
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.081,
+        0.45
+      ],
+      "volume_m3": 0.062,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 184,
+        "blade_count": 528,
+        "stiffness_coefficient": 0.77,
+        "wind_recovery_hz": 2.37,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.094
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.1cm Sward)"
+    },
+    {
+      "sector_id": "G_8_5",
+      "grid_row": 8,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.58,
+        0.0,
+        3.47
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.098,
+        0.45
+      ],
+      "volume_m3": 0.069,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 185,
+        "blade_count": 904,
+        "stiffness_coefficient": 0.6,
+        "wind_recovery_hz": 2.34,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.106
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.8cm Sward)"
+    },
+    {
+      "sector_id": "G_8_6",
+      "grid_row": 8,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.6,
+        0.0,
+        3.6
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.084,
+        0.45
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 186,
+        "blade_count": 480,
+        "stiffness_coefficient": 0.83,
+        "wind_recovery_hz": 1.8,
+        "bezier_bend_ratio": 0.25,
+        "height_meters": 0.092
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.4cm Sward)"
+    },
+    {
+      "sector_id": "G_8_7",
+      "grid_row": 8,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.51,
+        0.0,
+        3.41
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.101,
+        0.45
+      ],
+      "volume_m3": 0.075,
+      "mass_kg": 0.56,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 187,
+        "blade_count": 856,
+        "stiffness_coefficient": 0.8,
+        "wind_recovery_hz": 2.1,
+        "bezier_bend_ratio": 0.34,
+        "height_meters": 0.104
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.1cm Sward)"
+    },
+    {
+      "sector_id": "G_8_8",
+      "grid_row": 8,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.48,
+        0.0,
+        3.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.7cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.087,
+        0.45
+      ],
+      "volume_m3": 0.073,
+      "mass_kg": 0.8,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 188,
+        "blade_count": 432,
+        "stiffness_coefficient": 0.55,
+        "wind_recovery_hz": 2.53,
+        "bezier_bend_ratio": 0.28,
+        "height_meters": 0.091
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.7cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.7cm Sward)"
+    },
+    {
+      "sector_id": "G_8_9",
+      "grid_row": 8,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.37,
+        0.0,
+        3.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.104,
+        0.45
+      ],
+      "volume_m3": 0.064,
+      "mass_kg": 0.96,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 189,
+        "blade_count": 808,
+        "stiffness_coefficient": 0.56,
+        "wind_recovery_hz": 2.03,
+        "bezier_bend_ratio": 0.23,
+        "height_meters": 0.103
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.4cm Sward)"
+    },
+    {
+      "sector_id": "G_9_0",
+      "grid_row": 9,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.43,
+        0.0,
+        4.35
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.086,
+        0.45
+      ],
+      "volume_m3": 0.057,
+      "mass_kg": 0.84,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 190,
+        "blade_count": 872,
+        "stiffness_coefficient": 0.83,
+        "wind_recovery_hz": 2.57,
+        "bezier_bend_ratio": 0.28,
+        "height_meters": 0.105
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.6cm Sward)"
+    },
+    {
+      "sector_id": "G_9_1",
+      "grid_row": 9,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.49,
+        0.0,
+        4.5
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.3cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.103,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 191,
+        "blade_count": 448,
+        "stiffness_coefficient": 0.66,
+        "wind_recovery_hz": 2.15,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.092
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.3cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.3cm Sward)"
+    },
+    {
+      "sector_id": "G_9_2",
+      "grid_row": 9,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.54,
+        0.0,
+        4.49
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.089,
+        0.45
+      ],
+      "volume_m3": 0.069,
+      "mass_kg": 0.72,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 192,
+        "blade_count": 824,
+        "stiffness_coefficient": 0.58,
+        "wind_recovery_hz": 1.98,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.103
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.9cm Sward)"
+    },
+    {
+      "sector_id": "G_9_3",
+      "grid_row": 9,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.35,
+        0.0,
+        4.57
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.6cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.106,
+        0.45
+      ],
+      "volume_m3": 0.059,
+      "mass_kg": 0.88,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 193,
+        "blade_count": 400,
+        "stiffness_coefficient": 0.65,
+        "wind_recovery_hz": 2.1,
+        "bezier_bend_ratio": 0.2,
+        "height_meters": 0.09
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.6cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.6cm Sward)"
+    },
+    {
+      "sector_id": "G_9_4",
+      "grid_row": 9,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.36,
+        0.0,
+        4.45
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.2cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.092,
+        0.45
+      ],
+      "volume_m3": 0.062,
+      "mass_kg": 0.6,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 194,
+        "blade_count": 776,
+        "stiffness_coefficient": 0.69,
+        "wind_recovery_hz": 2.36,
+        "bezier_bend_ratio": 0.3,
+        "height_meters": 0.102
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.2cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.2cm Sward)"
+    },
+    {
+      "sector_id": "G_9_5",
+      "grid_row": 9,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.48,
+        0.0,
+        4.39
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (10.9cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.109,
+        0.45
+      ],
+      "volume_m3": 0.067,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 195,
+        "blade_count": 352,
+        "stiffness_coefficient": 0.67,
+        "wind_recovery_hz": 2.33,
+        "bezier_bend_ratio": 0.28,
+        "height_meters": 0.089
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 10.9cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (10.9cm Sward)"
+    },
+    {
+      "sector_id": "G_9_6",
+      "grid_row": 9,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.37,
+        0.0,
+        4.36
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.5cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.095,
+        0.45
+      ],
+      "volume_m3": 0.05,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 196,
+        "blade_count": 728,
+        "stiffness_coefficient": 0.61,
+        "wind_recovery_hz": 1.86,
+        "bezier_bend_ratio": 0.27,
+        "height_meters": 0.1
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.5cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.5cm Sward)"
+    },
+    {
+      "sector_id": "G_9_7",
+      "grid_row": 9,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.46,
+        0.0,
+        4.44
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.1cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.081,
+        0.45
+      ],
+      "volume_m3": 0.069,
+      "mass_kg": 0.76,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 197,
+        "blade_count": 304,
+        "stiffness_coefficient": 0.81,
+        "wind_recovery_hz": 1.96,
+        "bezier_bend_ratio": 0.29,
+        "height_meters": 0.087
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.1cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.1cm Sward)"
+    },
+    {
+      "sector_id": "G_9_8",
+      "grid_row": 9,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.52,
+        0.0,
+        4.43
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (9.8cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.098,
+        0.45
+      ],
+      "volume_m3": 0.075,
+      "mass_kg": 0.48,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 198,
+        "blade_count": 680,
+        "stiffness_coefficient": 0.74,
+        "wind_recovery_hz": 1.84,
+        "bezier_bend_ratio": 0.24,
+        "height_meters": 0.099
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 9.8cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (9.8cm Sward)"
+    },
+    {
+      "sector_id": "G_9_9",
+      "grid_row": 9,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.48,
+        0.0,
+        4.51
+      ],
+      "archetype_id": "grass",
+      "grass_title": "Meadow Turf Sector (8.4cm Sward)",
+      "dimensions_meters": [
+        0.45,
+        0.084,
+        0.45
+      ],
+      "volume_m3": 0.053,
+      "mass_kg": 0.68,
+      "biomass_density_kg_m3": 220.0,
+      "accent_color": "#39FF14",
+      "grass_parameters": {
+        "seed": 199,
+        "blade_count": 256,
+        "stiffness_coefficient": 0.72,
+        "wind_recovery_hz": 2.58,
+        "bezier_bend_ratio": 0.21,
+        "height_meters": 0.086
+      },
+      "geological_notes": "Continuous dense turf canopy (max height 11cm, measured 8.4cm). High-density intertwined sod forming an uncountable grass sward across 1m\u00b2 sector.",
+      "rock_title": "Meadow Turf Sector (8.4cm Sward)"
+    }
+  ]
+}

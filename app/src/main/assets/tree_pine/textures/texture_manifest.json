@@ -1,0 +1,12 @@
+{
+  "asset": "tree_pine",
+  "resolution": "128x128",
+  "format": "PNG-RGBA8",
+  "channels": {
+    "albedo.png": "Bark Diffuse Timber Grain & Moss Flecks",
+    "normal.png": "Tangent-Space Normal Map (Sobel bark furrow crevices)",
+    "roughness.png": "Micro-roughness (Weathered outer bark vs cambium)",
+    "emissive.png": "Non-emissive timber"
+  },
+  "botanical_shader_model": "PBR Metallic-Roughness (Burley Bark + Translucent Leaf BSDF)"
+}

@@ -1,0 +1,10 @@
+{
+  "model_code": "QR-77 SENTINEL",
+  "class": "Autonomous Recon Quad-UAV",
+  "propulsion": "Contra-Rotating Vector Ducted Turbines",
+  "top_velocity": "240 km/h with 4.5G maneuver capability",
+  "shielding": "Kinetic Energy Absorption Composite Plating",
+  "power_plant": "Solid-State Graphene Lithium-Sulfur Array (18 kWh)",
+  "avionics": "LiDAR 3D Spatial Mapping & Optical Multispectral Sensor Array",
+  "payload": "Electronic Warfare Jammer & Telemetry Relay Pod"
+}

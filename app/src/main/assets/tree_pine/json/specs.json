@@ -1,0 +1,18 @@
+{
+  "model_code": "BOT-1M-TREE_PINE",
+  "grid_cell_size": "1.0m x 1.0m",
+  "dimensions_meters": "0.717m (W) x 1.3m (H) x 0.927m (D)",
+  "botanical_classification": "Pinus Sylvestris (Coniferous Pine)",
+  "generator_algorithm": "3D Stochastic L-System + Turtle Graphics (Stojanovic 2016)",
+  "branch_conservation_rule": "Leonardo da Vinci Postulate (w_r = 0.707)",
+  "branching_angle_range": "Stochastic 25 deg - 40 deg with randomized roll",
+  "foliage_distribution": "Terminal Node Diametral Leaf Quads",
+  "volume_diagram_breakdown": {
+    "total_volume_m3": 0.0359,
+    "components": [
+      "Bole Trunk Base (1m Cell)",
+      "Primary Scaffold Boughs",
+      "Foliage Crown & Terminal Leaves"
+    ]
+  }
+}

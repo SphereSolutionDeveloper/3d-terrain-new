@@ -1,0 +1,26 @@
+{
+  "mass_kg": 14200.0,
+  "center_of_mass": [
+    0.0,
+    0.08,
+    0.15
+  ],
+  "bounding_box": {
+    "min": [
+      -3.55,
+      -0.51,
+      -3.55
+    ],
+    "max": [
+      3.55,
+      0.64,
+      4.5
+    ]
+  },
+  "drag_coefficient": 0.085,
+  "hypersonic_lift_to_drag": 4.8,
+  "primary_thrust_kn": 12500.0,
+  "afterburner_thrust_kn": 24000.0,
+  "rcs_thruster_count": 16,
+  "collider_type": "CONVEX_HULL_HIERARCHICAL"
+}

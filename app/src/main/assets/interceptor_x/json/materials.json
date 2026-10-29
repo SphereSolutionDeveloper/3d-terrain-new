@@ -1,0 +1,19 @@
+{
+  "shader_model": "PBR_METALLIC_ROUGHNESS",
+  "base_color_factor": [
+    0.92,
+    0.94,
+    0.97,
+    1.0
+  ],
+  "metallic_factor": 0.94,
+  "roughness_factor": 0.28,
+  "emissive_factor": [
+    0.1,
+    0.85,
+    1.0
+  ],
+  "emissive_strength": 5.2,
+  "normal_scale": 1.5,
+  "hull_alloy": "Aegis Nano-Layered Titanium-Carbide"
+}

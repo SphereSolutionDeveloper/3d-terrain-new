@@ -1,0 +1,23 @@
+{
+  "mass_kg": 195.3,
+  "center_of_mass": [
+    0.0,
+    -0.022,
+    0.0
+  ],
+  "bounding_box": {
+    "min": [
+      -0.2164,
+      -0.3125,
+      -0.2234
+    ],
+    "max": [
+      0.2126,
+      0.3793,
+      0.2061
+    ]
+  },
+  "friction_coefficient": 0.78,
+  "restitution": 0.12,
+  "collider_type": "Convex Polyhedron Hull (1m Boundary)"
+}

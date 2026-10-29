@@ -1,0 +1,150 @@
+{
+  "model_code": "ARROW-X MK-IV",
+  "title": "Arrow Interceptor",
+  "manufacturer": "Aethelred Space Industries",
+  "schematic_type": "Technical Schematic (Top View)",
+  "speed": "1,200 Mhm/h",
+  "crew_size": 3,
+  "operational_range": "36 - 10,000 Light-Years (Multi-Sector Range)",
+  "propulsion": "Primary Fusion Engine Cluster (Hyper-Wave Drive)",
+  "armor_hull": "Faceted Armor Wings (Aegis Alloy Construction)",
+  "cockpit": "Reinforced Tranquility Canopy Command Module (Crew of 3)",
+  "defense_shielding": "Rear Aegis Shield Emitter & Refueling Port (Aft Point)",
+  "offensive_armament": [
+    "Retractable High-Output Beam Cannon Port (Dual Flank Mounts)",
+    "External Armor-Plated Missile Silos (Conformal Shoulder Bays)"
+  ],
+  "maneuvering_systems": "Wingtip Maneuvering Thrusters & Canted Stabilizer Fins",
+  "refinery_plant": "Fuel Reservoir & Arrised Distillation Plant (Deuterium/Helium-3)",
+  "communications": "Deep-Space Communication & Phased-Array Data Uplink Dish",
+  "access_systems": "Crew Access Hatch & Standardized Docking Adapter",
+  "volumetric_decomposition": {
+    "total_displacement_m3": 86.1,
+    "primitive_volume_count": 9,
+    "shapes": [
+      {
+        "id": "vol_engines",
+        "name": "Twin Vector-Thrust Engines (V-TEN)",
+        "primitive_type": "Multi-Segment Cylinders & Flared Bells",
+        "volume_m3": 18.4,
+        "role": "Propulsion",
+        "dimensions_m": [
+          2.78,
+          0.94,
+          2.0
+        ]
+      },
+      {
+        "id": "vol_cockpit",
+        "name": "Command Module & Tranquility Canopy",
+        "primitive_type": "Streamlined Teardrop Capsule Dome",
+        "volume_m3": 8.2,
+        "role": "Command & Life Support",
+        "dimensions_m": [
+          1.12,
+          0.84,
+          1.4
+        ]
+      },
+      {
+        "id": "vol_fuselage",
+        "name": "Lifting-Body Hull & Chine Polyhedron",
+        "primitive_type": "Faceted Aerodynamic Polyhedron Wedge",
+        "volume_m3": 24.6,
+        "role": "Primary Structural Core",
+        "dimensions_m": [
+          3.5,
+          0.56,
+          3.85
+        ]
+      },
+      {
+        "id": "vol_dorsal_spine",
+        "name": "Central Aether-Reactor Spine",
+        "primitive_type": "Raised Chiseled Ridge Prism",
+        "volume_m3": 5.3,
+        "role": "Reactor & Thermal Dissipation",
+        "dimensions_m": [
+          0.6,
+          0.2,
+          3.05
+        ]
+      },
+      {
+        "id": "vol_crenellated_wings",
+        "name": "3-Tier Crenellated Phalanx Wings",
+        "primitive_type": "Stepped Battlement Airfoil Slabs",
+        "volume_m3": 14.8,
+        "role": "Aerodynamic Flight & Shield Emitters",
+        "dimensions_m": [
+          7.1,
+          0.2,
+          2.0
+        ]
+      },
+      {
+        "id": "vol_outriggers_turrets",
+        "name": "Outrigger Truss Booms & Turrets",
+        "primitive_type": "Hollow Truss Booms & Gun Cylinders",
+        "volume_m3": 3.6,
+        "role": "Offensive Armament",
+        "dimensions_m": [
+          3.5,
+          0.24,
+          1.65
+        ]
+      },
+      {
+        "id": "vol_avionics_prow",
+        "name": "Sensor Prow & Targeting Needle",
+        "primitive_type": "Diamond Pyramid & Tapered Needle Cone",
+        "volume_m3": 1.9,
+        "role": "Avionics & Targeting",
+        "dimensions_m": [
+          0.7,
+          0.4,
+          1.2
+        ]
+      },
+      {
+        "id": "vol_ftl_stern",
+        "name": "FTL Drive Cluster & Stinger Stern",
+        "primitive_type": "Rhomboid Drive Block & Aft Needle",
+        "volume_m3": 7.1,
+        "role": "Faster-Than-Light Propulsion & Defense",
+        "dimensions_m": [
+          1.24,
+          0.58,
+          2.3
+        ]
+      },
+      {
+        "id": "vol_keel_dish",
+        "name": "Ventral Keel Blade & Comm Dish",
+        "primitive_type": "Vertical Fin & Recessed Parabolic Dish",
+        "volume_m3": 2.2,
+        "role": "Communications & Stability",
+        "dimensions_m": [
+          3.5,
+          0.24,
+          2.85
+        ]
+      }
+    ]
+  },
+  "subsystems": {
+    "callout_1": "Cockpit and Command Module (Reinforced Tranquility Canopy)",
+    "callout_2": "Long-Range Targeting and Sensor Array",
+    "callout_3": "Faceted Armor Wings (Aegis Alloy Construction)",
+    "callout_4": "Primary Fusion Engine Cluster (Hyper-Wave Drive)",
+    "callout_5": "Aft Point (Rear Aegis Shield Emitter & Refueling Port)",
+    "callout_6": "Retractable High-Output Beam Cannon Port",
+    "callout_7": "Missile Silo (External, Armor-Plated)",
+    "callout_8": "Maneuvering Thrusters (Wingtip Canted Fins)",
+    "callout_9": "Fuel Reservoir Arrised Distillation Plant",
+    "callout_10": "Deep-Space Communication & Data Uplink Dish",
+    "callout_11": "Crew Access Hatch and Docking Adapter",
+    "callout_12": "Internal Power Conduit Matrix (Cutaway View)",
+    "callout_13": "'ARROW' Identity Etching Matrix (Dorsal Spine)"
+  }
+}

@@ -1,0 +1,672 @@
+{
+  "title": "Kenya Magadi Road (B19/C58) 1-Meter Spatial Grid System",
+  "format": "Direct Memory-Mapped Binary (ZERO DATABASE) + JSON Specification",
+  "road_name": "Magadi Road (B19 / C58: Galleria - Kiserian - Magadi)",
+  "total_distance_m": 105273.0,
+  "total_stations_1m": 105274,
+  "grid_resolution_m": 1.0,
+  "lateral_corridor_width_m": 10000.0,
+  "segment_count": 10,
+  "binary_file": "magadi_1m_grid_segments.bin",
+  "binary_size_bytes": 3370116,
+  "segments": [
+    {
+      "segment_id": 1,
+      "segment_code": "MAGADI_SEG_01",
+      "name": "Nairobi Galleria / Bomas to Ongata Rongai",
+      "station_start_idx": 0,
+      "station_count": 10000,
+      "chainage_start_m": 0.0,
+      "chainage_end_m": 9999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 250396.06,
+        "utm_y_m": 9850757.94,
+        "lon": 36.756831,
+        "lat": -1.349196,
+        "elev_m": 2012.98
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 238263.3,
+          "max_x": 255464.8,
+          "min_y": 9842916.1,
+          "max_y": 9855757.9
+        },
+        "grid_cells_x": 17202,
+        "grid_cells_y": 12842,
+        "total_1m_cells": 220908084
+      },
+      "elev_min_m": 1897.92,
+      "elev_max_m": 2029.23
+    },
+    {
+      "segment_id": 2,
+      "segment_code": "MAGADI_SEG_02",
+      "name": "Ongata Rongai to Kiserian Town Junction",
+      "station_start_idx": 10000,
+      "station_count": 10000,
+      "chainage_start_m": 10000.0,
+      "chainage_end_m": 19999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 243262.28,
+        "utm_y_m": 9847915.96,
+        "lon": 36.6927303,
+        "lat": -1.3748268,
+        "elev_m": 1897.91
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 236436.7,
+          "max_x": 248262.3,
+          "min_y": 9835736.6,
+          "max_y": 9853002.7
+        },
+        "grid_cells_x": 11826,
+        "grid_cells_y": 17267,
+        "total_1m_cells": 204199542
+      },
+      "elev_min_m": 1727.36,
+      "elev_max_m": 1898.75
+    },
+    {
+      "segment_id": 3,
+      "segment_code": "MAGADI_SEG_03",
+      "name": "Kiserian to Corner Baridi Escarpment Summit",
+      "station_start_idx": 20000,
+      "station_count": 10000,
+      "chainage_start_m": 20000.0,
+      "chainage_end_m": 29999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 241547.67,
+        "utm_y_m": 9840736.26,
+        "lon": 36.6772655,
+        "lat": -1.4397147,
+        "elev_m": 1727.34
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 231263.1,
+          "max_x": 246547.7,
+          "min_y": 9832129.7,
+          "max_y": 9845736.3
+        },
+        "grid_cells_x": 15285,
+        "grid_cells_y": 13607,
+        "total_1m_cells": 207982995
+      },
+      "elev_min_m": 1581.3,
+      "elev_max_m": 1727.34
+    },
+    {
+      "segment_id": 4,
+      "segment_code": "MAGADI_SEG_04",
+      "name": "Corner Baridi Hairpins to Olepolos Ridge",
+      "station_start_idx": 30000,
+      "station_count": 10000,
+      "chainage_start_m": 30000.0,
+      "chainage_end_m": 39999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 236262.76,
+        "utm_y_m": 9837128.8,
+        "lon": 36.6297625,
+        "lat": -1.4722749,
+        "elev_m": 1604.69
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 226292.3,
+          "max_x": 241262.8,
+          "min_y": 9825059.5,
+          "max_y": 9842128.8
+        },
+        "grid_cells_x": 14971,
+        "grid_cells_y": 17070,
+        "total_1m_cells": 255554970
+      },
+      "elev_min_m": 1403.8,
+      "elev_max_m": 1604.69
+    },
+    {
+      "segment_id": 5,
+      "segment_code": "MAGADI_SEG_05",
+      "name": "Olepolos Ridge to Kisamis Rift Basin",
+      "station_start_idx": 40000,
+      "station_count": 10000,
+      "chainage_start_m": 40000.0,
+      "chainage_end_m": 49999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 231291.27,
+        "utm_y_m": 9830222.1,
+        "lon": 36.585041,
+        "lat": -1.5346575,
+        "elev_m": 1408.55
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 217888.1,
+          "max_x": 236291.3,
+          "min_y": 9822728.0,
+          "max_y": 9835350.2
+        },
+        "grid_cells_x": 18404,
+        "grid_cells_y": 12623,
+        "total_1m_cells": 232313692
+      },
+      "elev_min_m": 1393.51,
+      "elev_max_m": 1426.86
+    },
+    {
+      "segment_id": 6,
+      "segment_code": "MAGADI_SEG_06",
+      "name": "Kisamis Basin to Tinga Maasai Center",
+      "station_start_idx": 50000,
+      "station_count": 10000,
+      "chainage_start_m": 50000.0,
+      "chainage_end_m": 59999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 222887.26,
+        "utm_y_m": 9828225.67,
+        "lon": 36.509538,
+        "lat": -1.5526154,
+        "elev_m": 1423.85
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 208112.5,
+          "max_x": 227887.3,
+          "min_y": 9821715.6,
+          "max_y": 9833225.7
+        },
+        "grid_cells_x": 19775,
+        "grid_cells_y": 11511,
+        "total_1m_cells": 227630025
+      },
+      "elev_min_m": 1326.4,
+      "elev_max_m": 1423.85
+    },
+    {
+      "segment_id": 7,
+      "segment_code": "MAGADI_SEG_07",
+      "name": "Tinga Center to Singiraine Plains",
+      "station_start_idx": 60000,
+      "station_count": 10000,
+      "chainage_start_m": 60000.0,
+      "chainage_end_m": 69999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 213111.52,
+        "utm_y_m": 9826715.52,
+        "lon": 36.4217237,
+        "lat": -1.5661582,
+        "elev_m": 1329.92
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 203337.9,
+          "max_x": 218111.5,
+          "min_y": 9813841.0,
+          "max_y": 9831715.5
+        },
+        "grid_cells_x": 14774,
+        "grid_cells_y": 17875,
+        "total_1m_cells": 264085250
+      },
+      "elev_min_m": 1203.75,
+      "elev_max_m": 1329.92
+    },
+    {
+      "segment_id": 8,
+      "segment_code": "MAGADI_SEG_08",
+      "name": "Singiraine Plains to Olorgesailie Site",
+      "station_start_idx": 70000,
+      "station_count": 10000,
+      "chainage_start_m": 70000.0,
+      "chainage_end_m": 79999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 208337.78,
+        "utm_y_m": 9818840.01,
+        "lon": 36.3787614,
+        "lat": -1.6372813,
+        "elev_m": 1207.19
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 202434.1,
+          "max_x": 213370.1,
+          "min_y": 9804235.0,
+          "max_y": 9823840.0
+        },
+        "grid_cells_x": 10936,
+        "grid_cells_y": 19606,
+        "total_1m_cells": 214411216
+      },
+      "elev_min_m": 994.86,
+      "elev_max_m": 1207.19
+    },
+    {
+      "segment_id": 9,
+      "segment_code": "MAGADI_SEG_09",
+      "name": "Olorgesailie Basin to Il Kamukuru Crossing",
+      "station_start_idx": 80000,
+      "station_count": 10000,
+      "chainage_start_m": 80000.0,
+      "chainage_end_m": 89999.0,
+      "length_m": 9999.0,
+      "origin": {
+        "utm_x_m": 207433.46,
+        "utm_y_m": 9809234.23,
+        "lon": 36.3705236,
+        "lat": -1.7240842,
+        "elev_m": 1021.56
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 198287.3,
+          "max_x": 212433.5,
+          "min_y": 9795489.5,
+          "max_y": 9814234.2
+        },
+        "grid_cells_x": 14147,
+        "grid_cells_y": 18745,
+        "total_1m_cells": 265185515
+      },
+      "elev_min_m": 836.78,
+      "elev_max_m": 1021.56
+    },
+    {
+      "segment_id": 10,
+      "segment_code": "MAGADI_SEG_10",
+      "name": "Kamukuru to Lake Magadi Soda Causeway",
+      "station_start_idx": 90000,
+      "station_count": 15274,
+      "chainage_start_m": 90000.0,
+      "chainage_end_m": 105273.0,
+      "length_m": 15273.0,
+      "origin": {
+        "utm_x_m": 203286.95,
+        "utm_y_m": 9800488.52,
+        "lon": 36.3331707,
+        "lat": -1.8030702,
+        "elev_m": 862.33
+      },
+      "corridor_1m_grid": {
+        "resolution_m": 1.0,
+        "lateral_width_m": 10000.0,
+        "lateral_half_width_m": 5000.0,
+        "bbox_utm_m": {
+          "min_x": 192902.0,
+          "max_x": 208287.0,
+          "min_y": 9783365.4,
+          "max_y": 9805488.5
+        },
+        "grid_cells_x": 15385,
+        "grid_cells_y": 22124,
+        "total_1m_cells": 340377740
+      },
+      "elev_min_m": 597.81,
+      "elev_max_m": 863.58
+    }
+  ],
+  "placed_assets_sample": [
+    {
+      "asset_id": "ASSET_001",
+      "name": "Solar Street Light - Galleria Departure",
+      "category": "LIGHTING",
+      "segment_id": 1,
+      "station_m": 150.0,
+      "lateral_offset_m": 4.5,
+      "height_m": 8.0,
+      "notes": "Dual carriageway median lighting mast",
+      "spatial_1m_grid": {
+        "utm_x": 250404.12,
+        "utm_y": 9850630.04,
+        "local_grid_x_m": 8.06,
+        "local_grid_y_m": -127.9,
+        "lon": 36.7569024,
+        "lat": -1.3503525,
+        "ground_elev_m": 2018.14,
+        "road_elev_m": 2018.14,
+        "vertical_clearance_m": 8.0,
+        "cell_col": 12140,
+        "cell_row": 7713
+      }
+    },
+    {
+      "asset_id": "ASSET_002",
+      "name": "Speed Limit 60 km/h Sign - Multimedia Univ",
+      "category": "SIGNAGE",
+      "segment_id": 1,
+      "station_m": 2400.0,
+      "lateral_offset_m": -5.0,
+      "height_m": 2.5,
+      "notes": "Reflective regulatory sign, left shoulder",
+      "spatial_1m_grid": {
+        "utm_x": 249302.2,
+        "utm_y": 9849664.86,
+        "local_grid_x_m": -1093.86,
+        "local_grid_y_m": -1093.08,
+        "lon": 36.7469967,
+        "lat": -1.3590686,
+        "ground_elev_m": 2020.11,
+        "road_elev_m": 2020.11,
+        "vertical_clearance_m": 2.5,
+        "cell_col": 11038,
+        "cell_row": 6748
+      }
+    },
+    {
+      "asset_id": "ASSET_003",
+      "name": "Rongai River Reinforced Concrete Culvert",
+      "category": "DRAINAGE",
+      "segment_id": 1,
+      "station_m": 6180.0,
+      "lateral_offset_m": 0.0,
+      "height_m": -2.8,
+      "notes": "Twin cell box culvert 3.0m x 2.5m under road",
+      "spatial_1m_grid": {
+        "utm_x": 246360.99,
+        "utm_y": 9848633.4,
+        "local_grid_x_m": -4035.07,
+        "local_grid_y_m": -2124.54,
+        "lon": 36.7205693,
+        "lat": -1.368368,
+        "ground_elev_m": 1936.53,
+        "road_elev_m": 1936.53,
+        "vertical_clearance_m": -2.8,
+        "cell_col": 8097,
+        "cell_row": 5717
+      }
+    },
+    {
+      "asset_id": "ASSET_004",
+      "name": "Kiserian Town Pedestrian Crossing Gantry",
+      "category": "STRUCTURE",
+      "segment_id": 2,
+      "station_m": 19820.0,
+      "lateral_offset_m": 0.0,
+      "height_m": 5.2,
+      "notes": "Steel truss overhead pedestrian bridge",
+      "spatial_1m_grid": {
+        "utm_x": 241715.31,
+        "utm_y": 9840801.8,
+        "local_grid_x_m": -1546.97,
+        "local_grid_y_m": -7114.16,
+        "lon": 36.6787719,
+        "lat": -1.4391237,
+        "ground_elev_m": 1730.49,
+        "road_elev_m": 1730.49,
+        "vertical_clearance_m": 5.2,
+        "cell_col": 5278,
+        "cell_row": 5065
+      }
+    },
+    {
+      "asset_id": "ASSET_005",
+      "name": "Corner Baridi Safari Rally Time Control Gate",
+      "category": "RALLY_INFRA",
+      "segment_id": 3,
+      "station_m": 29600.0,
+      "lateral_offset_m": 0.0,
+      "height_m": 4.5,
+      "notes": "FIA / KCB Safari Rally official timing gate",
+      "spatial_1m_grid": {
+        "utm_x": 236335.71,
+        "utm_y": 9837516.71,
+        "local_grid_x_m": -5211.96,
+        "local_grid_y_m": -3219.55,
+        "lon": 36.6304215,
+        "lat": -1.4687691,
+        "ground_elev_m": 1612.05,
+        "road_elev_m": 1612.05,
+        "vertical_clearance_m": 4.5,
+        "cell_col": 5072,
+        "cell_row": 5387
+      }
+    },
+    {
+      "asset_id": "ASSET_006",
+      "name": "Armco W-Beam Steel Crash Barrier (200m)",
+      "category": "SAFETY",
+      "segment_id": 4,
+      "station_m": 34500.0,
+      "lateral_offset_m": 4.0,
+      "height_m": 0.9,
+      "notes": "Double corrugated steel barrier along fault cliff",
+      "spatial_1m_grid": {
+        "utm_x": 235102.62,
+        "utm_y": 9832823.41,
+        "local_grid_x_m": -1160.14,
+        "local_grid_y_m": -4305.39,
+        "lon": 36.6193002,
+        "lat": -1.5111819,
+        "ground_elev_m": 1452.68,
+        "road_elev_m": 1452.68,
+        "vertical_clearance_m": 0.9,
+        "cell_col": 8810,
+        "cell_row": 7763
+      }
+    },
+    {
+      "asset_id": "ASSET_007",
+      "name": "Olepolos Ridge Solar Weather Telemetry Mast",
+      "category": "TELEMETRY",
+      "segment_id": 4,
+      "station_m": 38200.0,
+      "lateral_offset_m": -18.0,
+      "height_m": 12.0,
+      "notes": "Wind speed, ambient temp, solar irradiance sensor",
+      "spatial_1m_grid": {
+        "utm_x": 232894.68,
+        "utm_y": 9830500.3,
+        "local_grid_x_m": -3368.08,
+        "local_grid_y_m": -6628.5,
+        "lon": 36.5994461,
+        "lat": -1.5321586,
+        "ground_elev_m": 1425.2,
+        "road_elev_m": 1425.2,
+        "vertical_clearance_m": 12.0,
+        "cell_col": 6602,
+        "cell_row": 5440
+      }
+    },
+    {
+      "asset_id": "ASSET_008",
+      "name": "Kisamis Rift Valley Cellular Relay Tower",
+      "category": "COMMUNICATIONS",
+      "segment_id": 5,
+      "station_m": 45100.0,
+      "lateral_offset_m": 35.0,
+      "height_m": 36.0,
+      "notes": "Lattice steel 4G/5G mast with solar battery compound",
+      "spatial_1m_grid": {
+        "utm_x": 226762.71,
+        "utm_y": 9828783.35,
+        "local_grid_x_m": -4528.56,
+        "local_grid_y_m": -1438.75,
+        "lon": 36.5443505,
+        "lat": -1.5476165,
+        "ground_elev_m": 1420.12,
+        "road_elev_m": 1420.12,
+        "vertical_clearance_m": 36.0,
+        "cell_col": 8874,
+        "cell_row": 6055
+      }
+    },
+    {
+      "asset_id": "ASSET_009",
+      "name": "Tinga Pastoral Cattle Drift Cattlegrid",
+      "category": "DRAINAGE",
+      "segment_id": 6,
+      "station_m": 54800.0,
+      "lateral_offset_m": 0.0,
+      "height_m": 0.0,
+      "notes": "Cast iron heavy vehicle cattle grid over storm ditch",
+      "spatial_1m_grid": {
+        "utm_x": 218277.12,
+        "utm_y": 9826931.76,
+        "local_grid_x_m": -4610.14,
+        "local_grid_y_m": -1293.91,
+        "lon": 36.4681188,
+        "lat": -1.5642607,
+        "ground_elev_m": 1337.95,
+        "road_elev_m": 1337.95,
+        "vertical_clearance_m": 0.0,
+        "cell_col": 10164,
+        "cell_row": 5216
+      }
+    },
+    {
+      "asset_id": "ASSET_010",
+      "name": "Olorgesailie Prehistoric Museum Entrance Pylon",
+      "category": "STRUCTURE",
+      "segment_id": 8,
+      "station_m": 79250.0,
+      "lateral_offset_m": 12.5,
+      "height_m": 6.0,
+      "notes": "National Museums of Kenya stone monumental archway",
+      "spatial_1m_grid": {
+        "utm_x": 207611.83,
+        "utm_y": 9809950.25,
+        "local_grid_x_m": -725.95,
+        "local_grid_y_m": -8889.76,
+        "lon": 36.372134,
+        "lat": -1.7176154,
+        "ground_elev_m": 1020.02,
+        "road_elev_m": 1020.02,
+        "vertical_clearance_m": 6.0,
+        "cell_col": 5177,
+        "cell_row": 5715
+      }
+    },
+    {
+      "asset_id": "ASSET_011",
+      "name": "Kamukuru Railway Level Crossing Automated Boom",
+      "category": "SAFETY",
+      "segment_id": 9,
+      "station_m": 88100.0,
+      "lateral_offset_m": -4.2,
+      "height_m": 2.2,
+      "notes": "Magadi Soda freight rail level crossing automated gate",
+      "spatial_1m_grid": {
+        "utm_x": 203848.67,
+        "utm_y": 9802261.15,
+        "local_grid_x_m": -3584.79,
+        "local_grid_y_m": -6973.08,
+        "lon": 36.338239,
+        "lat": -1.7870576,
+        "ground_elev_m": 859.47,
+        "road_elev_m": 859.47,
+        "vertical_clearance_m": 2.2,
+        "cell_col": 5561,
+        "cell_row": 6771
+      }
+    },
+    {
+      "asset_id": "ASSET_012",
+      "name": "Lake Magadi Industrial Weighbridge Platform",
+      "category": "STRUCTURE",
+      "segment_id": 10,
+      "station_m": 104800.0,
+      "lateral_offset_m": 8.0,
+      "height_m": 0.4,
+      "notes": "80-ton multi-axle freight scale for trona soda ash trucks",
+      "spatial_1m_grid": {
+        "utm_x": 198130.9,
+        "utm_y": 9788644.25,
+        "local_grid_x_m": -5156.05,
+        "local_grid_y_m": -11844.27,
+        "lon": 36.2866997,
+        "lat": -1.9100382,
+        "ground_elev_m": 605.5,
+        "road_elev_m": 605.5,
+        "vertical_clearance_m": 0.4,
+        "cell_col": 5228,
+        "cell_row": 5278
+      }
+    }
+  ],
+  "asset_categories": [
+    {
+      "code": "LIGHTING",
+      "name": "Solar & Grid Lighting Masts",
+      "default_offset_m": 4.5,
+      "default_height_m": 8.0
+    },
+    {
+      "code": "SAFETY",
+      "name": "Armco Barriers & Impact Attenuators",
+      "default_offset_m": 4.0,
+      "default_height_m": 0.9
+    },
+    {
+      "code": "SIGNAGE",
+      "name": "Milestone & Directional Gantry Signs",
+      "default_offset_m": -5.0,
+      "default_height_m": 2.5
+    },
+    {
+      "code": "DRAINAGE",
+      "name": "Culverts, Sump Wells & Cattlegrids",
+      "default_offset_m": 0.0,
+      "default_height_m": -2.0
+    },
+    {
+      "code": "RALLY_INFRA",
+      "name": "Safari Rally Time Control & Spectator Chicanes",
+      "default_offset_m": 0.0,
+      "default_height_m": 4.5
+    },
+    {
+      "code": "STRUCTURE",
+      "name": "Overhead Bridges, Archways & Weighbridges",
+      "default_offset_m": 0.0,
+      "default_height_m": 5.5
+    },
+    {
+      "code": "COMMUNICATIONS",
+      "name": "Cellular Radio Masts & Towers",
+      "default_offset_m": 35.0,
+      "default_height_m": 36.0
+    },
+    {
+      "code": "TELEMETRY",
+      "name": "Weather Stations & Surface Road Sensors",
+      "default_offset_m": -15.0,
+      "default_height_m": 3.0
+    }
+  ]
+}

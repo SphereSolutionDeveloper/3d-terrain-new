@@ -1,0 +1,12 @@
+{
+  "asset": "rock_crystal",
+  "resolution": "128x128",
+  "format": "PNG-RGBA8",
+  "channels": {
+    "albedo.png": "Diffuse Color (Sediment strata, mineral composition, weathering)",
+    "normal.png": "Tangent-Space Normal Map (Sobel gradient bump detail)",
+    "roughness.png": "Micro-roughness (Crystalline smooth vs porous weathered stone)",
+    "emissive.png": "Radiant mineral vein luminescence"
+  },
+  "geological_shader_model": "PBR Metallic-Roughness (Burley Diffuse + GGX Specular)"
+}

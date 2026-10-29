@@ -1,0 +1,11 @@
+{
+  "asset": "rover",
+  "resolution": "128x128",
+  "format": "PNG_RGBA",
+  "channels": {
+    "albedo": "albedo.png (Base Color RGB)",
+    "normal": "normal.png (Tangent Space Normal XYZ)",
+    "roughness": "roughness.png (Micro-surface Greyscale)",
+    "emissive": "emissive.png (High-Dynamic Range Glow)"
+  }
+}

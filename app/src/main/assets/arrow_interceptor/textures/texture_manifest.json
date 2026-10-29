@@ -1,0 +1,16 @@
+{
+  "asset": "arrow_interceptor",
+  "resolution": "256x256",
+  "format": "PNG_RGBA",
+  "channels": {
+    "albedo": "albedo.png (Real Colored Solid Aegis Titanium Alloy, Gold Comm Dish & ARROW Dorsal Etching)",
+    "normal": "normal.png (Tangent Space Armor Bevels, Dish Recess & Engine Flutes)",
+    "roughness": "roughness.png (Glassy Canopy [0.05], Solid Metallic Hull [0.24], Matte Heat Ceramic [0.75])",
+    "emissive": "emissive.png (Hyper-Wave Drive Plasma Core, Shield Emitter & HUD Avionics)",
+    "volume_diagram": "volume_diagram.png (Marked & Digested Technical Blueprint Schematic with Color-Coded Volumetric Shapes)"
+  },
+  "pbr_workflow": "Metallic-Roughness",
+  "metallic_characteristic": "Solid Metallic Aegis Alloy (Specular Tinted Reflection)",
+  "volumetric_digest": "Marked volumetric schematic digest with color-coded shapes and dimension markings",
+  "blueprint_source": "Aethelred Space Industries Top-View Schematic"
+}

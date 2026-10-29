@@ -1,0 +1,9 @@
+{
+  "model_code": "FC-9000 HYPERION",
+  "class": "Compact Toroidal Magnetic Confinement Fusion Cell",
+  "output": "18.5 Terawatts Peak Sustained Power",
+  "containment": "Quad-Pillar Superconducting Magnetic Solenoids",
+  "fuel_type": "Deuterium-Helium 3 Catalyzed Pellet",
+  "operating_temp": "150 Million Kelvin Core Plasma",
+  "safety_system": "Automatic Cryogenic Quench & Emergency Magnetic Dump"
+}
