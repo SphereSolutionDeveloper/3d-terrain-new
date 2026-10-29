@@ -74,26 +74,10 @@ Desktop.ini
 /.aistudio/
 *.log
 
-# Procedural asset skeleton directory - Batch 9
-native_assets/
-
-# Root asset mirrors (duplicates of app assets)
-/asserts/
-/assets/
-
-# Documentation alias duplicates
-native-asserts.md
-native_asserts.md
-native_assets.md
-native_assets_reference.md
-NATIVE_ASSETS_REFERENCE.md
 # ============================================================
 # Staged Native Assets Ingestion (< 200 files per commit)
 # Explicit folder ignores so AI Studio / GitHub exporter sees active files
 # ============================================================
-native-assets/src/scene/
-native-assets/src/audio/
-native-assets/src/sky/
 native-assets/src/particles/
 native-assets/src/shared/
 native-assets/src/surfaces/
