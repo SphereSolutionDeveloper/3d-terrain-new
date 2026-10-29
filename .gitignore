@@ -78,5 +78,5 @@ Desktop.ini
 # Staged Native Assets Ingestion (< 200 files per commit)
 # Explicit folder ignores so AI Studio / GitHub exporter sees active files
 # ============================================================
-native-assets/src/terrain/game_terrain/kenya_magadi_50km/output/road_3d/
-native-assets/src/terrain/game_terrain/kenya_magadi_50km/output/terrain/
+native-assets/src/terrain/game_terrain/kenya_magadi_50km/output/road_3d/lod0/
+native-assets/src/terrain/game_terrain/kenya_magadi_50km/output/road_3d/lod2_full.bin
