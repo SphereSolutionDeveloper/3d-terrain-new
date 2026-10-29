@@ -88,7 +88,3 @@ native_assets.md
 native_assets_reference.md
 NATIVE_ASSETS_REFERENCE.md
 
-# Temporary lightweight GitHub push test (large data files)
-*.csv
-native-assets/
-/native-assets/

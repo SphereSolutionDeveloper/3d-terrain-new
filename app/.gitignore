@@ -2,6 +2,3 @@
 *.apk
 *.aab
 *.dex
-
-# Temporary lightweight GitHub push test
-*.csv
