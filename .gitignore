@@ -78,6 +78,5 @@ Desktop.ini
 # Staged Native Assets Ingestion (< 200 files per commit)
 # Explicit folder ignores so AI Studio / GitHub exporter sees active files
 # ============================================================
-native-assets/src/props/
 native-assets/src/road/
 native-assets/src/terrain/
