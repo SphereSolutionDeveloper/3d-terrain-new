@@ -1,0 +1,20 @@
+{
+  "id": "asset_rock_strata",
+  "title": "Sedimentary Sandstone (1m\u00b2 Cell)",
+  "category": "Fluvial Stratified Sandstone",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 315.4,
+  "volume_m3": 0.1342,
+  "density_kg_m3": 2350.0,
+  "lod": "LOD0 High-Fidelity Geodesic",
+  "author": "Apex Geological Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "rock",
+    "geology",
+    "1m_grid",
+    "procedural",
+    "noise",
+    "pbr"
+  ]
+}

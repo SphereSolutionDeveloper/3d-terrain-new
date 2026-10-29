@@ -1,0 +1,6 @@
+{
+  "name": "Apex 3D Assets",
+  "description": "Modular 3D asset explorer featuring Vulkan 1.3 rendering pipeline (Sascha Willems architecture), modular electric power posts with catenary sagging cables, multi-post transmission route with corner angle turn, procedural rigging, and GLB rendering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

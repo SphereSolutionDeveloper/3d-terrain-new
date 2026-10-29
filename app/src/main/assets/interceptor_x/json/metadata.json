@@ -1,0 +1,28 @@
+{
+  "id": "asset_arrow_interceptor",
+  "title": "Arrow Interceptor",
+  "category": "Spacecraft / Interceptor",
+  "class": "Heavy Strike Interceptor / Superiority Fighter",
+  "manufacturer": "Aethelred Space Industries",
+  "schematic_reference": "ARROW INTERCEPTOR - TECHNICAL SCHEMATIC (TOP VIEW)",
+  "mass_kg": 14200.0,
+  "lod": "LOD0 High-Fidelity Master (Volumetric Architecture)",
+  "author": "Aethelred Aerospace Design Bureau",
+  "version": "4.5.0",
+  "vertex_count": 256,
+  "polygon_count": 364,
+  "edge_count": 619,
+  "volume_shape_count": 9,
+  "tags": [
+    "arrow",
+    "interceptor",
+    "aethelred",
+    "spacecraft",
+    "starfighter",
+    "hyperwave",
+    "aegis_alloy",
+    "schematic",
+    "volumetric_decomposition",
+    "cylindrical_engines"
+  ]
+}

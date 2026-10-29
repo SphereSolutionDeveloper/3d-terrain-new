@@ -1,0 +1,11 @@
+/build/
+*.apk
+*.aab
+*.dex
+
+# Temporary lightweight GitHub push test
+*.json
+*.bin
+*.html
+*.csv
+*.obj

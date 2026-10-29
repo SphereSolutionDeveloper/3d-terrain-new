@@ -1,0 +1,20 @@
+{
+  "id": "asset_rock_meteorite",
+  "title": "Chondrite Meteorite (1m\u00b2 Cell)",
+  "category": "Extra-Terrestrial Nickel-Iron Regolith",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 227.5,
+  "volume_m3": 0.0669,
+  "density_kg_m3": 3400.0,
+  "lod": "LOD0 High-Fidelity Geodesic",
+  "author": "Apex Geological Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "rock",
+    "geology",
+    "1m_grid",
+    "procedural",
+    "noise",
+    "pbr"
+  ]
+}

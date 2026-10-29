@@ -1,0 +1,20 @@
+{
+  "id": "asset_tree_oak",
+  "title": "English Oak (1m\u00b2 Cell)",
+  "category": "Quercus Robur (Deciduous Oak)",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 35.1,
+  "volume_m3": 0.0487,
+  "density_kg_m3": 720.0,
+  "lod": "LOD0 High-Fidelity Stochastic L-System",
+  "author": "Apex Botanical Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "tree",
+    "lsystem",
+    "stochastic",
+    "leonardo_0.707",
+    "perlin_bark",
+    "1m_grid"
+  ]
+}

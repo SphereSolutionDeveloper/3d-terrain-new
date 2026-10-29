@@ -1,0 +1,19 @@
+{
+  "id": "asset_rover_03",
+  "title": "Titan Surface Rover",
+  "category": "Planetary Surface Vehicle",
+  "mass_kg": 2400.0,
+  "lod": "LOD0 High-Fidelity",
+  "author": "Apex Planetary Engineering",
+  "version": "3.1.2",
+  "tags": [
+    "rover",
+    "planetary",
+    "space",
+    "exploration",
+    "vehicle"
+  ],
+  "vertex_count": 18,
+  "polygon_count": 23,
+  "edge_count": 39
+}

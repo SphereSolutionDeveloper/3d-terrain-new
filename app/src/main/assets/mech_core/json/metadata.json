@@ -1,0 +1,19 @@
+{
+  "id": "asset_mech_core_04",
+  "title": "Hyperion Fusion Core",
+  "category": "Energy & Power Systems",
+  "mass_kg": 6800.0,
+  "lod": "LOD0 High-Fidelity",
+  "author": "Apex Advanced Energy Div",
+  "version": "4.0.0",
+  "tags": [
+    "power",
+    "reactor",
+    "fusion",
+    "sci-fi",
+    "mech"
+  ],
+  "vertex_count": 18,
+  "polygon_count": 24,
+  "edge_count": 52
+}

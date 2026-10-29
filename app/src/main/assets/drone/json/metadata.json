@@ -1,0 +1,19 @@
+{
+  "id": "asset_drone_02",
+  "title": "Sentinel Recon Drone",
+  "category": "Robotics / UAV",
+  "mass_kg": 42.0,
+  "lod": "LOD0 High-Fidelity",
+  "author": "Apex Autonomous Labs",
+  "version": "1.8.0",
+  "tags": [
+    "drone",
+    "robotics",
+    "recon",
+    "autonomous",
+    "quadcopter"
+  ],
+  "vertex_count": 18,
+  "polygon_count": 24,
+  "edge_count": 40
+}

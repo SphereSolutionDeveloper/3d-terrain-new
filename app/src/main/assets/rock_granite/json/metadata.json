@@ -1,0 +1,20 @@
+{
+  "id": "asset_rock_granite",
+  "title": "Granite Boulder (1m\u00b2 Cell)",
+  "category": "Plutonic Quartz-Feldspar Granite",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 302.0,
+  "volume_m3": 0.1127,
+  "density_kg_m3": 2680.0,
+  "lod": "LOD0 High-Fidelity Geodesic",
+  "author": "Apex Geological Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "rock",
+    "geology",
+    "1m_grid",
+    "procedural",
+    "noise",
+    "pbr"
+  ]
+}

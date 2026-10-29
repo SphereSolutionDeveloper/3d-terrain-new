@@ -1,0 +1,99 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.hprof
+
+# Gradle & Build caches
+.gradle/
+.kotlin/
+/build/
+**/build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+/.build-outputs/
+
+# Local configuration and credentials
+local.properties
+/local.properties
+.env
+.env.local
+.env.*.local
+debug.keystore
+debug.keystore.base64
+*.jks
+*.keystore
+keystore.properties
+
+# Android Studio / IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+/.idea/
+
+# VS Code
+.vscode/
+
+# Python scripts caches & venv
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Native C/C++ & CMake
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+*.ninja
+.ninja_*
+*.o
+*.obj
+*.so
+*.a
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+
+# AI Studio platform internal files & logs
+/.aistudio/
+*.log
+
+# Procedural asset skeleton directory - Batch 9
+native_assets/
+
+# Root asset mirrors (duplicates of app assets)
+/asserts/
+/assets/
+
+# Documentation alias duplicates
+native-asserts.md
+native_asserts.md
+native_assets.md
+native_assets_reference.md
+NATIVE_ASSETS_REFERENCE.md
+
+# Temporary lightweight GitHub push test (large data files)
+*.json
+!metadata.json
+*.bin
+*.html
+*.csv
+*.obj
+native-assets/
+/native-assets/

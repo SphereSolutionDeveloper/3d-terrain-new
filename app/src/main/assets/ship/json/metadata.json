@@ -1,0 +1,19 @@
+{
+  "id": "asset_ship_01",
+  "title": "Valkyrie Interceptor",
+  "category": "Spacecraft",
+  "mass_kg": 8500.0,
+  "lod": "LOD0 High-Fidelity",
+  "author": "Apex 3D Aerospace Lab",
+  "version": "2.4.0",
+  "tags": [
+    "spacecraft",
+    "starfighter",
+    "sci-fi",
+    "interceptor",
+    "aerospace"
+  ],
+  "vertex_count": 21,
+  "polygon_count": 32,
+  "edge_count": 53
+}

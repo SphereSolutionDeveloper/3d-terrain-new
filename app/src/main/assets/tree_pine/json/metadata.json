@@ -1,0 +1,20 @@
+{
+  "id": "asset_tree_pine",
+  "title": "Scotch Pine (1m\u00b2 Cell)",
+  "category": "Pinus Sylvestris (Coniferous Pine)",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 20.1,
+  "volume_m3": 0.0359,
+  "density_kg_m3": 560.0,
+  "lod": "LOD0 High-Fidelity Stochastic L-System",
+  "author": "Apex Botanical Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "tree",
+    "lsystem",
+    "stochastic",
+    "leonardo_0.707",
+    "perlin_bark",
+    "1m_grid"
+  ]
+}

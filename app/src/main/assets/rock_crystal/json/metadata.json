@@ -1,0 +1,20 @@
+{
+  "id": "asset_rock_crystal",
+  "title": "Quartz Geode Cluster (1m\u00b2 Cell)",
+  "category": "Hydrothermal Crystalline Silicate",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 163.2,
+  "volume_m3": 0.0616,
+  "density_kg_m3": 2650.0,
+  "lod": "LOD0 High-Fidelity Geodesic",
+  "author": "Apex Geological Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "rock",
+    "geology",
+    "1m_grid",
+    "procedural",
+    "noise",
+    "pbr"
+  ]
+}

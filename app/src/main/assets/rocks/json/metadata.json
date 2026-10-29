@@ -1,0 +1,20 @@
+{
+  "id": "asset_rocks",
+  "title": "Procedural Field Rock (1m\u00b2 Sector)",
+  "category": "Composite Geological Field Stone",
+  "grid_footprint": "1.0m x 1.0m Cell",
+  "mass_kg": 431.1,
+  "volume_m3": 0.1585,
+  "density_kg_m3": 2720.0,
+  "lod": "LOD0 High-Fidelity Geodesic",
+  "author": "Apex Geological Procedural Engine",
+  "version": "2.0.0",
+  "tags": [
+    "rock",
+    "geology",
+    "1m_grid",
+    "procedural",
+    "noise",
+    "pbr"
+  ]
+}
