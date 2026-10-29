@@ -42,7 +42,7 @@ keystore.properties
 # Python scripts caches & venv
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 .pytest_cache/
 .venv/
 venv/
@@ -88,3 +88,24 @@ native_assets.md
 native_assets_reference.md
 NATIVE_ASSETS_REFERENCE.md
 
+# ============================================================
+# Native Assets Staged Ingestion (< 200 files per commit)
+# ============================================================
+native-assets/*
+!native-assets/.gitignore
+!native-assets/CMakeLists.txt
+!native-assets/main.cpp
+!native-assets/README.md
+!native-assets/.clang-format
+
+# Part 1: Core Foundation & Primitives (< 200 files)
+!native-assets/base/
+!native-assets/base/**
+!native-assets/meshes/
+!native-assets/meshes/**
+!native-assets/shaders/
+!native-assets/shaders/**
+!native-assets/src/
+native-assets/src/*
+!native-assets/src/core/
+!native-assets/src/core/**
