@@ -4,6 +4,5 @@
 *.dex
 
 # Temporary lightweight GitHub push test
-*.bin
 *.html
 *.csv
