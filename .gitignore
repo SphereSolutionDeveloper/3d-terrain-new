@@ -87,25 +87,17 @@ native_asserts.md
 native_assets.md
 native_assets_reference.md
 NATIVE_ASSETS_REFERENCE.md
-
 # ============================================================
-# Native Assets Staged Ingestion (< 200 files per commit)
+# Staged Native Assets Ingestion (< 200 files per commit)
+# Explicit folder ignores so AI Studio / GitHub exporter sees active files
 # ============================================================
-native-assets/*
-!native-assets/.gitignore
-!native-assets/CMakeLists.txt
-!native-assets/main.cpp
-!native-assets/README.md
-!native-assets/.clang-format
-
-# Part 1: Core Foundation & Primitives (< 200 files)
-!native-assets/base/
-!native-assets/base/**
-!native-assets/meshes/
-!native-assets/meshes/**
-!native-assets/shaders/
-!native-assets/shaders/**
-!native-assets/src/
-native-assets/src/*
-!native-assets/src/core/
-!native-assets/src/core/**
+native-assets/src/scene/
+native-assets/src/audio/
+native-assets/src/sky/
+native-assets/src/particles/
+native-assets/src/shared/
+native-assets/src/surfaces/
+native-assets/src/buildings/
+native-assets/src/props/
+native-assets/src/road/
+native-assets/src/terrain/
