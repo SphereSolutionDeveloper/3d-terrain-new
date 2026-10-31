@@ -42,20 +42,25 @@ fun TerrainProceduralScreen(
 ) {
     var terrainState by remember { mutableStateOf(TerrainState()) }
     var renderMode by remember { mutableStateOf(TerrainRenderMode.SHADED_TRIPLANAR) }
-    var activeSubsystemTab by remember { mutableStateOf(TerrainSubsystemTab.GAME_TERRAIN_001) }
+    var activeSubsystemTab by remember { mutableStateOf(TerrainSubsystemTab.KENYA_MAGADI_50KM) }
 
-    // Camera state (True 3D Isometric perspective by default: pitch = 35.264° = 0.615 rad)
-    var yaw by remember { mutableFloatStateOf(0.785f) }
-    var pitch by remember { mutableFloatStateOf(0.615f) }
-    var zoom by remember { mutableFloatStateOf(1.0f) }
+    // Human viewpoint camera parameters (Ground-level 1.7m perspective looking 028° NNE forward along C58 causeway)
+    var yaw by remember { mutableFloatStateOf(0.0f) }
+    var pitch by remember { mutableFloatStateOf(0.10f) }
+    var zoom by remember { mutableFloatStateOf(1.35f) }
     var panX by remember { mutableFloatStateOf(0.0f) }
-    var panY by remember { mutableFloatStateOf(0.0f) }
+    var panY by remember { mutableFloatStateOf(-30.0f) }
     var isAutoRotate by remember { mutableStateOf(false) }
     var isWireframeOverlay by remember { mutableStateOf(false) }
     var lightAngle by remember { mutableFloatStateOf(0.85f) }
 
     var activeTerrainMap by remember { mutableStateOf("MAGADI_50KM") }
-    var isMagadiOverview by remember { mutableStateOf(true) }
+    var magadiViewMode by remember { mutableStateOf("HUMAN_START") } // "HUMAN_START", "OVERVIEW_50KM", "CHUNKS_10KM"
+    var humanWalkDistanceM by remember { mutableFloatStateOf(0f) }
+    var humanEyeHeightType by remember { mutableStateOf("STANDING_1_7M") } // "STANDING_1_7M", "DRIVER_1_2M", "SAFARI_2_8M", "DRONE_25M"
+    var humanLookDirection by remember { mutableStateOf("AHEAD_NORTH") } // "AHEAD_NORTH", "LEFT_TRONA", "RIGHT_BASALT", "BEHIND_MAGADI"
+
+    var isMagadiOverview by remember { mutableStateOf(false) }
     var selectedMagadiCol by remember { mutableIntStateOf(0) }
     var selectedMagadiRow by remember { mutableIntStateOf(0) }
     var isTestGround001Active by remember { mutableStateOf(false) }
@@ -74,14 +79,45 @@ fun TerrainProceduralScreen(
         }
     }
 
-    // Generated 3D Mesh (Kenya Magadi 50km, Test Ground 001, or Procedural FBM)
-    val mesh = remember(terrainState, activeTerrainMap, isMagadiOverview, selectedMagadiCol, selectedMagadiRow) {
+    // Generated 3D Mesh (Kenya Magadi Human Start 598m, 50km Corridor, Test Ground 001, or Procedural FBM)
+    val mesh = remember(
+        terrainState.contourInterval,
+        terrainState.stepTerracingFactor,
+        terrainState.heightScale,
+        activeTerrainMap,
+        magadiViewMode,
+        humanWalkDistanceM,
+        isMagadiOverview,
+        selectedMagadiCol,
+        selectedMagadiRow
+    ) {
         when (activeTerrainMap) {
             "MAGADI_50KM" -> {
-                if (isMagadiOverview) {
-                    ProceduralTerrainGenerator.generateMagadiOverviewMesh(gridSize = 45)
-                } else {
-                    ProceduralTerrainGenerator.generateMagadiChunkMesh(selectedMagadiCol, selectedMagadiRow, gridSize = 41)
+                when (magadiViewMode) {
+                    "HUMAN_START" -> {
+                        ProceduralTerrainGenerator.generateMagadiHumanStartMesh(
+                            walkDistanceM = humanWalkDistanceM,
+                            gridSize = 45,
+                            contourInterval = terrainState.contourInterval,
+                            stepTerracing = terrainState.stepTerracingFactor
+                        )
+                    }
+                    "OVERVIEW_50KM" -> {
+                        ProceduralTerrainGenerator.generateMagadiOverviewMesh(
+                            gridSize = 45,
+                            contourInterval = terrainState.contourInterval,
+                            stepTerracing = terrainState.stepTerracingFactor
+                        )
+                    }
+                    else -> {
+                        ProceduralTerrainGenerator.generateMagadiChunkMesh(
+                            col = selectedMagadiCol,
+                            row = selectedMagadiRow,
+                            gridSize = 41,
+                            contourInterval = terrainState.contourInterval,
+                            stepTerracing = terrainState.stepTerracingFactor
+                        )
+                    }
                 }
             }
             "TEST_GROUND_001" -> {
@@ -93,6 +129,7 @@ fun TerrainProceduralScreen(
         }
     }
 
+    val isHumanActive = (activeTerrainMap == "MAGADI_50KM" && magadiViewMode == "HUMAN_START")
     var isControlsCollapsed by remember { mutableStateOf(false) }
 
     Column(
@@ -117,9 +154,13 @@ fun TerrainProceduralScreen(
                 panY = panY,
                 lightAngleRad = lightAngle,
                 isWireframeOverlay = isWireframeOverlay,
+                showGridContours = terrainState.showContourLines,
+                contourInterval = terrainState.contourInterval,
+                isHumanView = isHumanActive,
+                walkDistanceM = humanWalkDistanceM,
                 onRotateDrag = { dx, dy ->
                     yaw += dx * 0.007f
-                    pitch = (pitch - dy * 0.007f).coerceIn(0.20f, 1.48f)
+                    pitch = (pitch - dy * 0.007f).coerceIn(0.04f, 1.48f)
                 },
                 onPanDrag = { dx, dy ->
                     panX += dx
@@ -526,9 +567,74 @@ fun TerrainProceduralScreen(
             when (activeSubsystemTab) {
                 TerrainSubsystemTab.KENYA_MAGADI_50KM -> {
                     KenyaMagadiControls(
+                        viewMode = magadiViewMode,
+                        onViewModeChange = { mode ->
+                            magadiViewMode = mode
+                            activeTerrainMap = "MAGADI_50KM"
+                            if (mode == "HUMAN_START") {
+                                yaw = 0.0f
+                                pitch = 0.10f
+                                zoom = 1.35f
+                                panX = 0f
+                                panY = -30f
+                            } else if (mode == "OVERVIEW_50KM") {
+                                isMagadiOverview = true
+                                yaw = 0.785f
+                                pitch = 0.615f
+                                zoom = 1.0f
+                                panX = 0f
+                                panY = 0f
+                            } else {
+                                isMagadiOverview = false
+                                yaw = 0.785f
+                                pitch = 0.615f
+                                zoom = 1.0f
+                                panX = 0f
+                                panY = 0f
+                            }
+                        },
+                        walkDistanceM = humanWalkDistanceM,
+                        onWalkDistanceChange = { humanWalkDistanceM = it },
+                        eyeHeightType = humanEyeHeightType,
+                        onEyeHeightTypeChange = { type ->
+                            humanEyeHeightType = type
+                            when (type) {
+                                "STANDING_1_7M" -> {
+                                    pitch = 0.10f
+                                    panY = -30f
+                                    zoom = 1.35f
+                                }
+                                "DRIVER_1_2M" -> {
+                                    pitch = 0.06f
+                                    panY = -38f
+                                    zoom = 1.45f
+                                }
+                                "SAFARI_2_8M" -> {
+                                    pitch = 0.16f
+                                    panY = -22f
+                                    zoom = 1.25f
+                                }
+                                "DRONE_25M" -> {
+                                    pitch = 0.45f
+                                    panY = 0f
+                                    zoom = 1.05f
+                                }
+                            }
+                        },
+                        lookDirection = humanLookDirection,
+                        onLookDirectionChange = { dir ->
+                            humanLookDirection = dir
+                            when (dir) {
+                                "AHEAD_NORTH" -> { yaw = 0.0f; pitch = 0.10f }
+                                "LEFT_TRONA" -> { yaw = -1.57f; pitch = 0.08f }
+                                "RIGHT_BASALT" -> { yaw = 1.57f; pitch = 0.12f }
+                                "BEHIND_MAGADI" -> { yaw = 3.14f; pitch = 0.10f }
+                            }
+                        },
                         isOverview = isMagadiOverview,
                         onToggleOverview = {
                             isMagadiOverview = it
+                            magadiViewMode = if (it) "OVERVIEW_50KM" else "CHUNKS_10KM"
                             activeTerrainMap = "MAGADI_50KM"
                         },
                         selectedCol = selectedMagadiCol,
@@ -537,8 +643,13 @@ fun TerrainProceduralScreen(
                             selectedMagadiCol = col
                             selectedMagadiRow = row
                             isMagadiOverview = false
+                            magadiViewMode = "CHUNKS_10KM"
                             activeTerrainMap = "MAGADI_50KM"
                         },
+                        state = terrainState,
+                        onStateChange = { terrainState = it },
+                        renderMode = renderMode,
+                        onRenderModeChange = { renderMode = it },
                         mesh = mesh,
                         onFocusPreset = { y, p ->
                             yaw = y
@@ -550,6 +661,17 @@ fun TerrainProceduralScreen(
                         onSelectFile = { file ->
                             selectedNativeFile = file
                             activeSubsystemTab = TerrainSubsystemTab.CPP_SOURCE_TREE
+                        }
+                    )
+                }
+                TerrainSubsystemTab.VULKAN_CPP_PIPELINE -> {
+                    VulkanCppPipelineControls(
+                        selectedCol = selectedMagadiCol,
+                        selectedRow = selectedMagadiRow,
+                        state = terrainState,
+                        onStateChange = { terrainState = it },
+                        onCopyCode = { code ->
+                            clipboardManager.setText(AnnotatedString(code))
                         }
                     )
                 }
@@ -1631,11 +1753,23 @@ private fun GameTerrain001Controls(
 
 @Composable
 private fun KenyaMagadiControls(
+    viewMode: String = "HUMAN_START",
+    onViewModeChange: (String) -> Unit = {},
+    walkDistanceM: Float = 0f,
+    onWalkDistanceChange: (Float) -> Unit = {},
+    eyeHeightType: String = "STANDING_1_7M",
+    onEyeHeightTypeChange: (String) -> Unit = {},
+    lookDirection: String = "AHEAD_NORTH",
+    onLookDirectionChange: (String) -> Unit = {},
     isOverview: Boolean,
     onToggleOverview: (Boolean) -> Unit,
     selectedCol: Int,
     selectedRow: Int,
     onSelectChunk: (Int, Int) -> Unit,
+    state: TerrainState,
+    onStateChange: (TerrainState) -> Unit,
+    renderMode: TerrainRenderMode,
+    onRenderModeChange: (TerrainRenderMode) -> Unit,
     mesh: TerrainMesh3D,
     onFocusPreset: (Float, Float) -> Unit,
     onSelectFile: (NativeFileTreeItem) -> Unit
@@ -1650,13 +1784,18 @@ private fun KenyaMagadiControls(
     val lonMin = 36.25 + selectedCol * 0.09
     val lonMax = lonMin + 0.09
 
+    val isHumanMode = viewMode == "HUMAN_START"
+    val isOverviewMode = viewMode == "OVERVIEW_50KM" || (isOverview && !isHumanMode)
+    val currentElevAtWalk = 598.0f + (walkDistanceM / 1000f) * 18.5f
+    val climbToEscarpment = 1980.0f - currentElevAtWalk
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // 1. Hero Overview & Mode Switcher Card
+        // 1. Hero Overview & Mode Switcher Card (Human View vs 50km Corridor vs 10km Chunks)
         Surface(
             shape = RoundedCornerShape(10.dp),
             color = DarkSurface,
@@ -1671,14 +1810,14 @@ private fun KenyaMagadiControls(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "MAGADI RD AREA (C58/B19) — REAL ROAD & 50KM TERRAIN",
+                            text = "MAGADI RD (C58/B19) — HUMAN VIEWPOINT & ELEVATION",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             color = LaserOrange
                         )
                         Text(
-                            text = "105.27 km Real OSM Route • 1,799 GPS Vertices • Copernicus COP30 DEM • 106 3D Chunks",
+                            text = "Lake Magadi Origin 598m ASL • Eye Level 1.70m • Escarpment Horizon 1,980m (+1,382m)",
                             fontSize = 10.sp,
                             color = NeonLime
                         )
@@ -1689,7 +1828,11 @@ private fun KenyaMagadiControls(
                         border = androidx.compose.foundation.BorderStroke(1.dp, LaserOrange)
                     ) {
                         Text(
-                            text = if (isOverview) "50KM OVERVIEW" else chunkId.uppercase(),
+                            text = when (viewMode) {
+                                "HUMAN_START" -> "HUMAN 1.7m VIEW"
+                                "OVERVIEW_50KM" -> "50KM OVERVIEW"
+                                else -> chunkId.uppercase()
+                            },
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
@@ -1701,35 +1844,633 @@ private fun KenyaMagadiControls(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Mode toggle buttons
+                // Mode toggle buttons: Human Start View vs 50km Overview vs 10km Tiles
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Button(
-                        onClick = { onToggleOverview(true) },
+                        onClick = { onViewModeChange("HUMAN_START") },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isOverview) LaserOrange.copy(alpha = 0.35f) else DarkSurfaceHighlight,
-                            contentColor = if (isOverview) LaserOrange else TextSecondary
+                            containerColor = if (isHumanMode) LaserOrange.copy(alpha = 0.35f) else DarkSurfaceHighlight,
+                            contentColor = if (isHumanMode) LaserOrange else TextSecondary
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isOverview) LaserOrange else Color.White.copy(alpha = 0.1f)),
-                        modifier = Modifier.weight(1f).height(34.dp)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isHumanMode) LaserOrange else Color.White.copy(alpha = 0.1f)),
+                        modifier = Modifier.weight(1.3f).height(34.dp)
                     ) {
-                        Text("50km Overview Mesh", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("Human View (Start 598m)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Button(
-                        onClick = { onToggleOverview(false) },
+                        onClick = {
+                            onToggleOverview(true)
+                            onViewModeChange("OVERVIEW_50KM")
+                        },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!isOverview) NeonLime.copy(alpha = 0.35f) else DarkSurfaceHighlight,
-                            contentColor = if (!isOverview) NeonLime else TextSecondary
+                            containerColor = if (isOverviewMode) CyberCyan.copy(alpha = 0.35f) else DarkSurfaceHighlight,
+                            contentColor = if (isOverviewMode) CyberCyan else TextSecondary
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (!isOverview) NeonLime else Color.White.copy(alpha = 0.1f)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isOverviewMode) CyberCyan else Color.White.copy(alpha = 0.1f)),
                         modifier = Modifier.weight(1f).height(34.dp)
                     ) {
-                        Text("10km Tile Inspection", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("50km Regional", fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            onToggleOverview(false)
+                            onViewModeChange("CHUNKS_10KM")
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (!isHumanMode && !isOverviewMode) NeonLime.copy(alpha = 0.35f) else DarkSurfaceHighlight,
+                            contentColor = if (!isHumanMode && !isOverviewMode) NeonLime else TextSecondary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (!isHumanMode && !isOverviewMode) NeonLime else Color.White.copy(alpha = 0.1f)),
+                        modifier = Modifier.weight(0.9f).height(34.dp)
+                    ) {
+                        Text("10km Tiles", fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        // ==================== HUMAN VIEWPOINT DEDICATED CARDS ====================
+        if (isHumanMode) {
+            // A. Human Eye-Level Telemetry & Horizon Target Card
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime.copy(alpha = 0.45f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "HUMAN EYE-LEVEL PERSPECTIVE METRICS",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = NeonLime
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = NeonLime.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime)
+                        ) {
+                            Text(
+                                text = "HEADING: 028° NNE",
+                                fontSize = 8.5.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = NeonLime,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = DarkSurfaceHighlight,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text("GROUND DATUM", fontSize = 8.5.sp, color = TextMuted)
+                                Text(
+                                    text = "%.1f m".format(currentElevAtWalk),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = LaserOrange
+                                )
+                                Text("Lake Magadi Basin", fontSize = 8.sp, color = TextSecondary)
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = DarkSurfaceHighlight,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text("EYE ELEVATION", fontSize = 8.5.sp, color = TextMuted)
+                                val eyeOffset = when (eyeHeightType) {
+                                    "DRIVER_1_2M" -> 1.20f
+                                    "SAFARI_2_8M" -> 2.80f
+                                    "DRONE_25M" -> 25.0f
+                                    else -> 1.70f
+                                }
+                                Text(
+                                    text = "%.2f m".format(currentElevAtWalk + eyeOffset),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = CyberCyan
+                                )
+                                Text(
+                                    text = when (eyeHeightType) {
+                                        "DRIVER_1_2M" -> "Cockpit (1.2m)"
+                                        "SAFARI_2_8M" -> "Roof (2.8m)"
+                                        "DRONE_25M" -> "Drone (25m)"
+                                        else -> "Standing (1.7m)"
+                                    },
+                                    fontSize = 8.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = DarkSurfaceHighlight,
+                            modifier = Modifier.weight(1.2f)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text("HORIZON CLIMB", fontSize = 8.5.sp, color = TextMuted)
+                                Text(
+                                    text = "+%.0f m".format(climbToEscarpment),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = NeonLime
+                                )
+                                Text("Ngong Escarpment 1980m", fontSize = 8.sp, color = TextSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // B. Walk / Drive Progression Along C58 Road (0 to 3,000m)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, CyberCyan.copy(alpha = 0.45f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "WALK ALONG C58 ROAD (Lake Magadi -> Nairobi)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = CyberCyan
+                        )
+                        Text(
+                            text = "%.0f m / 3,000 m".format(walkDistanceM),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = CyberCyan
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Slider(
+                        value = walkDistanceM,
+                        onValueChange = { onWalkDistanceChange(it) },
+                        valueRange = 0f..3000f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = CyberCyan,
+                            activeTrackColor = CyberCyan,
+                            inactiveTrackColor = DarkSurfaceHighlight
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Current location status description
+                    val currentFeature = when {
+                        walkDistanceM < 200f -> "Origin: Lake Magadi Causeway • 8m asphalt raised 0.8m over white trona soda flats."
+                        walkDistanceM < 600f -> "Causeway Bridge (500m): Crossing alkaline brine channel connecting southern & northern lagoons."
+                        walkDistanceM < 1400f -> "Lake Margin (1.2km): Transition from salt crust to volcanic gravel verge & dwarf acacia bushes."
+                        walkDistanceM < 2200f -> "Fault Approach (1.8km): Gentle +18.5m/km climb towards first basalt step terrace."
+                        else -> "First Basalt Step-Fault Scarp (2.5-3.0km): Road enters dark volcanic lava cliff cutting at 653m ASL."
+                    }
+                    Text(
+                        text = currentFeature,
+                        fontSize = 9.5.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(horizontal = 2.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Quick Jump Waypoint Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            Pair("0m Origin", 0f),
+                            Pair("500m Bridge", 500f),
+                            Pair("1.2km Margin", 1200f),
+                            Pair("2.5km Scarp", 2500f)
+                        ).forEach { (label, dist) ->
+                            val isSel = abs(walkDistanceM - dist) < 50f
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = if (isSel) CyberCyan.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isSel) CyberCyan else Color.White.copy(alpha = 0.1f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onWalkDistanceChange(dist) }
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 8.5.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSel) CyberCyan else TextSecondary,
+                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // C. Eye-Level Perspective Height & Look Direction Buttons
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, LaserOrange.copy(alpha = 0.45f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "OBSERVER EYE HEIGHT & PERSPECTIVE",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = LaserOrange
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            Triple("Standing 1.7m", "STANDING_1_7M", "Surveyor walking"),
+                            Triple("Driver 1.2m", "DRIVER_1_2M", "4x4 Cockpit"),
+                            Triple("Safari 2.8m", "SAFARI_2_8M", "Roof Hatch"),
+                            Triple("Drone 25m", "DRONE_25M", "Low Survey")
+                        ).forEach { (label, key, desc) ->
+                            val isSel = eyeHeightType == key
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = if (isSel) LaserOrange.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isSel) LaserOrange else Color.White.copy(alpha = 0.1f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onEyeHeightTypeChange(key) }
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 8.5.sp,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSel) LaserOrange else TextPrimary
+                                    )
+                                    Text(
+                                        text = desc,
+                                        fontSize = 7.sp,
+                                        color = TextMuted
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "360° GLANCE & OBSERVATION DIRECTION",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            Pair("Ahead (NNE)", "AHEAD_NORTH"),
+                            Pair("Left (Trona)", "LEFT_TRONA"),
+                            Pair("Right (Basalt)", "RIGHT_BASALT"),
+                            Pair("Behind (Plant)", "BEHIND_MAGADI")
+                        ).forEach { (label, dir) ->
+                            val isSel = lookDirection == dir
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = if (isSel) CyberCyan.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isSel) CyberCyan else Color.White.copy(alpha = 0.1f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onLookDirectionChange(dir) }
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 8.5.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSel) CyberCyan else TextSecondary,
+                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // D. Comprehensive "What The Human Eye Sees" Physical Elevation Breakdown Card
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, GlowingCyanBorder.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "WHAT YOU SEE FROM MAGADI ROAD START (HUMAN VIEWPOINT)",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 1. Immediate Foreground
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = DarkSurfaceElevated,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("1. FOREGROUND (0 - 150m)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = LaserOrange)
+                                Text("ELEV: 598.0 m ASL", fontSize = 8.5.sp, fontFamily = FontFamily.Monospace, color = LaserOrange)
+                            }
+                            Text(
+                                text = "• Standing on 8m dark asphalt causeway elevated 0.8m above blinding white crystallized trona (sodium sesquicarbonate) salt beds.\n" +
+                                       "• Sharp visual contrast between black bitumen roadbed and gleaming snow-white alkali crust with cracked polygonal fissures.\n" +
+                                       "• Distinct road verge: red volcanic gravel shoulders dropping to alkaline brine pools.",
+                                fontSize = 9.sp,
+                                color = TextSecondary,
+                                lineHeight = 13.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 2. Lateral Views
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = DarkSurfaceElevated,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("2. LATERAL PANORAMA (LEFT / RIGHT)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = NeonLime)
+                                Text("ELEV: 590m - 640m ASL", fontSize = 8.5.sp, fontFamily = FontFamily.Monospace, color = NeonLime)
+                            }
+                            Text(
+                                text = "• WEST (Left): Expansive Lake Magadi soda pan stretching 30km south; alkaline thermal brine pools tinted vivid magenta/pink by halophilic spirulina algae; steam plumes drifting from 45°C–86°C hot springs.\n" +
+                                       "• EAST (Right): Dark vesicular basalt boulders, alluvial fans of grey volcanic ash, sparse arid commiphora and dwarf acacia tortilis shrubs.\n" +
+                                       "• SOUTH (Behind): Magadi Soda Company calcining chimneys, rail sidings, and factory township nestled on basalt ridge.",
+                                fontSize = 9.sp,
+                                color = TextSecondary,
+                                lineHeight = 13.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 3. Midground Terraces
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = DarkSurfaceElevated,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("3. MIDGROUND STEP FAULTS (500m - 15km)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                                Text("CLIMB: +50m to +350m", fontSize = 8.5.sp, fontFamily = FontFamily.Monospace, color = CyberCyan)
+                            }
+                            Text(
+                                text = "• Classic Gregory Rift horst-and-graben fault architecture: successive dark basalt fault scarps stepping upward like gigantic terraces toward the north.\n" +
+                                       "• The C58 asphalt road gently climbs along natural structural contour benches (+18.5m/km) to bypass vertical volcanic rock bluffs toward Ol Keju Nero.",
+                                fontSize = 9.sp,
+                                color = TextSecondary,
+                                lineHeight = 13.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 4. Horizon Escarpment
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = DarkSurfaceElevated,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("4. DISTANT HORIZON (25km - 45km)", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFFCE93D8))
+                                Text("SUMMIT: 1,980m (+1,382m RISE)", fontSize = 8.5.sp, fontFamily = FontFamily.Monospace, color = Color(0xFFCE93D8))
+                            }
+                            Text(
+                                text = "• Towering directly ahead on the horizon: The colossal dark indigo/purple wall of the Eastern Rift Valley Escarpment and Ngong Hills rising 1,382 meters above your eye level.\n" +
+                                       "• Corner Baridi mountain pass clearly visible as a notch in the mountain barrier where the road ascends to Nairobi (1,795m).\n" +
+                                       "• Atmospheric heat mirage: In midday heat (38°C–42°C), intense convection over the black asphalt creates a reflective silvery 'water mirage' hovering 300m–600m ahead.",
+                                fontSize = 9.sp,
+                                color = TextSecondary,
+                                lineHeight = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Contour-Defined Elevation Architecture Card (Sascha Willems Architecture)
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = DarkSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, CyberCyan.copy(alpha = 0.45f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "CONTOUR-DEFINED ELEVATION (Sascha Willems C++ Spec)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = CyberCyan.copy(alpha = 0.2f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, CyberCyan)
+                    ) {
+                        Text(
+                            text = "${state.contourInterval.toInt()}m ISOLINES",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = CyberCyan,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Contours define how elevation is shaped: geological fault terraces in the Great Rift Valley, stepped scarp cliffs, and road cuts.",
+                    fontSize = 10.sp,
+                    color = TextSecondary
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Contour Interval Selector Chips
+                Text("CONTOUR INTERVAL (ELEVATION DELTA PER ISOLINE)", fontSize = 9.sp, color = TextMuted)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val intervals = listOf(10f to "10m Fine", 25f to "25m Std", 50f to "50m Mid", 100f to "100m Bold")
+                    for ((cVal, label) in intervals) {
+                        val isSel = state.contourInterval == cVal
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isSel) CyberCyan.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSel) CyberCyan else Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onStateChange(state.copy(contourInterval = cVal)) }
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 9.sp,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSel) CyberCyan else TextSecondary,
+                                modifier = Modifier.padding(vertical = 6.dp, horizontal = 2.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Stepped Terracing Slider (shows how contours shape elevation into tectonic fault steps)
+                ControlSlider(
+                    label = "Stepped Fault Terracing (Contours Define Steps)",
+                    value = state.stepTerracingFactor,
+                    valueRange = 0f..1f,
+                    unit = "%",
+                    onValueChange = { onStateChange(state.copy(stepTerracingFactor = it)) }
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Show 3D Contour Lines Switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("3D Topographic Contour Lines", fontSize = 11.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        Text("Draws isoline ribbons on 3D mesh (Gold = 100m index)", fontSize = 9.sp, color = TextMuted)
+                    }
+                    Switch(
+                        checked = state.showContourLines,
+                        onCheckedChange = { onStateChange(state.copy(showContourLines = it)) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = CyberCyan, checkedTrackColor = CyberCyan.copy(alpha = 0.3f))
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 3D Render Mode Quick Toggles
+                Text("3D SHADING & CONTOUR VISUALIZATION MODES", fontSize = 9.sp, color = TextMuted)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val modes = listOf(
+                        TerrainRenderMode.CONTOURS_3D_ELEVATION to "3D Isolines",
+                        TerrainRenderMode.HYPSOMETRIC_CONTOURS to "Hypsometric",
+                        TerrainRenderMode.SHADED_TRIPLANAR to "PBR Splat",
+                        TerrainRenderMode.WIREFRAME_CDLOD to "Vulkan Mesh"
+                    )
+                    for ((m, label) in modes) {
+                        val isModeSel = renderMode == m
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isModeSel) LaserOrange.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isModeSel) LaserOrange else Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onRenderModeChange(m) }
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 8.5.sp,
+                                fontWeight = if (isModeSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isModeSel) LaserOrange else TextSecondary,
+                                modifier = Modifier.padding(vertical = 5.dp, horizontal = 2.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
@@ -2238,6 +2979,437 @@ private fun KenyaMagadiControls(
                             Text("📄 road_3d/meta.json", fontSize = 8.5.sp, color = CyberCyan, fontWeight = FontWeight.Bold)
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// ==================== VULKAN C++ TERRAIN PIPELINE CONTROLS ====================
+
+@Composable
+private fun VulkanCppPipelineControls(
+    selectedCol: Int,
+    selectedRow: Int,
+    state: TerrainState,
+    onStateChange: (TerrainState) -> Unit,
+    onCopyCode: (String) -> Unit
+) {
+    var selectedTab by remember { mutableStateOf("CHUNK_H") } // "CHUNK_H", "CHUNK_CPP", "MANAGER_CPP", "SHADER_FRAG", "SHADER_VERT"
+    val chunkId = "chunk_%02d_%02d".format(selectedCol, selectedRow)
+
+    val codeMap = remember {
+        mapOf(
+            "CHUNK_H" to """// Kenya Magadi Road (C58) 50km x 50km Terrain System - Vulkan Chunk Architecture
+// Reference: Sascha Willems Vulkan Infinite Procedural Terrain (SaschaWillems/Vulkan)
+// Path: native-assets/src/terrain/game_terrain/kenya_magadi_50km/cpp/MagadiTerrainChunk.h
+#pragma once
+#include <vector>
+#include <cstdint>
+
+namespace Magadi {
+
+struct TerrainVertex {
+    float pos[3];          // Position: X, Y (elevation), Z (local meters)
+    float normal[3];       // Normal vector (Nx, Ny, Nz) via central differencing
+    float uv[2];           // Texture coordinates
+    float rawElevation;    // Real-world elevation (590m - 1980m)
+    float contourBand;     // Normalized elevation band [0.0 - 1.0]
+    float isolineFactor;   // Screen-space contour line factor for fragment shader
+    float slopeDeg;        // Surface slope in degrees [0 - 90]
+    uint32_t surfaceType;  // MagadiSurfaceType
+    float splatWeights[4]; // Savannah, Escarpment, Trona, Road
+};
+
+struct ContourConfig {
+    float contourInterval = 25.0f;       // Distance between contour lines (meters)
+    float indexContourInterval = 100.0f; // Bold index contour lines
+    float stepTerracingFactor = 0.0f;    // Stepped tectonic fault terraces
+    bool enableRoadCutEmbankment = true; // C58 road corridor grading
+};
+
+class MagadiTerrainChunk {
+public:
+    MagadiTerrainChunk(int col, int row, float originX, float originZ, float sizeM = 10000.0f);
+    void GenerateMesh(const ContourConfig& contourConfig, ChunkLOD lod = ChunkLOD::LOD0_High);
+    float SampleContourElevation(float worldX, float worldZ, const ContourConfig& cfg) const;
+    void CalculateNormal(float worldX, float worldZ, const ContourConfig& cfg, float step, float outNormal[3]) const;
+    MagadiSurfaceType DetermineSurfaceType(float worldX, float worldZ, float elev, float distRoad) const;
+
+    const std::vector<TerrainVertex>& GetVertices() const { return m_vertices; }
+    const std::vector<uint32_t>& GetIndices() const { return m_indices; }
+};
+}""",
+            "CHUNK_CPP" to """// Kenya Magadi Road (C58) 50km x 50km Terrain System - Vulkan Chunk Implementation
+// Reference: Sascha Willems Vulkan Infinite Procedural Terrain (SaschaWillems/Vulkan)
+#include "MagadiTerrainChunk.h"
+#include <cmath>
+#include <algorithm>
+
+namespace Magadi {
+
+float MagadiTerrainChunk::SampleContourElevation(float worldX, float worldZ, const ContourConfig& cfg) const {
+    // 1. Regional Elevation Slope: East African Rift Valley floor (590m) to Eastern Escarpment (1980m)
+    float u = std::max(0.0f, std::min(1.0f, (worldX + worldZ * 0.95f) / 95000.0f));
+    float regionalElev = 590.0f + u * 1390.0f;
+
+    // 2. Rift Valley Fault Scarps: North-South tectonic stepped contour terraces
+    float fault1 = std::sin(worldX * 0.00035f + 0.8f) * 65.0f;
+    float fault2 = std::sin(worldX * 0.00095f + worldZ * 0.00025f) * 35.0f;
+    float continuousElev = regionalElev + fault1 + fault2;
+
+    // 3. Lake Magadi Trona basin clamp (lake bed flat at ~590m)
+    if (worldX < 11000.0f && worldZ < 11000.0f) {
+        float lakeDist = std::sqrt(worldX * worldX + worldZ * worldZ);
+        if (lakeDist < 9500.0f) {
+            float lt = std::min(1.0f, lakeDist / 9500.0f);
+            continuousElev = 590.0f + (continuousElev - 590.0f) * (lt * lt);
+        }
+    }
+
+    // 4. Topographic Contour Shaping & Terracing
+    // Contours explicitly define elevation steps when terracing is enabled
+    if (cfg.stepTerracingFactor > 0.001f) {
+        float stepH = cfg.contourInterval;
+        float baseStep = std::floor(continuousElev / stepH) * stepH;
+        float frac = (continuousElev - baseStep) / stepH;
+        float steppedFrac = frac * frac * (3.0f - 2.0f * frac);
+        float terracedElev = baseStep + steppedFrac * stepH;
+        continuousElev = continuousElev * (1.0f - cfg.stepTerracingFactor) + terracedElev * cfg.stepTerracingFactor;
+    }
+
+    // 5. C58 Road Cut & Fill Corridor blending
+    if (cfg.enableRoadCutEmbankment) {
+        float roadElev = 0.0f;
+        float distToRoad = DistanceToRoadCenterline(worldX, worldZ, roadElev);
+        if (distToRoad < 8.0f) {
+            continuousElev = roadElev;
+        } else if (distToRoad < 35.0f) {
+            float t = (distToRoad - 8.0f) / 27.0f;
+            float smoothT = t * t * (3.0f - 2.0f * t);
+            continuousElev = roadElev * (1.0f - smoothT) + continuousElev * smoothT;
+        }
+    }
+
+    return std::max(590.0f, std::min(1980.0f, continuousElev));
+}
+}""",
+            "MANAGER_CPP" to """// Kenya Magadi Road 50km Terrain System - Chunk Manager Implementation
+#include "MagadiTerrainChunkManager.h"
+
+namespace Magadi {
+
+MagadiTerrainChunkManager::MagadiTerrainChunkManager() {
+    m_contourConfig.contourInterval = 25.0f;
+    m_contourConfig.indexContourInterval = 100.0f;
+    m_contourConfig.stepTerracingFactor = 0.0f;
+}
+
+bool MagadiTerrainChunkManager::Initialize(const std::string& manifestPath) {
+    m_chunks.clear();
+    for (int row = 0; row < m_gridDim; ++row) {
+        float originZ = row * m_chunkSpanM;
+        for (int col = 0; col < m_gridDim; ++col) {
+            float originX = col * m_chunkSpanM;
+            auto chunk = std::make_unique<MagadiTerrainChunk>(col, row, originX, originZ, m_chunkSpanM);
+            chunk->GenerateMesh(m_contourConfig, ChunkLOD::LOD0_High);
+            m_chunks.push_back(std::move(chunk));
+        }
+    }
+    return true;
+}
+
+void MagadiTerrainChunkManager::UpdateActiveArea(float vehicleX, float vehicleZ, int radius) {
+    int cCol = static_cast<int>(std::floor(vehicleX / m_chunkSpanM));
+    int cRow = static_cast<int>(std::floor(vehicleZ / m_chunkSpanM));
+    for (int r = 0; r < m_gridDim; ++r) {
+        for (int c = 0; c < m_gridDim; ++c) {
+            int d = std::max(std::abs(c - cCol), std::abs(r - cRow));
+            if (auto* ch = GetChunk(c, r)) {
+                ch->GenerateMesh(m_contourConfig, (d <= radius) ? ChunkLOD::LOD0_High : ChunkLOD::LOD1_Medium);
+            }
+        }
+    }
+}
+}""",
+            "SHADER_FRAG" to """// Vulkan 1.3 GLSL Fragment Shader - 3D Contour Isolines & Hypsometric Tinting
+// Reference: Sascha Willems Vulkan Infinite Procedural Terrain (SaschaWillems/Vulkan)
+#version 450
+layout (location = 0) in vec3 inWorldPos;
+layout (location = 1) in vec3 inNormal;
+layout (location = 3) in float inElevation;
+layout (location = 5) flat in uint inSurfaceType;
+
+layout (push_constant) uniform PushConstants {
+    mat4 mvpMatrix;
+    vec4 lightDir;
+    float contourInterval;       // 25.0m
+    float indexContourInterval;  // 100.0m
+    uint showContourIsolines;
+} pushConstants;
+
+layout (location = 0) out vec4 outFragColor;
+
+void main() {
+    vec3 N = normalize(inNormal);
+    vec3 L = normalize(pushConstants.lightDir.xyz);
+    float diffuse = 0.35 + 0.65 * max(dot(N, L), 0.15);
+
+    // Hypsometric elevation coloring
+    float t = clamp((inElevation - 590.0) / 1390.0, 0.0, 1.0);
+    vec3 color = (t < 0.15) ? vec3(0.92, 0.96, 0.98) :
+                 (t < 0.55) ? vec3(0.82, 0.74, 0.45) :
+                 (t < 0.85) ? vec3(0.35, 0.52, 0.28) : vec3(0.42, 0.38, 0.36);
+
+    // 3D Topographic Contour Isolines
+    if (pushConstants.showContourIsolines == 1 && inSurfaceType != 1) {
+        float dElev = max(fwidth(inElevation), 0.001);
+        float cCoord = inElevation / pushConstants.contourInterval;
+        float cDist = abs(fract(cCoord - 0.5) - 0.5) * pushConstants.contourInterval;
+        float cLine = clamp(1.0 - cDist / (dElev * 1.2), 0.0, 1.0);
+
+        // Golden Index contours every 100m
+        float idxCoord = inElevation / pushConstants.indexContourInterval;
+        float idxDist = abs(fract(idxCoord - 0.5) - 0.5) * pushConstants.indexContourInterval;
+        float idxLine = clamp(1.0 - idxDist / (dElev * 2.2), 0.0, 1.0);
+
+        color = mix(color, vec3(0.95, 0.95, 0.98), cLine * 0.55);
+        color = mix(color, vec3(1.0, 0.78, 0.22), idxLine * 0.85);
+    }
+
+    outFragColor = vec4(color * diffuse, 1.0);
+}""",
+            "SHADER_VERT" to """// Vulkan 1.3 GLSL Vertex Shader - Magadi Terrain Chunk Pipeline
+#version 450
+layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inUV;
+layout (location = 3) in float inRawElevation;
+layout (location = 5) in uint inSurfaceType;
+
+layout (push_constant) uniform PushConstants {
+    mat4 mvpMatrix;
+    vec4 lightDir;
+    vec4 cameraPos;
+    float contourInterval;
+    float indexContourInterval;
+} pushConstants;
+
+layout (location = 0) out vec3 outWorldPos;
+layout (location = 1) out vec3 outNormal;
+layout (location = 2) out vec2 outUV;
+layout (location = 3) out float outElevation;
+layout (location = 5) flat out uint outSurfaceType;
+
+void main() {
+    outWorldPos = inPos;
+    outNormal = inNormal;
+    outUV = inUV;
+    outElevation = inRawElevation;
+    outSurfaceType = inSurfaceType;
+    gl_Position = pushConstants.mvpMatrix * vec4(inPos, 1.0);
+}"""
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // 1. Architecture Hero Card
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = DarkSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "SASCHA WILLEMS VULKAN PROCEDURAL TERRAIN",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = NeonLime
+                        )
+                        Text(
+                            text = "github.com/SaschaWillems/Vulkan • VulkanInfiniteProceduralTerrain",
+                            fontSize = 9.5.sp,
+                            color = CyberCyan
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = NeonLime.copy(alpha = 0.2f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime)
+                    ) {
+                        Text(
+                            text = "C++ 17 / VULKAN 1.3",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = NeonLime,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Terrain chunks for Kenya Magadi C58 road corridor implemented explicitly in C/C++ with contour-guided elevation math, screen-space isoline shaders, and Vulkan GPU push constants.",
+                    fontSize = 10.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+
+        // 2. Active Chunk Telemetry Card
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = DarkSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, LaserOrange.copy(alpha = 0.4f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = "ACTIVE CHUNK C++ TELEMETRY: $chunkId",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = LaserOrange
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("GRID COORDINATES", fontSize = 9.sp, color = TextMuted)
+                        Text("Col: $selectedCol, Row: $selectedRow (Tile 10km²)", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("LOD0 VERTEX COUNT", fontSize = 9.sp, color = TextMuted)
+                        Text("4,225 Vertices (65×65)", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = NeonLime)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("VULKAN PRIMITIVE TOPOLOGY", fontSize = 9.sp, color = TextMuted)
+                        Text("8,192 Triangles (Triangle List)", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, color = CyberCyan)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("VMA GPU ALLOCATION", fontSize = 9.sp, color = TextMuted)
+                        Text("168.4 KB VkBuffer", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, color = LaserOrange)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("CONTOUR ISOLINES", fontSize = 9.sp, color = TextMuted)
+                        Text("${state.contourInterval.toInt()}m Intervals (100m Index)", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, color = TextPrimary)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("FAULT SCARP TERRACING", fontSize = 9.sp, color = TextMuted)
+                        Text("${(state.stepTerracingFactor * 100).toInt()}% Stepped", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, color = NeonLime)
+                    }
+                }
+            }
+        }
+
+        // 3. C++ Source Code & Vulkan Shader Viewer Card
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = DarkSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, GlowingCyanBorder.copy(alpha = 0.25f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "C++ NATIVE SOURCE & GLSL SHADERS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan
+                    )
+
+                    Button(
+                        onClick = { onCopyCode(codeMap[selectedTab] ?: "") },
+                        colors = ButtonDefaults.buttonColors(containerColor = CyberCyan.copy(alpha = 0.2f), contentColor = CyberCyan),
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.height(28.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text("Copy Code", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Tab Pills
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val tabs = listOf(
+                        "CHUNK_H" to "MagadiTerrainChunk.h",
+                        "CHUNK_CPP" to "MagadiTerrainChunk.cpp",
+                        "MANAGER_CPP" to "ChunkManager.cpp",
+                        "SHADER_FRAG" to "terrain.frag (Contour)",
+                        "SHADER_VERT" to "terrain.vert"
+                    )
+                    for ((tKey, label) in tabs) {
+                        val isSel = selectedTab == tKey
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isSel) NeonLime.copy(alpha = 0.25f) else DarkSurfaceHighlight,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSel) NeonLime else Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier.clickable { selectedTab = tKey }
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 9.sp,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSel) NeonLime else TextSecondary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Code block
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(0xFF090D14),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = codeMap[selectedTab] ?: "",
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = TextPrimary,
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .horizontalScroll(rememberScrollState())
+                    )
                 }
             }
         }

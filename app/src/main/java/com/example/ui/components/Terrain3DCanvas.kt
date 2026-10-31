@@ -45,6 +45,9 @@ fun Terrain3DCanvas(
     lightAngleRad: Float,
     isWireframeOverlay: Boolean = false,
     showGridContours: Boolean = true,
+    contourInterval: Float = 25f,
+    isHumanView: Boolean = false,
+    walkDistanceM: Float = 0f,
     onRotateDrag: (Float, Float) -> Unit,
     onPanDrag: (Float, Float) -> Unit,
     onZoomChange: (Float) -> Unit,
@@ -80,6 +83,61 @@ fun Terrain3DCanvas(
 
             val centerX = canvasW * 0.5f + panX
             val centerY = canvasH * 0.52f + panY
+
+            // In Human Viewpoint mode: Draw atmospheric East African Rift Valley sky and distant escarpment silhouette
+            if (isHumanView) {
+                // 1. Deep atmospheric sky gradient
+                drawRect(
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1E3C72), // Zenith deep blue
+                            Color(0xFF2A5298), // Mid sky
+                            Color(0xFF87CEEB), // Atmospheric cyan haze
+                            Color(0xFFE8D7C3), // Dust haze layer
+                            Color(0xFFD49B6A)  // Magadi soda flat horizon glow
+                        ),
+                        startY = 0f,
+                        endY = canvasH * 0.60f
+                    ),
+                    topLeft = Offset(0f, 0f),
+                    size = androidx.compose.ui.geometry.Size(canvasW, canvasH * 0.60f)
+                )
+
+                // 2. Distant Ngong Hills / Corner Baridi mountain escarpment silhouette (+1,382m above Magadi basin)
+                val horizonY = centerY - 28f
+                val mountainPath = Path().apply {
+                    moveTo(0f, horizonY + 18f)
+                    lineTo(canvasW * 0.12f, horizonY - 14f)
+                    lineTo(canvasW * 0.28f, horizonY - 26f) // Olorgesailie volcanic shoulder
+                    lineTo(canvasW * 0.44f, horizonY - 48f) // Corner Baridi pass (1,780m)
+                    lineTo(canvasW * 0.58f, horizonY - 65f) // Ngong Hills crest (1,980m - 2,460m)
+                    lineTo(canvasW * 0.72f, horizonY - 52f) // Ngong second peak
+                    lineTo(canvasW * 0.86f, horizonY - 30f) // Rift western wall step
+                    lineTo(canvasW, horizonY - 12f)
+                    lineTo(canvasW, horizonY + 30f)
+                    lineTo(0f, horizonY + 30f)
+                    close()
+                }
+                drawPath(
+                    path = mountainPath,
+                    color = Color(0xFF282338).copy(alpha = 0.88f) // Deep indigo-purple atmospheric haze
+                )
+
+                // 3. Desert heat shimmer band across the horizon
+                drawRect(
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(0xFFFFF3E0).copy(alpha = 0.35f),
+                            Color.Transparent
+                        ),
+                        startY = horizonY - 8f,
+                        endY = horizonY + 12f
+                    ),
+                    topLeft = Offset(0f, horizonY - 8f),
+                    size = androidx.compose.ui.geometry.Size(canvasW, 20f)
+                )
+            }
 
             val cosY = cos(yaw)
             val sinY = sin(yaw)
@@ -271,6 +329,55 @@ fun Terrain3DCanvas(
                                     Color(r.coerceIn(0f, 1f), g.coerceIn(0f, 1f), b.coerceIn(0f, 1f))
                                 }
                             }
+                            TerrainRenderMode.CONTOURS_3D_ELEVATION,
+                            TerrainRenderMode.HYPSOMETRIC_CONTOURS -> {
+                                if (isWater) {
+                                    Color(0xFF0091EA).copy(
+                                        red = 0.05f * diffuse,
+                                        green = 0.52f * diffuse + 0.12f,
+                                        blue = 0.88f * diffuse
+                                    )
+                                } else if (isRoad) {
+                                    Color(0xFF212529).copy(
+                                        red = 0.16f * diffuse,
+                                        green = 0.17f * diffuse,
+                                        blue = 0.19f * diffuse
+                                    )
+                                } else if (isGravel) {
+                                    Color(0xFF607D8B).copy(
+                                        red = 0.40f * diffuse,
+                                        green = 0.44f * diffuse,
+                                        blue = 0.48f * diffuse
+                                    )
+                                } else {
+                                    val avgRawE = if (v0.rawElevation > 0f) {
+                                        (v0.rawElevation + v1.rawElevation + v2.rawElevation) / 3f
+                                    } else {
+                                        590f + ((avgY - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+                                    }
+                                    val t = ((avgRawE - 590f) / 1390f).coerceIn(0f, 1f)
+                                    val br: Float
+                                    val bg: Float
+                                    val bb: Float
+                                    if (t < 0.12f) {
+                                        // Lake Magadi Trona soda flats
+                                        br = 0.92f; bg = 0.96f; bb = 0.98f
+                                    } else if (t < 0.35f) {
+                                        // Savannah scrub
+                                        br = 0.82f; bg = 0.74f; bb = 0.45f
+                                    } else if (t < 0.65f) {
+                                        // Volcanic ash & Tinga
+                                        br = 0.70f; bg = 0.46f; bb = 0.32f
+                                    } else if (t < 0.88f) {
+                                        // Highland green
+                                        br = 0.30f; bg = 0.52f; bb = 0.26f
+                                    } else {
+                                        // Escarpment rock summit
+                                        br = 0.42f; bg = 0.38f; bb = 0.36f
+                                    }
+                                    Color((br * diffuse).coerceIn(0f, 1f), (bg * diffuse).coerceIn(0f, 1f), (bb * diffuse).coerceIn(0f, 1f))
+                                }
+                            }
                             TerrainRenderMode.HEIGHTMAP_HEATMAP -> {
                                 val hNorm = ((avgY - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)).coerceIn(0f, 1f)
                                 val r = (sin(hNorm * 3.14159f) * 0.95f).coerceIn(0f, 1f)
@@ -304,6 +411,65 @@ fun Terrain3DCanvas(
                         path.close()
 
                         drawPath(path, color = faceColor)
+
+                        // 3D Topographic Contour Isolines
+                        if (showGridContours || renderMode == TerrainRenderMode.CONTOURS_3D_ELEVATION || renderMode == TerrainRenderMode.HYPSOMETRIC_CONTOURS) {
+                            val e0 = if (v0.rawElevation > 0f) v0.rawElevation else 590f + ((v0.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+                            val e1 = if (v1.rawElevation > 0f) v1.rawElevation else 590f + ((v1.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+                            val e2 = if (v2.rawElevation > 0f) v2.rawElevation else 590f + ((v2.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+
+                            val minE = minOf(e0, minOf(e1, e2))
+                            val maxE = maxOf(e0, maxOf(e1, e2))
+
+                            val cStep = contourInterval.coerceAtLeast(5f)
+                            var hc = ceil(minE / cStep) * cStep
+                            while (hc <= maxE) {
+                                var pCount = 0
+                                var xA = 0f; var yA = 0f
+                                var xB = 0f; var yB = 0f
+
+                                if ((e0 <= hc && hc < e1) || (e1 <= hc && hc < e0)) {
+                                    val tEdge = (hc - e0) / (e1 - e0)
+                                    xA = projX[i0] + tEdge * (projX[i1] - projX[i0])
+                                    yA = projY[i0] + tEdge * (projY[i1] - projY[i0])
+                                    pCount++
+                                }
+                                if ((e1 <= hc && hc < e2) || (e2 <= hc && hc < e1)) {
+                                    val tEdge = (hc - e1) / (e2 - e1)
+                                    val px = projX[i1] + tEdge * (projX[i2] - projX[i1])
+                                    val py = projY[i1] + tEdge * (projY[i2] - projY[i1])
+                                    if (pCount == 0) {
+                                        xA = px; yA = py; pCount++
+                                    } else {
+                                        xB = px; yB = py; pCount++
+                                    }
+                                }
+                                if (pCount < 2 && ((e2 <= hc && hc < e0) || (e0 <= hc && hc < e2))) {
+                                    val tEdge = (hc - e2) / (e0 - e2)
+                                    val px = projX[i2] + tEdge * (projX[i0] - projX[i2])
+                                    val py = projY[i2] + tEdge * (projY[i0] - projY[i2])
+                                    if (pCount == 0) {
+                                        xA = px; yA = py; pCount++
+                                    } else {
+                                        xB = px; yB = py; pCount++
+                                    }
+                                }
+
+                                if (pCount == 2) {
+                                    val isIndexContour = (round(hc) % 100f == 0f)
+                                    val lineColor = if (isIndexContour) Color(0xFFFFB300) else Color(0xFFE0F7FA).copy(alpha = 0.70f)
+                                    val strokeW = if (isIndexContour) 1.8f else 0.9f
+                                    drawLine(
+                                        color = lineColor,
+                                        start = Offset(xA, yA),
+                                        end = Offset(xB, yB),
+                                        strokeWidth = strokeW
+                                    )
+                                }
+
+                                hc += cStep
+                            }
+                        }
 
                         if (isWireframeOverlay || renderMode == TerrainRenderMode.WIREFRAME_CDLOD) {
                             val wireColor = when (renderMode) {
@@ -413,16 +579,21 @@ fun Terrain3DCanvas(
             ) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = NeonLime,
+                    color = if (isHumanView) LaserOrange else NeonLime,
                     modifier = Modifier.size(6.dp)
                 ) {}
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "VK 1.3 • ${mesh.resolutionX}×${mesh.resolutionZ} • ${mesh.indices.size / 3}Δ • 1:1:1 RATIO",
+                    text = if (isHumanView) {
+                        val currentElev = 598.0f + (walkDistanceM / 1000f) * 18.5f
+                        "EYE LEVEL 1.7m • ROAD START: %.1fm • ESCARPMENT +1382m (1980m)".format(currentElev)
+                    } else {
+                        "VK 1.3 • ${mesh.resolutionX}×${mesh.resolutionZ} • ${mesh.indices.size / 3}Δ • 1:1:1 RATIO"
+                    },
                     fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = CyberCyan
+                    color = if (isHumanView) LaserOrange else CyberCyan
                 )
             }
         }

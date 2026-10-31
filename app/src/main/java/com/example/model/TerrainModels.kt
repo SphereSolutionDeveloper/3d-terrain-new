@@ -6,6 +6,8 @@ package com.example.model
  */
 enum class TerrainRenderMode(val title: String, val description: String) {
     SHADED_TRIPLANAR("Realistic Splat PBR", "Slope & elevation biomes: grass valley, dirt hills, rock cliffs, snow peaks"),
+    CONTOURS_3D_ELEVATION("3D Contour Isolines", "Real-time topographic contour isolines (25m/50m/100m) directly on 3D terrain"),
+    HYPSOMETRIC_CONTOURS("Hypsometric Elevation Tints", "Topographic elevation bands: Lake Magadi (590m) to Ngong Summit (1980m)"),
     HEIGHTMAP_HEATMAP("Elevation Heatmap", "Color gradients by altitude with topographic contour lines"),
     WIREFRAME_CDLOD("CDLOD Tessellation", "Continuous distance-dependent LOD quadtree wireframe with morphing"),
     SLOPE_ANALYSIS("Slope & Aspect Angle", "Visualizes steepness angles for cliff strata & talus rock deposits"),
@@ -14,7 +16,8 @@ enum class TerrainRenderMode(val title: String, val description: String) {
 }
 
 enum class TerrainSubsystemTab(val label: String, val iconName: String) {
-    KENYA_MAGADI_50KM("Magadi Rd Area", "explore"),
+    KENYA_MAGADI_50KM("Magadi Rd Chunks", "explore"),
+    VULKAN_CPP_PIPELINE("Vulkan C++ Terrain", "code"),
     GAME_TERRAIN_001("Test Ground 001", "sports_esports"),
     HEIGHTMAP_NOISE("Height & Noise", "terrain"),
     EROSION_SIM("Erosion Dynamics", "water_drop"),
@@ -23,7 +26,7 @@ enum class TerrainSubsystemTab(val label: String, val iconName: String) {
     ROAD_CUTS("Road Cuts", "alt_route"),
     CAVES_VOXELS("3D Caves", "cave"),
     CDLOD_SHADERS("CDLOD & Shaders", "memory"),
-    CPP_SOURCE_TREE("C++ Source Tree", "code")
+    CPP_SOURCE_TREE("C++ Source Tree", "terminal")
 }
 
 data class TerrainState(
@@ -46,7 +49,11 @@ data class TerrainState(
     val roadWidth: Float = 6.0f,
     val roadCutSlope: Float = 45.0f,
     val cdlodTileResolution: Int = 65,
-    val cdlodMorphFactor: Float = 0.5f
+    val cdlodMorphFactor: Float = 0.5f,
+    val contourInterval: Float = 25.0f,
+    val indexContourInterval: Float = 100.0f,
+    val stepTerracingFactor: Float = 0.0f,
+    val showContourLines: Boolean = true
 )
 
 data class TerrainVertex(
@@ -66,7 +73,10 @@ data class TerrainVertex(
     val surfaceType: String = "grass",
     val isWaterSurface: Boolean = false,
     val isMudSurface: Boolean = false,
-    val isGravelSurface: Boolean = false
+    val isGravelSurface: Boolean = false,
+    val rawElevation: Float = 0f,
+    val contourBand: Float = 0f,
+    val isolineFactor: Float = 0f
 )
 
 data class GameTerrainAssetPlacement(

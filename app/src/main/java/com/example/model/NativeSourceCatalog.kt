@@ -4,6 +4,142 @@ object NativeSourceCatalog {
 
     val terrainFiles: List<NativeFileTreeItem> = listOf(
         NativeFileTreeItem(
+            path = "game_terrain/kenya_magadi_50km/cpp/MagadiTerrainChunk.h",
+            name = "MagadiTerrainChunk.h",
+            category = "Vulkan Chunk Architecture",
+            lines = 110,
+            description = "Sascha Willems-style Vulkan terrain chunk with contour-defined elevation, normal generation via central differencing, and PBR splat weights.",
+            codeSnippet = """// Kenya Magadi Road (C58) 50km x 50km Terrain System - Vulkan Chunk Architecture
+// Reference: Sascha Willems Vulkan Infinite Procedural Terrain (SaschaWillems/Vulkan)
+#pragma once
+#include <vector>
+#include <cstdint>
+
+namespace Magadi {
+struct TerrainVertex {
+    float pos[3];          // Position: X, Y (elevation), Z (local meters)
+    float normal[3];       // Normal vector (Nx, Ny, Nz) via central differencing
+    float uv[2];           // Texture coordinates
+    float rawElevation;    // Real-world elevation (590m - 1980m)
+    float contourBand;     // Normalized elevation band [0.0 - 1.0]
+    float isolineFactor;   // Screen-space contour line factor for fragment shader
+    float slopeDeg;        // Surface slope in degrees [0 - 90]
+    uint32_t surfaceType;  // MagadiSurfaceType
+    float splatWeights[4]; // Savannah, Escarpment, Trona, Road
+};
+
+struct ContourConfig {
+    float contourInterval = 25.0f;       // Distance between contour lines (meters)
+    float indexContourInterval = 100.0f; // Bold index contour lines
+    float stepTerracingFactor = 0.0f;    // Stepped tectonic fault terraces
+    bool enableRoadCutEmbankment = true; // C58 road corridor grading
+};
+
+class MagadiTerrainChunk {
+public:
+    MagadiTerrainChunk(int col, int row, float originX, float originZ, float sizeM = 10000.0f);
+    void GenerateMesh(const ContourConfig& contourConfig, ChunkLOD lod = ChunkLOD::LOD0_High);
+    float SampleContourElevation(float worldX, float worldZ, const ContourConfig& cfg) const;
+};
+}"""
+        ),
+        NativeFileTreeItem(
+            path = "game_terrain/kenya_magadi_50km/cpp/MagadiTerrainChunk.cpp",
+            name = "MagadiTerrainChunk.cpp",
+            category = "Vulkan Chunk Architecture",
+            lines = 280,
+            description = "Implements contour-defined elevation math, fault scarp stepped terracing, and C58 road corridor cut & fill geometry.",
+            codeSnippet = """#include "MagadiTerrainChunk.h"
+#include <cmath>
+#include <algorithm>
+
+namespace Magadi {
+float MagadiTerrainChunk::SampleContourElevation(float worldX, float worldZ, const ContourConfig& cfg) const {
+    // 1. Regional Elevation Slope: Rift floor (590m) to Eastern Escarpment (1980m)
+    float u = std::max(0.0f, std::min(1.0f, (worldX + worldZ * 0.95f) / 95000.0f));
+    float regionalElev = 590.0f + u * 1390.0f;
+
+    // 2. Rift Valley Fault Scarps: North-South tectonic stepped contour terraces
+    float fault1 = std::sin(worldX * 0.00035f + 0.8f) * 65.0f;
+    float fault2 = std::sin(worldX * 0.00095f + worldZ * 0.00025f) * 35.0f;
+
+    float continuousElev = regionalElev + fault1 + fault2;
+
+    // 3. Topographic Contour Shaping & Terracing
+    if (cfg.stepTerracingFactor > 0.001f) {
+        float stepH = cfg.contourInterval;
+        float baseStep = std::floor(continuousElev / stepH) * stepH;
+        float frac = (continuousElev - baseStep) / stepH;
+        float steppedFrac = frac * frac * (3.0f - 2.0f * frac);
+        float terracedElev = baseStep + steppedFrac * stepH;
+        continuousElev = continuousElev * (1.0f - cfg.stepTerracingFactor) + terracedElev * cfg.stepTerracingFactor;
+    }
+    return std::max(590.0f, std::min(1980.0f, continuousElev));
+}
+}"""
+        ),
+        NativeFileTreeItem(
+            path = "game_terrain/kenya_magadi_50km/cpp/MagadiTerrainChunkManager.cpp",
+            name = "MagadiTerrainChunkManager.cpp",
+            category = "5x5 Grid Manager",
+            lines = 160,
+            description = "Manages 25 terrain chunks covering 2,500 km² with dynamic LOD streaming and WGS84 coordinate transformations.",
+            codeSnippet = """#include "MagadiTerrainChunkManager.h"
+
+namespace Magadi {
+MagadiTerrainChunkManager::MagadiTerrainChunkManager() {
+    m_contourConfig.contourInterval = 25.0f;
+    m_contourConfig.indexContourInterval = 100.0f;
+    m_contourConfig.stepTerracingFactor = 0.0f;
+}
+
+bool MagadiTerrainChunkManager::Initialize(const std::string& manifestPath) {
+    for (int row = 0; row < m_gridDim; ++row) {
+        for (int col = 0; col < m_gridDim; ++col) {
+            auto chunk = std::make_unique<MagadiTerrainChunk>(col, row, col * 10000.0f, row * 10000.0f);
+            chunk->GenerateMesh(m_contourConfig, ChunkLOD::LOD0_High);
+            m_chunks.push_back(std::move(chunk));
+        }
+    }
+    return true;
+}
+}"""
+        ),
+        NativeFileTreeItem(
+            path = "shaders/terrain/magadi_terrain.frag",
+            name = "magadi_terrain.frag",
+            category = "Vulkan Shaders",
+            lines = 85,
+            description = "Vulkan GLSL fragment shader rendering anti-aliased 3D contour isolines via screen-space derivatives and hypsometric elevation tints.",
+            codeSnippet = """#version 450
+layout (location = 0) in vec3 inWorldPos;
+layout (location = 3) in float inElevation;
+
+layout (push_constant) uniform PushConstants {
+    mat4 mvpMatrix;
+    vec4 lightDir;
+    float contourInterval;       // e.g. 25.0m
+    float indexContourInterval;  // e.g. 100.0m
+    uint showContourIsolines;
+} pushConstants;
+
+layout (location = 0) out vec4 outFragColor;
+
+void main() {
+    // Topographic contour lines on 3D terrain
+    if (pushConstants.showContourIsolines == 1) {
+        float dElev = max(fwidth(inElevation), 0.001);
+        float cCoord = inElevation / pushConstants.contourInterval;
+        float cDist = abs(fract(cCoord - 0.5) - 0.5) * pushConstants.contourInterval;
+        float cLine = clamp(1.0 - cDist / (dElev * 1.2), 0.0, 1.0);
+        // Golden index contours every 100m
+        float idxCoord = inElevation / pushConstants.indexContourInterval;
+        float idxDist = abs(fract(idxCoord - 0.5) - 0.5) * pushConstants.indexContourInterval;
+        float idxLine = clamp(1.0 - idxDist / (dElev * 2.2), 0.0, 1.0);
+    }
+}"""
+        ),
+        NativeFileTreeItem(
             path = "src/terrain/TerrainSystem.h",
             name = "TerrainSystem.h",
             category = "Core Orchestration",
