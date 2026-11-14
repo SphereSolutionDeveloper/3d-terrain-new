@@ -131,6 +131,7 @@ data class TerrainChunkUiModel(
 )
 
 enum class KenyaGridTab(val label: String, val icon: String) {
+    MAGADI_TOWN_3X5("🏙️ Magadi Town 3×5km (1m)", "magadi_town"),
     ROAD_CORRIDOR("🛣️ Road & Chunks Visualizer", "corridor"),
     ELEVATION_2D_PROFILE("📈 2D Elevation Profile", "profile"),
     TERRAIN_CHUNKS_5X5("🧩 25 Terrain Chunks", "chunks"),
@@ -665,6 +666,9 @@ fun KenyaTerrainGridScreen(
         // Active Tab Viewport
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeTab) {
+                KenyaGridTab.MAGADI_TOWN_3X5 -> {
+                    MagadiTownScreen(modifier = Modifier.fillMaxSize())
+                }
                 KenyaGridTab.ROAD_CORRIDOR -> {
                     // TAB: Real Surveyed Road Corridor, 2D Elevation Graph & 25 Terrain Chunks
                     val currentScrubPoint = remember(activeScrubKm, allRoadPoints) {
@@ -1800,15 +1804,6 @@ fun KenyaTerrainGridScreen(
                                                 val y2 = h - ((pt2.roadElevM - minE) / (maxE - minE)) * (h - 24f) - 12f
                                                 drawLine(Color(0xFFFFD600), Offset(x1, y1), Offset(x2, y2), strokeWidth = 2.6f)
                                             }
-                                        } else {
-                                            // Fallback profile
-                                            val path = Path()
-                                            profilePoints.forEachIndexed { i, pt ->
-                                                val x = (pt.first / maxD) * w
-                                                val y = h - ((pt.second - minE) / (maxE - minE)) * (h - 24f) - 12f
-                                                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                                            }
-                                            drawPath(path = path, color = CyberCyan, style = Stroke(width = 3f))
                                         }
 
                                         // Landmarks points

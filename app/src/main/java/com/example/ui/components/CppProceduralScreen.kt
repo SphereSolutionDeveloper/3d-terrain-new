@@ -268,6 +268,17 @@ private fun CppAssetSelectorRow(
                 CppAssetType.TEST_VEHICLE_LORRY -> LaserOrange
                 CppAssetType.MODULAR_POWER_POST -> Color(0xFFFFB300)
                 CppAssetType.POWER_GRID_NETWORK -> Color(0xFF00E5FF)
+                CppAssetType.MODULAR_BRIDGE -> Color(0xFF64B5F6)
+                CppAssetType.MODULAR_TOLL_PLAZA -> Color(0xFFFFB74D)
+                CppAssetType.MODULAR_TUNNEL -> Color(0xFF81C784)
+                CppAssetType.MODULAR_INTERCHANGE -> Color(0xFFBA68C8)
+                CppAssetType.MODULAR_RETAINING_WALL -> Color(0xFFE57373)
+                CppAssetType.CONNECTED_HIGHWAY_SCENE -> Color(0xFF4DD0E1)
+                CppAssetType.MODULAR_FOOTBRIDGE -> Color(0xFF00E5FF)
+                CppAssetType.MODULAR_EXPRESSWAY -> Color(0xFF26A69A)
+                CppAssetType.MODULAR_SIGNPOST -> Color(0xFF66BB6A)
+                CppAssetType.MODULAR_BARRIER -> Color(0xFFFFCA28)
+                CppAssetType.MODULAR_ROAD_BLOCK -> Color(0xFFFF7043)
             }
 
             Surface(
@@ -291,6 +302,17 @@ private fun CppAssetSelectorRow(
                         CppAssetType.TEST_VEHICLE_LORRY -> Icons.Default.LocalShipping
                         CppAssetType.MODULAR_POWER_POST -> Icons.Default.ElectricBolt
                         CppAssetType.POWER_GRID_NETWORK -> Icons.Default.LinearScale
+                        CppAssetType.MODULAR_BRIDGE -> Icons.Default.Directions
+                        CppAssetType.MODULAR_TOLL_PLAZA -> Icons.Default.AccountBalance
+                        CppAssetType.MODULAR_TUNNEL -> Icons.Default.Tune
+                        CppAssetType.MODULAR_INTERCHANGE -> Icons.Default.AltRoute
+                        CppAssetType.MODULAR_RETAINING_WALL -> Icons.Default.ViewAgenda
+                        CppAssetType.CONNECTED_HIGHWAY_SCENE -> Icons.Default.Map
+                        CppAssetType.MODULAR_FOOTBRIDGE -> Icons.Default.DirectionsWalk
+                        CppAssetType.MODULAR_EXPRESSWAY -> Icons.Default.AddRoad
+                        CppAssetType.MODULAR_SIGNPOST -> Icons.Default.Signpost
+                        CppAssetType.MODULAR_BARRIER -> Icons.Default.Fence
+                        CppAssetType.MODULAR_ROAD_BLOCK -> Icons.Default.Block
                     }
                     Icon(
                         imageVector = iconVector,

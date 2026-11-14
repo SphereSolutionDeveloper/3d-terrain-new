@@ -228,6 +228,7 @@ fun AssetStudioScreen(
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
                                     color = when (mainAppView) {
+                                        MainAppView.MAGADI_TOWN_3X5 -> NeonLime
                                         MainAppView.KENYA_GRID_VIEW -> CyberCyan
                                         MainAppView.TERRAIN_VIEW -> CyberCyan
                                         MainAppView.ROAD_VIEW -> NeonLime
@@ -285,6 +286,11 @@ fun AssetStudioScreen(
                     .padding(innerPadding)
             ) {
             when (mainAppView) {
+                MainAppView.MAGADI_TOWN_3X5 -> {
+                    MagadiTownScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
                 MainAppView.KENYA_GRID_VIEW -> {
                     KenyaTerrainGridScreen(
                         modifier = Modifier.fillMaxSize()
@@ -297,6 +303,7 @@ fun AssetStudioScreen(
                 }
                 MainAppView.ROAD_VIEW -> {
                     RoadProceduralScreen(
+                        viewModel = viewModel,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -948,6 +955,7 @@ private fun MainAppNavBar(
             items(MainAppView.values()) { viewItem ->
                 val isSelected = currentView == viewItem
                 val itemColor = when (viewItem) {
+                    MainAppView.MAGADI_TOWN_3X5 -> NeonLime
                     MainAppView.KENYA_GRID_VIEW -> CyberCyan
                     MainAppView.TERRAIN_VIEW -> CyberCyan
                     MainAppView.ROAD_VIEW -> NeonLime

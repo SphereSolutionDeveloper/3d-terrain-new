@@ -268,7 +268,7 @@ fun Segment1mGridPlacer(
                 }
             }
         } catch (e: Exception) {
-            // fallback
+            android.util.Log.e("Segment1mGridPlacer", "Error parsing station binary", e)
         }
         list
     }

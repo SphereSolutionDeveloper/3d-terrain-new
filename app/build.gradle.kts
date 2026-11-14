@@ -60,9 +60,14 @@ android {
     includeInApk = false
     includeInBundle = true
   }
+  sourceSets {
+    getByName("main") {
+      assets.setSrcDirs(listOf("../native-assets/assets"))
+    }
+  }
   externalNativeBuild {
     cmake {
-      path = file("src/main/cpp/CMakeLists.txt")
+      path = file("../native-assets/CMakeLists.txt")
       version = "3.22.1"
     }
   }

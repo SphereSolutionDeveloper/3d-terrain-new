@@ -37,15 +37,7 @@ class AssetRepository(private val context: Context) {
             list
         } catch (e: Exception) {
             e.printStackTrace()
-            // Fallback default rock list
-            listOf(
-                AssetItem("rocks", "10x10 Procedural Rock Field", "rocks", "Field Terrain (1m² Grid)", "Procedural Field Rock", "#00E5FF", "#7000FF"),
-                AssetItem("rock_granite", "Granite Boulder", "rock_granite", "Plutonic Granite", "Quartz-Feldspar Boulder", "#39FF14", "#00E5FF"),
-                AssetItem("rock_basalt", "Volcanic Basalt Column", "rock_basalt", "Extrusive Basalt", "Prismatic Basalt Column", "#FF8800", "#FF3366"),
-                AssetItem("rock_meteorite", "Chondrite Meteorite", "rock_meteorite", "Extra-Terrestrial Regolith", "Pitted Impact Asteroid", "#00F0FF", "#BF55EC"),
-                AssetItem("rock_crystal", "Quartz Geode Cluster", "rock_crystal", "Hydrothermal Silicate", "Amethyst Quartz Spires", "#BF55EC", "#00FFFF"),
-                AssetItem("rock_strata", "Sedimentary Sandstone", "rock_strata", "Stratified Sandstone", "Layered Terraced Slab", "#FFCC00", "#FF9900")
-            )
+            emptyList()
         }
     }
 
@@ -403,10 +395,10 @@ class AssetRepository(private val context: Context) {
         }
     }
 
-    private fun parseGeometry(jsonString: String, fallbackName: String): MeshGeometry {
+    private fun parseGeometry(jsonString: String, assetId: String): MeshGeometry {
         return try {
             val obj = JSONObject(jsonString)
-            val name = obj.optString("name", fallbackName)
+            val name = obj.optString("name", assetId)
             val vertexCount = obj.optInt("vertex_count", 0)
             val faceCount = obj.optInt("face_count", 0)
             val edgeCount = obj.optInt("edge_count", 0)
@@ -488,7 +480,7 @@ class AssetRepository(private val context: Context) {
                     )
                 }
             } else if (faces.isNotEmpty()) {
-                // Fallback synthesized volume groups for legacy models
+                // Synthesized volume groups for legacy models
                 val chunkSize = maxOf(1, faces.size / 3)
                 val f1 = (0 until minOf(chunkSize, faces.size)).toList()
                 val f2 = (chunkSize until minOf(chunkSize * 2, faces.size)).toList()
@@ -549,14 +541,14 @@ class AssetRepository(private val context: Context) {
 
             MeshGeometry(name, vertexCount, faceCount, edgeCount, vertices, normals, uvs, indices, faces, volumeShapes)
         } catch (e: Exception) {
-            MeshGeometry(fallbackName, 0, 0, 0, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+            MeshGeometry(assetId, 0, 0, 0, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
         }
     }
 
-    private fun parseWireframeEdges(jsonString: String, fallbackName: String): WireframeEdges {
+    private fun parseWireframeEdges(jsonString: String, assetId: String): WireframeEdges {
         return try {
             val obj = JSONObject(jsonString)
-            val name = obj.optString("name", fallbackName)
+            val name = obj.optString("name", assetId)
             val edgeCount = obj.optInt("edge_count", 0)
             val edgesJson = obj.optJSONArray("edges")
             val edges = mutableListOf<List<Int>>()
@@ -568,7 +560,7 @@ class AssetRepository(private val context: Context) {
             }
             WireframeEdges(name, edgeCount, edges)
         } catch (e: Exception) {
-            WireframeEdges(fallbackName, 0, emptyList())
+            WireframeEdges(assetId, 0, emptyList())
         }
     }
 

@@ -66,6 +66,12 @@ def export_modular_post():
 def export_power_grid_network():
     return create_grid_glb(num_posts=4, span=16.0, corner_angle_deg=85.0, sag=0.55)
 """
+        else -> """
+# dev scripts/export_road_component_glb.py
+# Exports Vulkan 1.3 modular road component: ${assetType.title}
+def export_road_component():
+    return create_road_component_glb(component_id="${assetType.id}")
+"""
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

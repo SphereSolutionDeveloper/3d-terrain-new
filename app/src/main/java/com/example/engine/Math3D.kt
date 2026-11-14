@@ -3,6 +3,13 @@ package com.example.engine
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.tan
+
+data class Projected2D(
+    val screenX: Float,
+    val screenY: Float,
+    val depth: Float
+)
 
 data class Vec3(val x: Float, val y: Float, val z: Float) {
     operator fun plus(other: Vec3) = Vec3(x + other.x, y + other.y, z + other.z)
@@ -46,6 +53,45 @@ data class ProjectedTriangle(
 )
 
 object Math3D {
+
+    fun project3DTo2D(
+        x: Float, y: Float, z: Float,
+        yaw: Float, pitch: Float,
+        scale: Float,
+        cx: Float, cy: Float,
+        centerX: Float = 0f, centerY: Float = 0f, centerZ: Float = 0f,
+        cameraDist: Float = 80f,
+        isPerspective: Boolean = true,
+        fovDeg: Float = 60f
+    ): Projected2D {
+        val rx0 = x - centerX
+        val ry0 = y - centerY
+        val rz0 = z - centerZ
+
+        val cosY = cos(yaw)
+        val sinY = sin(yaw)
+        val x1 = rx0 * cosY - rz0 * sinY
+        val z1 = rx0 * sinY + rz0 * cosY
+
+        val cosP = cos(pitch)
+        val sinP = sin(pitch)
+        val y2 = ry0 * cosP - z1 * sinP
+        val z2 = ry0 * sinP + z1 * cosP
+
+        val perspectiveFactor = if (isPerspective) {
+            val fovRad = Math.toRadians(fovDeg.toDouble()).toFloat()
+            val tanHalfFov = tan(fovRad * 0.5f).coerceAtLeast(0.18f)
+            val distToCamera = (cameraDist - z2).coerceAtLeast(cameraDist * 0.20f)
+            (cameraDist / distToCamera) * (0.577f / tanHalfFov)
+        } else {
+            1.0f
+        }
+
+        val screenX = cx + (x1 * scale * perspectiveFactor)
+        val screenY = cy - (y2 * scale * perspectiveFactor)
+
+        return Projected2D(screenX, screenY, z2)
+    }
 
     fun rotateY(v: Vec3, angleRad: Float): Vec3 {
         val cosA = cos(angleRad)

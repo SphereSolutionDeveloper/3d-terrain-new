@@ -99,6 +99,17 @@ fun CppViewport3DCanvas(
                 CppAssetType.TEST_VEHICLE_LORRY -> (min(width, height) / 8.5f) * zoom
                 CppAssetType.MODULAR_POWER_POST -> (min(width, height) / 14.5f) * zoom
                 CppAssetType.POWER_GRID_NETWORK -> (min(width, height) / 44f) * zoom
+                CppAssetType.MODULAR_BRIDGE -> (min(width, height) / 95f) * zoom
+                CppAssetType.MODULAR_TOLL_PLAZA -> (min(width, height) / 46f) * zoom
+                CppAssetType.MODULAR_TUNNEL -> (min(width, height) / 70f) * zoom
+                CppAssetType.MODULAR_INTERCHANGE -> (min(width, height) / 110f) * zoom
+                CppAssetType.MODULAR_RETAINING_WALL -> (min(width, height) / 50f) * zoom
+                CppAssetType.CONNECTED_HIGHWAY_SCENE -> (min(width, height) / 160f) * zoom
+                CppAssetType.MODULAR_FOOTBRIDGE -> (min(width, height) / 72f) * zoom
+                CppAssetType.MODULAR_EXPRESSWAY -> (min(width, height) / 110f) * zoom
+                CppAssetType.MODULAR_SIGNPOST -> (min(width, height) / 36f) * zoom
+                CppAssetType.MODULAR_BARRIER -> (min(width, height) / 44f) * zoom
+                CppAssetType.MODULAR_ROAD_BLOCK -> (min(width, height) / 38f) * zoom
             }
 
             // Center of entire model for camera centering, rotation, and explosion disassembly
@@ -112,6 +123,17 @@ fun CppViewport3DCanvas(
                 CppAssetType.TEST_VEHICLE_LORRY -> 13.0f
                 CppAssetType.MODULAR_POWER_POST -> 20.0f
                 CppAssetType.POWER_GRID_NETWORK -> 56.0f
+                CppAssetType.MODULAR_BRIDGE -> 140.0f
+                CppAssetType.MODULAR_TOLL_PLAZA -> 75.0f
+                CppAssetType.MODULAR_TUNNEL -> 95.0f
+                CppAssetType.MODULAR_INTERCHANGE -> 150.0f
+                CppAssetType.MODULAR_RETAINING_WALL -> 70.0f
+                CppAssetType.CONNECTED_HIGHWAY_SCENE -> 260.0f
+                CppAssetType.MODULAR_FOOTBRIDGE -> 110.0f
+                CppAssetType.MODULAR_EXPRESSWAY -> 160.0f
+                CppAssetType.MODULAR_SIGNPOST -> 58.0f
+                CppAssetType.MODULAR_BARRIER -> 66.0f
+                CppAssetType.MODULAR_ROAD_BLOCK -> 58.0f
             }
 
             // 1. Draw 3D Ground Grid with matching perspective convergence
@@ -632,10 +654,22 @@ private fun DrawScope.drawGroundGrid(
         CppAssetType.POWER_GRID_NETWORK -> 42f
         CppAssetType.MODULAR_POWER_POST -> 9f
         CppAssetType.TEST_VEHICLE_LORRY -> 7f
+        CppAssetType.MODULAR_BRIDGE -> 100f
+        CppAssetType.MODULAR_TOLL_PLAZA -> 45f
+        CppAssetType.MODULAR_TUNNEL -> 60f
+        CppAssetType.MODULAR_INTERCHANGE -> 120f
+        CppAssetType.MODULAR_RETAINING_WALL -> 50f
+        CppAssetType.CONNECTED_HIGHWAY_SCENE -> 180f
+        CppAssetType.MODULAR_FOOTBRIDGE -> 75f
+        CppAssetType.MODULAR_EXPRESSWAY -> 110f
+        CppAssetType.MODULAR_SIGNPOST -> 28f
+        CppAssetType.MODULAR_BARRIER -> 45f
+        CppAssetType.MODULAR_ROAD_BLOCK -> 35f
     }
     val step = when (assetType) {
         CppAssetType.GARAGE_001, CppAssetType.POWER_GRID_NETWORK -> 4f
-        else -> 1f
+        CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_INTERCHANGE, CppAssetType.CONNECTED_HIGHWAY_SCENE, CppAssetType.MODULAR_EXPRESSWAY -> 10f
+        else -> 2f
     }
 
     var z = -halfSize

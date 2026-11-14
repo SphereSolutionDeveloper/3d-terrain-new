@@ -1,0 +1,3323 @@
+{
+  "grid_version": "2.0",
+  "description": "Procedural 10x10 Rock Field Terrain Matrix",
+  "grid_dimensions": {
+    "columns": 10,
+    "rows": 10,
+    "total_cells": 100,
+    "cell_size_meters": 1.0,
+    "total_field_size_meters": [
+      10.0,
+      10.0
+    ],
+    "total_area_m2": 100.0,
+    "coordinate_bounds": {
+      "min_x_meters": -4.5,
+      "max_x_meters": 4.5,
+      "min_z_meters": -4.5,
+      "max_z_meters": 4.5
+    }
+  },
+  "cells": [
+    {
+      "sector_id": "CELL_00_00",
+      "grid_row": 0,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.088,
+        -4.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [0,0]",
+      "dimensions_meters": [
+        0.68,
+        0.552,
+        0.637
+      ],
+      "volume_m3": 0.1027,
+      "mass_kg": 275.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 777,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,0. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_01",
+      "grid_row": 0,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.06,
+        -4.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [0,1]",
+      "dimensions_meters": [
+        0.589,
+        0.499,
+        0.544
+      ],
+      "volume_m3": 0.0686,
+      "mass_kg": 233.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 794,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,1. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_02",
+      "grid_row": 0,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.091,
+        -4.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [0,2]",
+      "dimensions_meters": [
+        0.794,
+        0.42,
+        0.654
+      ],
+      "volume_m3": 0.0936,
+      "mass_kg": 220.0,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 811,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,2. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_03",
+      "grid_row": 0,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        -0.002,
+        -4.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [0,3]",
+      "dimensions_meters": [
+        0.429,
+        0.772,
+        0.429
+      ],
+      "volume_m3": 0.061,
+      "mass_kg": 179.9,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 828,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,3. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_04",
+      "grid_row": 0,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        -0.019,
+        -4.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [0,4]",
+      "dimensions_meters": [
+        0.44,
+        0.599,
+        0.44
+      ],
+      "volume_m3": 0.0498,
+      "mass_kg": 132.0,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 845,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,4. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_05",
+      "grid_row": 0,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.112,
+        -4.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [0,5]",
+      "dimensions_meters": [
+        0.71,
+        0.577,
+        0.666
+      ],
+      "volume_m3": 0.1171,
+      "mass_kg": 313.8,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 862,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,5. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_06",
+      "grid_row": 0,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.186,
+        -4.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [0,6]",
+      "dimensions_meters": [
+        0.556,
+        0.471,
+        0.513
+      ],
+      "volume_m3": 0.0577,
+      "mass_kg": 196.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 879,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,6. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_07",
+      "grid_row": 0,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.148,
+        -4.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [0,7]",
+      "dimensions_meters": [
+        0.749,
+        0.396,
+        0.617
+      ],
+      "volume_m3": 0.0786,
+      "mass_kg": 184.7,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 896,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,7. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_08",
+      "grid_row": 0,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.133,
+        -4.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [0,8]",
+      "dimensions_meters": [
+        0.448,
+        0.806,
+        0.448
+      ],
+      "volume_m3": 0.0695,
+      "mass_kg": 205.0,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 913,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,8. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_00_09",
+      "grid_row": 0,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.145,
+        -4.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [0,9]",
+      "dimensions_meters": [
+        0.456,
+        0.622,
+        0.456
+      ],
+      "volume_m3": 0.0555,
+      "mass_kg": 147.1,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 930,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 0,9. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_00",
+      "grid_row": 1,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.211,
+        -3.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [1,0]",
+      "dimensions_meters": [
+        0.464,
+        0.632,
+        0.464
+      ],
+      "volume_m3": 0.0584,
+      "mass_kg": 154.8,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 808,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,0. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_01",
+      "grid_row": 1,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.162,
+        -3.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [1,1]",
+      "dimensions_meters": [
+        0.701,
+        0.569,
+        0.657
+      ],
+      "volume_m3": 0.1125,
+      "mass_kg": 301.5,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 825,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,1. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_02",
+      "grid_row": 1,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.096,
+        -3.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [1,2]",
+      "dimensions_meters": [
+        0.565,
+        0.478,
+        0.521
+      ],
+      "volume_m3": 0.0604,
+      "mass_kg": 205.4,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 842,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,2. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_03",
+      "grid_row": 1,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.007,
+        -3.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [1,3]",
+      "dimensions_meters": [
+        0.747,
+        0.396,
+        0.616
+      ],
+      "volume_m3": 0.0782,
+      "mass_kg": 183.8,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 859,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,3. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_04",
+      "grid_row": 1,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.089,
+        -3.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [1,4]",
+      "dimensions_meters": [
+        0.423,
+        0.761,
+        0.423
+      ],
+      "volume_m3": 0.0585,
+      "mass_kg": 172.6,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 876,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,4. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_05",
+      "grid_row": 1,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.209,
+        -3.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [1,5]",
+      "dimensions_meters": [
+        0.488,
+        0.666,
+        0.488
+      ],
+      "volume_m3": 0.0681,
+      "mass_kg": 180.5,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 893,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,5. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_06",
+      "grid_row": 1,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.203,
+        -3.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [1,6]",
+      "dimensions_meters": [
+        0.706,
+        0.573,
+        0.662
+      ],
+      "volume_m3": 0.115,
+      "mass_kg": 308.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 910,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,6. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_07",
+      "grid_row": 1,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.125,
+        -3.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [1,7]",
+      "dimensions_meters": [
+        0.556,
+        0.47,
+        0.513
+      ],
+      "volume_m3": 0.0576,
+      "mass_kg": 195.8,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 927,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,7. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_08",
+      "grid_row": 1,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.107,
+        -3.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [1,8]",
+      "dimensions_meters": [
+        0.739,
+        0.391,
+        0.608
+      ],
+      "volume_m3": 0.0754,
+      "mass_kg": 177.2,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 944,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,8. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_01_09",
+      "grid_row": 1,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.063,
+        -3.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [1,9]",
+      "dimensions_meters": [
+        0.435,
+        0.782,
+        0.435
+      ],
+      "volume_m3": 0.0635,
+      "mass_kg": 187.3,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 961,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 1,9. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_00",
+      "grid_row": 2,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.19,
+        -2.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [2,0]",
+      "dimensions_meters": [
+        0.425,
+        0.765,
+        0.425
+      ],
+      "volume_m3": 0.0593,
+      "mass_kg": 174.9,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 839,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,0. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_01",
+      "grid_row": 2,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.185,
+        -2.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [2,1]",
+      "dimensions_meters": [
+        0.459,
+        0.626,
+        0.459
+      ],
+      "volume_m3": 0.0566,
+      "mass_kg": 150.0,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 856,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,1. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_02",
+      "grid_row": 2,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.096,
+        -2.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [2,2]",
+      "dimensions_meters": [
+        0.618,
+        0.502,
+        0.58
+      ],
+      "volume_m3": 0.0773,
+      "mass_kg": 207.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 873,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,2. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_03",
+      "grid_row": 2,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.016,
+        -2.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [2,3]",
+      "dimensions_meters": [
+        0.555,
+        0.47,
+        0.513
+      ],
+      "volume_m3": 0.0575,
+      "mass_kg": 195.5,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 890,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,3. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_04",
+      "grid_row": 2,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.128,
+        -2.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [2,4]",
+      "dimensions_meters": [
+        0.729,
+        0.386,
+        0.601
+      ],
+      "volume_m3": 0.0726,
+      "mass_kg": 170.6,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 907,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,4. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_05",
+      "grid_row": 2,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.144,
+        -2.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [2,5]",
+      "dimensions_meters": [
+        0.441,
+        0.794,
+        0.441
+      ],
+      "volume_m3": 0.0663,
+      "mass_kg": 195.6,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 924,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,5. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_06",
+      "grid_row": 2,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.091,
+        -2.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [2,6]",
+      "dimensions_meters": [
+        0.47,
+        0.641,
+        0.47
+      ],
+      "volume_m3": 0.0608,
+      "mass_kg": 161.1,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 941,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,6. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_07",
+      "grid_row": 2,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.155,
+        -2.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [2,7]",
+      "dimensions_meters": [
+        0.681,
+        0.554,
+        0.639
+      ],
+      "volume_m3": 0.1035,
+      "mass_kg": 277.4,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 958,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,7. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_08",
+      "grid_row": 2,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.162,
+        -2.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [2,8]",
+      "dimensions_meters": [
+        0.572,
+        0.484,
+        0.528
+      ],
+      "volume_m3": 0.0628,
+      "mass_kg": 213.5,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 975,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,8. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_02_09",
+      "grid_row": 2,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.121,
+        -2.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [2,9]",
+      "dimensions_meters": [
+        0.752,
+        0.398,
+        0.619
+      ],
+      "volume_m3": 0.0795,
+      "mass_kg": 186.8,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 992,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 2,9. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_00",
+      "grid_row": 3,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.09,
+        -1.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [3,0]",
+      "dimensions_meters": [
+        0.698,
+        0.37,
+        0.575
+      ],
+      "volume_m3": 0.0638,
+      "mass_kg": 149.9,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 870,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,0. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_01",
+      "grid_row": 3,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.124,
+        -1.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [3,1]",
+      "dimensions_meters": [
+        0.42,
+        0.756,
+        0.42
+      ],
+      "volume_m3": 0.0573,
+      "mass_kg": 169.0,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 887,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,1. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_02",
+      "grid_row": 3,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.092,
+        -1.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [3,2]",
+      "dimensions_meters": [
+        0.399,
+        0.544,
+        0.399
+      ],
+      "volume_m3": 0.0372,
+      "mass_kg": 98.6,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 904,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,2. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_03",
+      "grid_row": 3,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.012,
+        -1.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [3,3]",
+      "dimensions_meters": [
+        0.63,
+        0.512,
+        0.591
+      ],
+      "volume_m3": 0.0818,
+      "mass_kg": 219.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 921,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,3. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_04",
+      "grid_row": 3,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.069,
+        -1.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [3,4]",
+      "dimensions_meters": [
+        0.511,
+        0.432,
+        0.472
+      ],
+      "volume_m3": 0.0447,
+      "mass_kg": 152.0,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 938,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,4. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_05",
+      "grid_row": 3,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.052,
+        -1.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [3,5]",
+      "dimensions_meters": [
+        0.681,
+        0.36,
+        0.561
+      ],
+      "volume_m3": 0.0591,
+      "mass_kg": 138.9,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 955,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,5. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_06",
+      "grid_row": 3,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.002,
+        -1.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [3,6]",
+      "dimensions_meters": [
+        0.384,
+        0.691,
+        0.384
+      ],
+      "volume_m3": 0.0437,
+      "mass_kg": 128.9,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 972,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,6. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_07",
+      "grid_row": 3,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.078,
+        -1.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [3,7]",
+      "dimensions_meters": [
+        0.47,
+        0.642,
+        0.47
+      ],
+      "volume_m3": 0.0609,
+      "mass_kg": 161.4,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 989,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,7. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_08",
+      "grid_row": 3,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.094,
+        -1.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [3,8]",
+      "dimensions_meters": [
+        0.731,
+        0.594,
+        0.685
+      ],
+      "volume_m3": 0.1277,
+      "mass_kg": 342.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1006,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,8. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_03_09",
+      "grid_row": 3,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.174,
+        -1.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [3,9]",
+      "dimensions_meters": [
+        0.562,
+        0.475,
+        0.518
+      ],
+      "volume_m3": 0.0594,
+      "mass_kg": 202.0,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1023,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 3,9. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_00",
+      "grid_row": 4,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.104,
+        -0.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [4,0]",
+      "dimensions_meters": [
+        0.571,
+        0.483,
+        0.527
+      ],
+      "volume_m3": 0.0624,
+      "mass_kg": 212.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 901,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,0. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_01",
+      "grid_row": 4,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.199,
+        -0.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [4,1]",
+      "dimensions_meters": [
+        0.668,
+        0.354,
+        0.55
+      ],
+      "volume_m3": 0.0558,
+      "mass_kg": 131.1,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 918,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,1. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_02",
+      "grid_row": 4,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.166,
+        -0.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [4,2]",
+      "dimensions_meters": [
+        0.406,
+        0.73,
+        0.406
+      ],
+      "volume_m3": 0.0517,
+      "mass_kg": 152.5,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 935,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,2. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_03",
+      "grid_row": 4,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.072,
+        -0.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [4,3]",
+      "dimensions_meters": [
+        0.485,
+        0.662,
+        0.485
+      ],
+      "volume_m3": 0.0669,
+      "mass_kg": 177.3,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 952,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,3. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_04",
+      "grid_row": 4,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.062,
+        -0.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [4,4]",
+      "dimensions_meters": [
+        0.705,
+        0.573,
+        0.661
+      ],
+      "volume_m3": 0.1146,
+      "mass_kg": 307.1,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 969,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,4. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_05",
+      "grid_row": 4,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.072,
+        -0.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [4,5]",
+      "dimensions_meters": [
+        0.575,
+        0.486,
+        0.53
+      ],
+      "volume_m3": 0.0636,
+      "mass_kg": 216.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 986,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,5. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_06",
+      "grid_row": 4,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.07,
+        -0.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [4,6]",
+      "dimensions_meters": [
+        0.728,
+        0.385,
+        0.599
+      ],
+      "volume_m3": 0.0721,
+      "mass_kg": 169.4,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1003,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,6. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_07",
+      "grid_row": 4,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.064,
+        -0.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [4,7]",
+      "dimensions_meters": [
+        0.406,
+        0.731,
+        0.406
+      ],
+      "volume_m3": 0.0517,
+      "mass_kg": 152.5,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1020,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,7. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_08",
+      "grid_row": 4,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.02,
+        -0.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [4,8]",
+      "dimensions_meters": [
+        0.472,
+        0.644,
+        0.472
+      ],
+      "volume_m3": 0.0616,
+      "mass_kg": 163.2,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1037,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,8. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_04_09",
+      "grid_row": 4,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.179,
+        -0.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [4,9]",
+      "dimensions_meters": [
+        0.706,
+        0.574,
+        0.662
+      ],
+      "volume_m3": 0.1152,
+      "mass_kg": 308.7,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1054,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 4,9. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_00",
+      "grid_row": 5,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.159,
+        0.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [5,0]",
+      "dimensions_meters": [
+        0.68,
+        0.552,
+        0.637
+      ],
+      "volume_m3": 0.1027,
+      "mass_kg": 275.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 932,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,0. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_01",
+      "grid_row": 5,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.272,
+        0.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [5,1]",
+      "dimensions_meters": [
+        0.562,
+        0.475,
+        0.519
+      ],
+      "volume_m3": 0.0595,
+      "mass_kg": 202.3,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 949,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,1. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_02",
+      "grid_row": 5,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.215,
+        0.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [5,2]",
+      "dimensions_meters": [
+        0.806,
+        0.427,
+        0.664
+      ],
+      "volume_m3": 0.0981,
+      "mass_kg": 230.5,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 966,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,2. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_03",
+      "grid_row": 5,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.108,
+        0.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [5,3]",
+      "dimensions_meters": [
+        0.447,
+        0.805,
+        0.447
+      ],
+      "volume_m3": 0.0691,
+      "mass_kg": 203.8,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 983,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,3. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_04",
+      "grid_row": 5,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.034,
+        0.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [5,4]",
+      "dimensions_meters": [
+        0.461,
+        0.629,
+        0.461
+      ],
+      "volume_m3": 0.0574,
+      "mass_kg": 152.1,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1000,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,4. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_05",
+      "grid_row": 5,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.041,
+        0.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [5,5]",
+      "dimensions_meters": [
+        0.71,
+        0.577,
+        0.666
+      ],
+      "volume_m3": 0.1171,
+      "mass_kg": 313.8,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1017,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,5. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_06",
+      "grid_row": 5,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.093,
+        0.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [5,6]",
+      "dimensions_meters": [
+        0.563,
+        0.476,
+        0.52
+      ],
+      "volume_m3": 0.0598,
+      "mass_kg": 203.3,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1034,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,6. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_07",
+      "grid_row": 5,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.099,
+        0.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [5,7]",
+      "dimensions_meters": [
+        0.684,
+        0.362,
+        0.563
+      ],
+      "volume_m3": 0.0599,
+      "mass_kg": 140.8,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1051,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,7. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_08",
+      "grid_row": 5,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.02,
+        0.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [5,8]",
+      "dimensions_meters": [
+        0.369,
+        0.664,
+        0.369
+      ],
+      "volume_m3": 0.0388,
+      "mass_kg": 114.5,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1068,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,8. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_05_09",
+      "grid_row": 5,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.106,
+        0.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [5,9]",
+      "dimensions_meters": [
+        0.464,
+        0.633,
+        0.464
+      ],
+      "volume_m3": 0.0585,
+      "mass_kg": 155.0,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1085,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 5,9. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_00",
+      "grid_row": 6,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.197,
+        1.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [6,0]",
+      "dimensions_meters": [
+        0.479,
+        0.653,
+        0.479
+      ],
+      "volume_m3": 0.0643,
+      "mass_kg": 170.4,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 963,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,0. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_01",
+      "grid_row": 6,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.23,
+        1.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [6,1]",
+      "dimensions_meters": [
+        0.719,
+        0.584,
+        0.674
+      ],
+      "volume_m3": 0.1215,
+      "mass_kg": 325.6,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 980,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,1. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_02",
+      "grid_row": 6,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.131,
+        1.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [6,2]",
+      "dimensions_meters": [
+        0.556,
+        0.471,
+        0.513
+      ],
+      "volume_m3": 0.0577,
+      "mass_kg": 196.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 997,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,2. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_03",
+      "grid_row": 6,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.082,
+        1.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [6,3]",
+      "dimensions_meters": [
+        0.724,
+        0.383,
+        0.596
+      ],
+      "volume_m3": 0.071,
+      "mass_kg": 166.8,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1014,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,3. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_04",
+      "grid_row": 6,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.01,
+        1.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [6,4]",
+      "dimensions_meters": [
+        0.447,
+        0.805,
+        0.447
+      ],
+      "volume_m3": 0.0691,
+      "mass_kg": 203.8,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1031,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,4. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_05",
+      "grid_row": 6,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        -0.043,
+        1.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [6,5]",
+      "dimensions_meters": [
+        0.513,
+        0.7,
+        0.513
+      ],
+      "volume_m3": 0.0791,
+      "mass_kg": 209.6,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1048,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,5. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_06",
+      "grid_row": 6,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        -0.026,
+        1.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [6,6]",
+      "dimensions_meters": [
+        0.647,
+        0.526,
+        0.607
+      ],
+      "volume_m3": 0.0887,
+      "mass_kg": 237.7,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1065,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,6. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_07",
+      "grid_row": 6,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.031,
+        1.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [6,7]",
+      "dimensions_meters": [
+        0.527,
+        0.446,
+        0.486
+      ],
+      "volume_m3": 0.049,
+      "mass_kg": 166.6,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1082,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,7. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_08",
+      "grid_row": 6,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.015,
+        1.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [6,8]",
+      "dimensions_meters": [
+        0.704,
+        0.373,
+        0.58
+      ],
+      "volume_m3": 0.0654,
+      "mass_kg": 153.7,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1099,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,8. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_06_09",
+      "grid_row": 6,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.106,
+        1.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [6,9]",
+      "dimensions_meters": [
+        0.432,
+        0.777,
+        0.432
+      ],
+      "volume_m3": 0.0623,
+      "mass_kg": 183.8,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1116,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.36,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 6,9. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_00",
+      "grid_row": 7,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.189,
+        2.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [7,0]",
+      "dimensions_meters": [
+        0.446,
+        0.802,
+        0.446
+      ],
+      "volume_m3": 0.0685,
+      "mass_kg": 202.1,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 994,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,0. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_01",
+      "grid_row": 7,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.115,
+        2.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [7,1]",
+      "dimensions_meters": [
+        0.458,
+        0.624,
+        0.458
+      ],
+      "volume_m3": 0.0562,
+      "mass_kg": 148.9,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1011,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,1. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_02",
+      "grid_row": 7,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.029,
+        2.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [7,2]",
+      "dimensions_meters": [
+        0.683,
+        0.555,
+        0.641
+      ],
+      "volume_m3": 0.1043,
+      "mass_kg": 279.5,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1028,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,2. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_03",
+      "grid_row": 7,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.114,
+        2.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [7,3]",
+      "dimensions_meters": [
+        0.585,
+        0.495,
+        0.54
+      ],
+      "volume_m3": 0.0671,
+      "mass_kg": 228.1,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1045,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,3. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_04",
+      "grid_row": 7,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.157,
+        2.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [7,4]",
+      "dimensions_meters": [
+        0.72,
+        0.381,
+        0.593
+      ],
+      "volume_m3": 0.0698,
+      "mass_kg": 164.0,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1062,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,4. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_05",
+      "grid_row": 7,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.045,
+        2.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [7,5]",
+      "dimensions_meters": [
+        0.417,
+        0.751,
+        0.417
+      ],
+      "volume_m3": 0.0561,
+      "mass_kg": 165.5,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1079,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,5. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_06",
+      "grid_row": 7,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        -0.061,
+        2.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [7,6]",
+      "dimensions_meters": [
+        0.48,
+        0.655,
+        0.48
+      ],
+      "volume_m3": 0.0648,
+      "mass_kg": 171.7,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1096,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,6. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_07",
+      "grid_row": 7,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        -0.01,
+        2.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [7,7]",
+      "dimensions_meters": [
+        0.682,
+        0.554,
+        0.639
+      ],
+      "volume_m3": 0.1037,
+      "mass_kg": 277.9,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1113,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,7. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_08",
+      "grid_row": 7,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.089,
+        2.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [7,8]",
+      "dimensions_meters": [
+        0.559,
+        0.473,
+        0.516
+      ],
+      "volume_m3": 0.0586,
+      "mass_kg": 199.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1130,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,8. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_07_09",
+      "grid_row": 7,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.189,
+        2.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [7,9]",
+      "dimensions_meters": [
+        0.726,
+        0.384,
+        0.598
+      ],
+      "volume_m3": 0.0716,
+      "mass_kg": 168.3,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1147,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.44,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 7,9. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_00",
+      "grid_row": 8,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        0.09,
+        3.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [8,0]",
+      "dimensions_meters": [
+        0.642,
+        0.34,
+        0.528
+      ],
+      "volume_m3": 0.0495,
+      "mass_kg": 116.3,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1025,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,0. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_01",
+      "grid_row": 8,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.068,
+        3.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [8,1]",
+      "dimensions_meters": [
+        0.41,
+        0.738,
+        0.41
+      ],
+      "volume_m3": 0.0533,
+      "mass_kg": 157.2,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1042,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,1. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_02",
+      "grid_row": 8,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.102,
+        3.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [8,2]",
+      "dimensions_meters": [
+        0.455,
+        0.62,
+        0.455
+      ],
+      "volume_m3": 0.0551,
+      "mass_kg": 146.0,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1059,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,2. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_03",
+      "grid_row": 8,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.204,
+        3.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [8,3]",
+      "dimensions_meters": [
+        0.699,
+        0.568,
+        0.655
+      ],
+      "volume_m3": 0.1117,
+      "mass_kg": 299.4,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1076,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,3. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_04",
+      "grid_row": 8,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.256,
+        3.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [8,4]",
+      "dimensions_meters": [
+        0.535,
+        0.453,
+        0.494
+      ],
+      "volume_m3": 0.0514,
+      "mass_kg": 174.8,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1093,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,4. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_05",
+      "grid_row": 8,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.152,
+        3.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [8,5]",
+      "dimensions_meters": [
+        0.693,
+        0.367,
+        0.57
+      ],
+      "volume_m3": 0.0622,
+      "mass_kg": 146.2,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1110,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,5. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_06",
+      "grid_row": 8,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.038,
+        3.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [8,6]",
+      "dimensions_meters": [
+        0.445,
+        0.801,
+        0.445
+      ],
+      "volume_m3": 0.0681,
+      "mass_kg": 200.9,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1127,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,6. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_07",
+      "grid_row": 8,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.073,
+        3.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [8,7]",
+      "dimensions_meters": [
+        0.465,
+        0.634,
+        0.465
+      ],
+      "volume_m3": 0.0589,
+      "mass_kg": 156.1,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1144,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,7. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_08",
+      "grid_row": 8,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.171,
+        3.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [8,8]",
+      "dimensions_meters": [
+        0.674,
+        0.547,
+        0.631
+      ],
+      "volume_m3": 0.0999,
+      "mass_kg": 267.7,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1161,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,8. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_08_09",
+      "grid_row": 8,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.174,
+        3.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [8,9]",
+      "dimensions_meters": [
+        0.525,
+        0.444,
+        0.485
+      ],
+      "volume_m3": 0.0485,
+      "mass_kg": 164.9,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1178,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.2,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 8,9. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_00",
+      "grid_row": 9,
+      "grid_col": 0,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -4.5,
+        -0.02,
+        4.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [9,0]",
+      "dimensions_meters": [
+        0.567,
+        0.48,
+        0.524
+      ],
+      "volume_m3": 0.0612,
+      "mass_kg": 208.1,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1056,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,0. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_01",
+      "grid_row": 9,
+      "grid_col": 1,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -3.5,
+        0.03,
+        4.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [9,1]",
+      "dimensions_meters": [
+        0.752,
+        0.398,
+        0.619
+      ],
+      "volume_m3": 0.0795,
+      "mass_kg": 186.8,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1073,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,1. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_02",
+      "grid_row": 9,
+      "grid_col": 2,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -2.5,
+        0.143,
+        4.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [9,2]",
+      "dimensions_meters": [
+        0.421,
+        0.758,
+        0.421
+      ],
+      "volume_m3": 0.0577,
+      "mass_kg": 170.2,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1090,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,2. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_03",
+      "grid_row": 9,
+      "grid_col": 3,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -1.5,
+        0.177,
+        4.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [9,3]",
+      "dimensions_meters": [
+        0.463,
+        0.631,
+        0.463
+      ],
+      "volume_m3": 0.0581,
+      "mass_kg": 154.0,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1107,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,3. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_04",
+      "grid_row": 9,
+      "grid_col": 4,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        -0.5,
+        0.179,
+        4.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [9,4]",
+      "dimensions_meters": [
+        0.662,
+        0.538,
+        0.621
+      ],
+      "volume_m3": 0.095,
+      "mass_kg": 254.6,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1124,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,4. Granite Boulder resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_05",
+      "grid_row": 9,
+      "grid_col": 5,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        0.5,
+        0.202,
+        4.5
+      ],
+      "archetype_id": "rock_meteorite",
+      "rock_title": "Chondrite Meteorite [9,5]",
+      "dimensions_meters": [
+        0.502,
+        0.425,
+        0.463
+      ],
+      "volume_m3": 0.0424,
+      "mass_kg": 144.2,
+      "mineral_density_kg_m3": 3400.0,
+      "accent_color": "#39FF14",
+      "noise_parameters": {
+        "seed": 1141,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,5. Chondrite Meteorite resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_06",
+      "grid_row": 9,
+      "grid_col": 6,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        1.5,
+        0.144,
+        4.5
+      ],
+      "archetype_id": "rock_strata",
+      "rock_title": "Sedimentary Sandstone [9,6]",
+      "dimensions_meters": [
+        0.726,
+        0.384,
+        0.598
+      ],
+      "volume_m3": 0.0716,
+      "mass_kg": 168.3,
+      "mineral_density_kg_m3": 2350.0,
+      "accent_color": "#FFCC00",
+      "noise_parameters": {
+        "seed": 1158,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,6. Sedimentary Sandstone resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_07",
+      "grid_row": 9,
+      "grid_col": 7,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        2.5,
+        0.052,
+        4.5
+      ],
+      "archetype_id": "rock_basalt",
+      "rock_title": "Volcanic Basalt Column [9,7]",
+      "dimensions_meters": [
+        0.436,
+        0.786,
+        0.436
+      ],
+      "volume_m3": 0.0642,
+      "mass_kg": 189.4,
+      "mineral_density_kg_m3": 2950.0,
+      "accent_color": "#FF8800",
+      "noise_parameters": {
+        "seed": 1175,
+        "fbm_octaves": 4,
+        "frequency": 2.4,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,7. Volcanic Basalt Column resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_08",
+      "grid_row": 9,
+      "grid_col": 8,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        3.5,
+        0.139,
+        4.5
+      ],
+      "archetype_id": "rock_crystal",
+      "rock_title": "Quartz Geode Cluster [9,8]",
+      "dimensions_meters": [
+        0.485,
+        0.662,
+        0.485
+      ],
+      "volume_m3": 0.0669,
+      "mass_kg": 177.3,
+      "mineral_density_kg_m3": 2650.0,
+      "accent_color": "#BF55EC",
+      "noise_parameters": {
+        "seed": 1192,
+        "fbm_octaves": 4,
+        "frequency": 2.8,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,8. Quartz Geode Cluster resting on local terrain bedrock."
+    },
+    {
+      "sector_id": "CELL_09_09",
+      "grid_row": 9,
+      "grid_col": 9,
+      "cell_size_meters": [
+        1.0,
+        1.0
+      ],
+      "world_position_meters": [
+        4.5,
+        0.197,
+        4.5
+      ],
+      "archetype_id": "rock_granite",
+      "rock_title": "Granite Boulder [9,9]",
+      "dimensions_meters": [
+        0.626,
+        0.509,
+        0.587
+      ],
+      "volume_m3": 0.0803,
+      "mass_kg": 215.2,
+      "mineral_density_kg_m3": 2680.0,
+      "accent_color": "#00E5FF",
+      "noise_parameters": {
+        "seed": 1209,
+        "fbm_octaves": 4,
+        "frequency": 2.0,
+        "voronoi_facets": 0.28,
+        "surface_roughness": 0.65
+      },
+      "geological_notes": "1m\u00b2 grid sector 9,9. Granite Boulder resting on local terrain bedrock."
+    }
+  ]
+}

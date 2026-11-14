@@ -1,114 +1,96 @@
 package com.example
 
-import com.example.engine.Procedural3DBuilder
+import com.example.engine.Math3D
+import com.example.engine.NativeEngineBridge
 import com.example.model.CppAssetType
+import com.example.model.NativeVulkanMesh
 import org.junit.Assert.*
 import org.junit.Test
 
 class Procedural3DBuilderTest {
 
     @Test
-    fun testBuildGarage001DimensionsAndPrimitives() {
-        val mesh = Procedural3DBuilder.buildGarage001(
-            bay1OpenPct = 0.0f,
-            bay2OpenPct = 0.5f,
-            neonSignOn = true
+    fun testNativeVulkanMeshDataModel() {
+        val dummyVerts = FloatArray(12 * 4) // 4 vertices
+        val dummyIndices = intArrayOf(0, 1, 2, 0, 2, 3)
+        val mesh = NativeVulkanMesh(
+            assetType = CppAssetType.MODULAR_BRIDGE,
+            vertices = dummyVerts,
+            indices = dummyIndices,
+            vertexCount = 4,
+            triangleCount = 2,
+            civilStandard = "AASHTO LRFD / Eurocode EN 1991-2"
         )
 
-        assertEquals(CppAssetType.GARAGE_001, mesh.assetType)
-        assertTrue(mesh.boxes.isNotEmpty())
-        // Total vertices is boxes.size * 36
-        assertEquals(mesh.boxes.size * 36, mesh.totalVertices)
-        assertEquals(mesh.boxes.size * 12, mesh.totalTriangles)
-
-        // Check essential boxes exist for standalone garage house
-        val boxNames = mesh.boxes.map { it.id }
-        assertTrue(boxNames.contains("floor_slab"))
-        assertTrue(boxNames.contains("main_warehouse"))
-        assertTrue(boxNames.contains("roof_trim"))
-        assertTrue(boxNames.contains("workshop_banner"))
+        assertEquals(CppAssetType.MODULAR_BRIDGE, mesh.assetType)
+        assertEquals(4, mesh.vertexCount)
+        assertEquals(2, mesh.triangleCount)
+        assertEquals(48, mesh.vertices.size)
+        assertEquals(6, mesh.indices.size)
+        assertTrue(mesh.civilStandard.contains("AASHTO"))
     }
 
     @Test
-    fun testBuildTestVehicleDimensionsAndPrimitives() {
-        val mesh = Procedural3DBuilder.buildTestVehicle(
-            headlightsOn = true,
-            taillightsOn = true
+    fun testMath3DProjectionForVulkanMesh() {
+        val proj = Math3D.project3DTo2D(
+            x = 10f, y = 5f, z = 20f,
+            yaw = 0.5f, pitch = 0.3f,
+            scale = 10f,
+            cx = 400f, cy = 300f,
+            centerX = 0f, centerY = 0f, centerZ = 0f,
+            cameraDist = 100f,
+            isPerspective = true
         )
-
-        assertEquals(CppAssetType.TEST_VEHICLE_LORRY, mesh.assetType)
-        assertTrue(mesh.boxes.isNotEmpty())
-        assertEquals(mesh.boxes.size * 36, mesh.totalVertices)
-
-        // Check key components
-        val boxNames = mesh.boxes.map { it.id }
-        assertTrue(boxNames.contains("chassis_frame"))
-        assertTrue(boxNames.contains("driver_cab"))
-        assertTrue(boxNames.contains("cargo_box"))
-        assertTrue(boxNames.contains("headlight_left"))
-        assertTrue(boxNames.contains("taillight_left"))
-        assertTrue(boxNames.contains("wheel_front_left"))
-        assertTrue(boxNames.contains("wheel_rear_right"))
+        assertNotNull(proj)
+        assertTrue(proj.screenX > 0f)
+        assertTrue(proj.screenY > 0f)
     }
 
     @Test
-    fun testBuildPowerGridNetworkCylinderVsBox() {
-        val cylinderMesh = Procedural3DBuilder.buildPowerGridNetwork(
-            numPosts = 4,
-            spanDistance = 16.0f,
-            useCylinder = true,
-            cylinderSides = 8,
-            cableRadiusM = 0.035f,
-            tensionKn = 18.5f,
-            linearMassKgM = 1.25f
-        )
+    fun testBridgeTypeKeyMapping() {
+        assertEquals(0, NativeEngineBridge.mapBridgeTypeKeyToIndex("CABLE_STAYED"))
+        assertEquals(1, NativeEngineBridge.mapBridgeTypeKeyToIndex("SUSPENSION"))
+        assertEquals(2, NativeEngineBridge.mapBridgeTypeKeyToIndex("PEDESTRIAN_FOOTBRIDGE"))
+        assertEquals(3, NativeEngineBridge.mapBridgeTypeKeyToIndex("CONCRETE_VIADUCT"))
+        assertEquals(4, NativeEngineBridge.mapBridgeTypeKeyToIndex("STEEL_TRUSS"))
+        assertEquals(5, NativeEngineBridge.mapBridgeTypeKeyToIndex("PARABOLIC_ARCH"))
+        assertEquals(6, NativeEngineBridge.mapBridgeTypeKeyToIndex("EXTRADOSED"))
+        assertEquals(7, NativeEngineBridge.mapBridgeTypeKeyToIndex("BASCULE_DRAWBRIDGE"))
+        assertEquals(8, NativeEngineBridge.mapBridgeTypeKeyToIndex("CANTILEVER_TRUSS"))
+        assertEquals(9, NativeEngineBridge.mapBridgeTypeKeyToIndex("CURVED_CABLE_STAYED"))
+        assertEquals(10, NativeEngineBridge.mapBridgeTypeKeyToIndex("ROMAN_VIADUCT"))
+        assertEquals(11, NativeEngineBridge.mapBridgeTypeKeyToIndex("POST_TENSIONED_OVERPASS"))
+        assertEquals(12, NativeEngineBridge.mapBridgeTypeKeyToIndex("PEDESTRIAN_STRESS_RIBBON"))
+        assertEquals(13, NativeEngineBridge.mapBridgeTypeKeyToIndex("PEDESTRIAN_CABLE_STAYED"))
+        assertEquals(14, NativeEngineBridge.mapBridgeTypeKeyToIndex("PEDESTRIAN_TIMBER_ARCH"))
+        assertEquals(15, NativeEngineBridge.mapBridgeTypeKeyToIndex("STEEL_PLATE_GIRDER"))
 
-        assertEquals(CppAssetType.POWER_GRID_NETWORK, cylinderMesh.assetType)
-        assertTrue(cylinderMesh.wires.isNotEmpty())
-        assertTrue(cylinderMesh.wires.first().useCylinder)
-        assertEquals(8, cylinderMesh.wires.first().cylinderSides)
-
-        val boxMesh = Procedural3DBuilder.buildPowerGridNetwork(
-            numPosts = 4,
-            spanDistance = 16.0f,
-            useCylinder = false,
-            cylinderSides = 8,
-            cableRadiusM = 0.035f,
-            tensionKn = 18.5f,
-            linearMassKgM = 1.25f
-        )
-
-        assertFalse(boxMesh.wires.first().useCylinder)
-        // In continuous cylinder mode, cables are pure continuous tubular geometry without box blocks
-        assertTrue(cylinderMesh.wires.all { it.useCylinder })
-        assertTrue(boxMesh.boxes.size > cylinderMesh.boxes.size)
-
-        // Verify post-to-ground guy support cables are present as continuous cylinder wires
-        val guyWires = cylinderMesh.wires.filter { it.id.contains("guy_cable") }
-        assertTrue(guyWires.isNotEmpty())
-        assertTrue(guyWires.all { it.useCylinder })
-        assertFalse(guyWires.any { it.isHotPhase }) // Support cables are structural grounding stays, not hot
-
-        // Verify no cables have cyan / blue color (#00E5FF or high blue channel)
-        assertTrue(cylinderMesh.wires.none { it.colorHex == "#00E5FF" })
-        assertTrue(cylinderMesh.wires.none { it.b > 0.8f && it.r < 0.2f }) // Not cyan/blue
+        for (i in 0..15) {
+            val name = NativeEngineBridge.getBridgeTypeName(i)
+            assertTrue("Bridge type $i should have non-empty name", name.isNotEmpty())
+        }
     }
 
     @Test
-    fun testBuildModularPowerPostSupportCableCylinder() {
-        val postCylinder = Procedural3DBuilder.buildModularPowerPost(
-            postType = "CORNER",
-            hasGuyWire = true,
-            useCylinder = true,
-            cylinderSides = 8
-        )
+    fun testNativeBridgeGenerationIfLibraryLoaded() {
+        if (!NativeEngineBridge.isLoaded()) {
+            // Under JVM test runner without libapex_vulkan.so in java.library.path, graceful skip
+            return
+        }
 
-        assertEquals(CppAssetType.MODULAR_POWER_POST, postCylinder.assetType)
-        assertTrue(postCylinder.wires.isNotEmpty())
-        val guyWire = postCylinder.wires.first()
-        assertTrue(guyWire.useCylinder)
-        assertEquals("Post-to-Ground Support Stay Cable", guyWire.name)
-        // Zero cylinder core or facet blocks in boxes
-        assertTrue(postCylinder.boxes.none { it.id.contains("cyl_core") || it.id.contains("cyl_facet") })
+        val bridge = NativeEngineBridge.generateModularBridgeMesh(
+            bridgeType = "CURVED_CABLE_STAYED",
+            spanLengthM = 160f,
+            deckWidthM = 24f,
+            pylonHeightM = 58f,
+            curveBendAngleDeg = 26f,
+            superelevationDeg = 4f,
+            cablePairsCount = 12,
+            hasBarriers = true
+        )
+        assertTrue(bridge.vertexCount > 0)
+        assertTrue(bridge.triangleCount > 0)
+        assertEquals(bridge.vertexCount * 12, bridge.vertices.size)
+        assertEquals(bridge.triangleCount * 3, bridge.indices.size)
     }
 }

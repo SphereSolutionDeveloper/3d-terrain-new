@@ -112,6 +112,17 @@ fun ApexDrawerContent(
             )
 
             DrawerItemCard(
+                title = "Magadi Town 3×5km (1m)",
+                subtitle = "Real OSM Roads, Buildings & 1m DEM",
+                emoji = "🏙️",
+                badge = "1m Grid",
+                badgeColor = NeonLime,
+                isSelected = currentView == MainAppView.MAGADI_TOWN_3X5,
+                testTag = "drawer_item_magadi_town_3x5",
+                onClick = { onSelectView(MainAppView.MAGADI_TOWN_3X5) }
+            )
+
+            DrawerItemCard(
                 title = "Kenya Road Corridors & Grid",
                 subtitle = "10km Road Ribbon & 416 Sqtiles",
                 emoji = "🛣️",

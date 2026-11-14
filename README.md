@@ -1,6 +1,29 @@
 # Apex 3D Studio — Vulkan 1.3 Procedural Engine & Asset Suite
 
-Apex 3D Studio is a high-performance procedural 3D modeler and architectural visualization engine powered by modern **C++20** and **Vulkan 1.3** graphics pipelines (following Sascha Willems' established architecture patterns).
+Apex 3D Studio is a high-performance procedural 3D modeler and architectural visualization engine powered by modern **C++20** and **Vulkan 1.3** graphics pipelines.
+
+---
+
+## Clean Architecture Directory Layout
+
+```
+.
+├── app/                  # Pure Android UI Module
+│   ├── src/main/java/    # Android UI, Jetpack Compose screens, ViewModels, Themes
+│   ├── src/main/res/     # Android XML resources (strings, colors, drawables, icons)
+│   ├── AndroidManifest.xml
+│   └── build.gradle.kts  # Configures CMake & assets to reference native-assets/
+│
+└── native-assets/        # All C/C++, Shaders, JSON, Binaries, Generators & Docs
+    ├── CMakeLists.txt    # Native engine build script (libapex_vulkan.so)
+    ├── cpp/              # All C and C++ source code, JNI bridges, physics, math
+    ├── shaders/          # All GLSL & Vulkan compute/vertex/fragment shaders
+    ├── json/             # All asset catalogs, grid specifications, telemetry schemas
+    ├── binaries/         # All compiled .glb models, DEM spatial grids, ribbon binaries
+    ├── assets/           # Packaged modular runtime assets bundled into APK
+    ├── dev_scripts/      # Procedural asset generators and validation Python scripts
+    └── docs/             # Engineering specs, road analysis, and reference documentation
+```
 
 ---
 

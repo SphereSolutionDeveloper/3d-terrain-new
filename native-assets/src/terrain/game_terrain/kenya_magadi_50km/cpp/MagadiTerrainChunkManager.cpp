@@ -66,7 +66,7 @@ float MagadiTerrainChunkManager::GetElevationAt(float worldX, float worldZ) {
         return chunk->SampleContourElevation(worldX, worldZ, m_contourConfig);
     }
 
-    // Fallback formula
+    // Continuous rift valley elevation gradient for coordinates
     float u = std::max(0.0f, std::min(1.0f, (worldX + worldZ) / 100000.0f));
     return 590.0f + u * 1390.0f;
 }

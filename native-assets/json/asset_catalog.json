@@ -1,0 +1,130 @@
+{
+  "catalog_version": "2.0",
+  "description": "Procedural Rock Assets & 10x10 Grid Field Architecture",
+  "timestamp": "2026-10-06T13:00:00Z",
+  "grid_meta": {
+    "columns": 10,
+    "rows": 10,
+    "cell_size_m": 1.0,
+    "total_area_m2": 100.0
+  },
+  "assets": [
+    {
+      "id": "rocks",
+      "name": "10x10 Procedural Rock Field",
+      "folder": "rocks",
+      "category": "Field Terrain (1m\u00b2 Grid)",
+      "icon_desc": "Procedural Field Rock",
+      "primary_color": "#00E5FF",
+      "accent_color": "#7000FF"
+    },
+    {
+      "id": "rock_granite",
+      "name": "Granite Boulder",
+      "folder": "rock_granite",
+      "category": "Plutonic Granite",
+      "icon_desc": "Quartz-Feldspar Boulder",
+      "primary_color": "#39FF14",
+      "accent_color": "#00E5FF"
+    },
+    {
+      "id": "rock_basalt",
+      "name": "Volcanic Basalt Column",
+      "folder": "rock_basalt",
+      "category": "Extrusive Basalt",
+      "icon_desc": "Prismatic Basalt Column",
+      "primary_color": "#FF8800",
+      "accent_color": "#FF3366"
+    },
+    {
+      "id": "rock_meteorite",
+      "name": "Chondrite Meteorite",
+      "folder": "rock_meteorite",
+      "category": "Extra-Terrestrial Regolith",
+      "icon_desc": "Pitted Impact Asteroid",
+      "primary_color": "#00F0FF",
+      "accent_color": "#BF55EC"
+    },
+    {
+      "id": "rock_crystal",
+      "name": "Quartz Geode Cluster",
+      "folder": "rock_crystal",
+      "category": "Hydrothermal Silicate",
+      "icon_desc": "Amethyst Quartz Spires",
+      "primary_color": "#BF55EC",
+      "accent_color": "#00FFFF"
+    },
+    {
+      "id": "rock_strata",
+      "name": "Sedimentary Sandstone",
+      "folder": "rock_strata",
+      "category": "Stratified Sandstone",
+      "icon_desc": "Layered Terraced Slab",
+      "primary_color": "#FFCC00",
+      "accent_color": "#FF9900"
+    },
+    {
+      "id": "trees",
+      "name": "10x10 Forest Tree Field",
+      "folder": "trees",
+      "category": "Forest Plot (1m\u00b2 Grid)",
+      "icon_desc": "Stochastic L-System Forest",
+      "primary_color": "#39FF14",
+      "accent_color": "#00E5FF"
+    },
+    {
+      "id": "tree_oak",
+      "name": "English Oak Tree",
+      "folder": "tree_oak",
+      "category": "Deciduous Broadleaf",
+      "icon_desc": "Stochastic English Oak",
+      "primary_color": "#2ECC71",
+      "accent_color": "#39FF14"
+    },
+    {
+      "id": "tree_pine",
+      "name": "Scotch Pine Tree",
+      "folder": "tree_pine",
+      "category": "Coniferous Evergreen",
+      "icon_desc": "Needle-Branch Scotch Pine",
+      "primary_color": "#00E5FF",
+      "accent_color": "#7000FF"
+    },
+    {
+      "id": "tree_birch",
+      "name": "Silver Birch Tree",
+      "folder": "tree_birch",
+      "category": "Deciduous Birch",
+      "icon_desc": "Chalk-Bark Silver Birch",
+      "primary_color": "#FFCC00",
+      "accent_color": "#FF9900"
+    },
+    {
+      "id": "tree_willow",
+      "name": "Weeping Willow Tree",
+      "folder": "tree_willow",
+      "category": "Pendant Salicaceae",
+      "icon_desc": "Drooping Weeping Willow",
+      "primary_color": "#00F0FF",
+      "accent_color": "#BF55EC"
+    },
+    {
+      "id": "tree_acacia",
+      "name": "Umbrella Acacia Tree",
+      "folder": "tree_acacia",
+      "category": "Savanna Fabaceae",
+      "icon_desc": "Flat-Top Umbrella Acacia",
+      "primary_color": "#FF9900",
+      "accent_color": "#FF3366"
+    },
+    {
+      "id": "grass",
+      "name": "Bézier Meadow Grass",
+      "folder": "grass",
+      "category": "Vulkan Procedural Vegetation",
+      "icon_desc": "Responsive Quadratic Bézier Blade Tuft",
+      "primary_color": "#39FF14",
+      "accent_color": "#00FF99"
+    }
+  ]
+}

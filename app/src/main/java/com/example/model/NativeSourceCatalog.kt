@@ -806,6 +806,259 @@ AREA_NAME = "Magadi Rd Area"
 
     val roadFiles: List<NativeFileTreeItem> = listOf(
         NativeFileTreeItem(
+            path = "src/road/vulkan/VulkanRoadScene.h",
+            name = "VulkanRoadScene.h",
+            category = "Vulkan 1.3 Scene Pipeline",
+            lines = 115,
+            description = "Sascha Willems-style Vulkan 1.3 pipeline architecture, dynamic rendering, UBOs, push constants, and complete connected highway assembler (Toll -> Bridge -> Tunnel).",
+            codeSnippet = """// Vulkan 1.3 Road Scene Engine & Modular Component Assembler
+// Reference: Sascha Willems Vulkan Framework (SaschaWillems/Vulkan) & Khronos Vulkan Samples
+#pragma once
+#include <vector>
+#include <string>
+
+namespace ApexAssets {
+namespace Road {
+struct VulkanPipelineSpecs {
+    std::string apiVersion = "Vulkan 1.3.268 (Core Dynamic Rendering)";
+    std::string shaderModel = "GLSL 4.60 SPIR-V";
+    std::string polygonMode = "VK_POLYGON_MODE_FILL";
+    std::string msaaSamples = "VK_SAMPLE_COUNT_4_BIT";
+    bool dynamicRenderingEnabled = true;
+    bool pipelineCaching = true;
+    uint32_t pushConstantBytes = 128;
+};
+
+class VulkanRoadScene {
+public:
+    VulkanAssembledScene AssembleFullConnectedScene(
+        const BridgeParams& bridgeParams,
+        const TollParams& tollParams,
+        const TunnelParams& tunnelParams,
+        const InterchangeParams& interchangeParams,
+        const RetainingWallParams& wallParams
+    );
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/BridgeParams.h",
+            name = "BridgeParams.h",
+            category = "Bridge Architecture",
+            lines = 85,
+            description = "AASHTO LRFD / Eurocode parametric bridge specifications: Cable-stayed, segmental box girder, steel truss, parabolic arch, bending radius, and superelevation banking.",
+            codeSnippet = """// Modular Road Component: Bridge Architecture & Parametric Modeler
+// Standards: AASHTO LRFD Bridge Design & Eurocode EN 1991-2
+#pragma once
+
+namespace ApexAssets {
+namespace Road {
+enum class BridgeType : uint32_t {
+    CableStayed = 0,    // A-frame pylons, semi-fan stay cables, aerodynamic box deck
+    ConcreteBoxGirder,  // Post-tensioned box girder, hammerhead piers
+    SteelTrussViaduct,  // Warren through-truss with sway bracing
+    ParabolicArch       // Parabolic arch rib with vertical spandrel hangers
+};
+
+struct BridgeParams {
+    BridgeType type = BridgeType::CableStayed;
+    float spanLengthM = 160.0f;
+    float deckWidthM = 24.0f;
+    float pylonHeightM = 58.0f;
+    float curveBendAngleDeg = 0.0f; // Bending manipulation (-45° to +45°)
+    float superelevationDeg = 3.5f;  // Banking angle for lateral stability
+    uint32_t cablePairsCount = 14;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/BridgeGenerator.h",
+            name = "BridgeGenerator.h",
+            category = "Bridge 3D Engine",
+            lines = 92,
+            description = "Evaluates 3D curved centerline splines, Frenet-Serret normal frames, aerodynamic box decks, pylon towers, and catenary stay cables.",
+            codeSnippet = """// Modular Road Component: Bridge 3D Mesh Generator
+#pragma once
+#include "BridgeParams.h"
+#include <vector>
+
+namespace ApexAssets {
+namespace Road {
+class BridgeGenerator {
+public:
+    static BridgeMeshBuffer GenerateBridgeMesh(const BridgeParams& params);
+    static void SampleCenterline(
+        float t, const BridgeParams& params,
+        float& outX, float& outY, float& outZ,
+        float& outTangentX, float& outTangentY, float& outTangentZ,
+        float& outBankRad
+    );
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tolls/TollParams.h",
+            name = "TollParams.h",
+            category = "Toll Plaza Architecture",
+            lines = 78,
+            description = "Highway toll plaza parameters: Canopy styles (aerodynamic airfoil, space-frame truss), electronic toll collection (ETC) overhead gantries, crash attenuators, and dynamic VMS signals.",
+            codeSnippet = """// Modular Road Component: Toll Plaza Architecture & Telemetry
+// Follows FHWA & ASECAP Highway Toll Standards
+#pragma once
+
+namespace ApexAssets {
+namespace Road {
+enum class TollPlazaType : uint32_t {
+    CanopyHighwayPlaza = 0, // Monumental multi-lane spatial canopy with concrete islands
+    OverheadETCGantry,      // High-speed barrier-free electronic toll collection (RFID + ALPR)
+    ExpressBorderCheckpoint,// Weigh-in-motion dynamic scale plates
+    RampBarrierGate         // Interchange slip ramp gate with automated dispenser
+};
+
+struct TollParams {
+    TollPlazaType type = TollPlazaType::CanopyHighwayPlaza;
+    uint32_t laneCount = 6;
+    float laneWidthM = 3.8f;
+    float plazaLengthM = 64.0f;
+    float canopyClearanceM = 5.5f;
+    bool hasDynamicVMSDisplay = true;
+    bool hasCrashAttenuators = true;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tolls/TollPlazaGenerator.h",
+            name = "TollPlazaGenerator.h",
+            category = "Toll 3D Engine",
+            lines = 84,
+            description = "Generates 3D concrete foundation aprons, raised islands with crash bullnoses, curved canopy roof ribs, and overhead RFID/ALPR gantry trusses.",
+            codeSnippet = """// Modular Road Component: Toll Plaza 3D Mesh Generator
+#pragma once
+#include "TollParams.h"
+#include <vector>
+
+namespace ApexAssets {
+namespace Road {
+class TollPlazaGenerator {
+public:
+    static TollMeshBuffer GenerateTollMesh(const TollParams& params);
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tunnels/TunnelParams.h",
+            name = "TunnelParams.h",
+            category = "Tunnel Architecture",
+            lines = 88,
+            description = "Subterranean tunnel engineering (NFPA 502 / PIARC): Mountain horseshoe NATM vault, circular TBM bore, cut-and-cover box, flared acoustic portal hoods, and jet fans.",
+            codeSnippet = """// Modular Road Component: Tunnel Architecture & Subterranean Engineering
+// Standards: NFPA 502 & PIARC Road Tunnel Guidelines
+#pragma once
+
+namespace ApexAssets {
+namespace Road {
+enum class TunnelBoreType : uint32_t {
+    MountainHorseshoe = 0, // NATM drill & blast horseshoe vault with cast RC lining
+    TwinBoreCircularTBM,   // Mechanized TBM circular tunnel with segmental rings
+    CutAndCoverBox,        // Rectangular reinforced concrete multi-cell box
+    FlaredPortalTransition // Monumental entrance portal with acoustic flare
+};
+
+struct TunnelParams {
+    TunnelBoreType boreType = TunnelBoreType::MountainHorseshoe;
+    float internalRadiusM = 5.8f;
+    float tunnelLengthM = 120.0f;
+    float curveBendAngleDeg = 0.0f; // Bending curvature through mountain
+    bool hasFlaredPortalHood = true;
+    bool hasJetVentilationFans = true;
+    float jetFanSpacingM = 35.0f;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tunnels/TunnelGenerator.h",
+            name = "TunnelGenerator.h",
+            category = "Tunnel 3D Engine",
+            lines = 82,
+            description = "Extrudes curved 3D tunnel bore rings along 3D spatial alignment, generates portal entrance headwalls, and places ceiling jet fans and emergency niches.",
+            codeSnippet = """// Modular Road Component: Tunnel 3D Mesh Generator
+#pragma once
+#include "TunnelParams.h"
+#include <vector>
+
+namespace ApexAssets {
+namespace Road {
+class TunnelGenerator {
+public:
+    static TunnelMeshBuffer GenerateTunnelMesh(const TunnelParams& params);
+    static void SampleTunnelCenterline(
+        float t, const TunnelParams& params,
+        float& outX, float& outY, float& outZ,
+        float& outTx, float& outTy, float& outTz
+    );
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/interchanges/InterchangeParams.h",
+            name = "InterchangeParams.h",
+            category = "Interchanges & Ramps",
+            lines = 68,
+            description = "AASHTO Green Book geometric interchange design: 270° cloverleaf loop ramps, directional flyovers, modern multilane roundabouts, and clothoid spiral transitions.",
+            codeSnippet = """// Modular Road Component: Interchange & Ramp Architecture
+// Follows AASHTO Green Book: Geometric Design of Highways
+#pragma once
+
+namespace ApexAssets {
+namespace Road {
+enum class InterchangeType : uint32_t {
+    CloverleafLoop = 0,    // 270-degree loop slip ramp
+    DirectionalFlyover,    // Elevated curved flyover bridge ramp
+    DiamondSlipRamp,       // Diagonal deceleration slip lane
+    ModernRoundabout       // Circulating roadway with truck apron
+};
+
+struct InterchangeParams {
+    InterchangeType type = InterchangeType::CloverleafLoop;
+    float loopRadiusM = 55.0f;
+    float totalArcAngleDeg = 270.0f;
+    float rampWidthM = 7.5f;
+    float gradeElevationDeltaM = 7.5f;
+    float superelevationBankingDeg = 6.0f;
+    float designSpeedKmH = 45.0f;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/retaining_walls/RetainingWallParams.h",
+            name = "RetainingWallParams.h",
+            category = "Retaining Walls & Slopes",
+            lines = 64,
+            description = "FHWA GEC 011 earth retention systems: Mechanically Stabilized Earth (MSE) cruciform panels, terraced rock gabions, cantilever RC stem walls, and Coulomb earth pressure.",
+            codeSnippet = """// Modular Road Component: Retaining Wall & Highway Embankment Architecture
+// Follows FHWA GEC 011 & Eurocode 7 Geotechnical Design
+#pragma once
+
+namespace ApexAssets {
+namespace Road {
+enum class RetainingWallType : uint32_t {
+    MSEModularPanel = 0, // Mechanically Stabilized Earth with cruciform panels
+    SteppedRockGabion,   // Double-twisted wire mesh baskets with basalt/granite
+    CantileverRCWall,    // Cast-in-place RC T-stem wall
+    SoilNailShotcrete    // Top-down soil nailed wall
+};
+
+struct RetainingWallParams {
+    RetainingWallType type = RetainingWallType::MSEModularPanel;
+    float wallHeightM = 6.5f;
+    float wallLengthM = 60.0f;
+    float wallBatterAngleDeg = 4.0f;
+    bool hasWeepholes = true;
+    bool hasTopCopigSlab = true;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
             path = "src/road/RoadNetwork.h",
             name = "RoadNetwork.h",
             category = "Road Graph",
@@ -818,12 +1071,6 @@ AREA_NAME = "Magadi Rd Area"
 #include <glm/glm.hpp>
 
 namespace Road {
-struct RoadNode {
-    uint32_t id;
-    glm::vec3 position;
-    std::vector<uint32_t> connectedEdgeIds;
-};
-
 struct RoadSegment {
     uint32_t id;
     uint32_t nodeA;
@@ -831,12 +1078,6 @@ struct RoadSegment {
     uint32_t laneCount = 2;
     float laneWidth = 3.5f;
     float speedLimitKmH = 60.0f;
-};
-
-class RoadNetwork {
-public:
-    void addNode(const glm::vec3& pos);
-    void connectNodes(uint32_t a, uint32_t b);
 };
 }"""
         ),
@@ -857,35 +1098,115 @@ class RoadSplineGraph {
 public:
     static glm::vec3 evaluatePosition(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t);
     static glm::vec3 evaluateTangent(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t);
-    static float evaluateCurvature(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t);
 };
 }"""
         ),
         NativeFileTreeItem(
-            path = "src/road/RoadTileGen.h",
-            name = "RoadTileGen.h",
-            category = "Tile Generation",
-            lines = 64,
-            description = "Generates streaming road tile chunks with cross-section profiles, guardrails, and asphalt wearing surfaces.",
-            codeSnippet = """// Procedural Vulkan Asset Suite
-// Path: src/road/RoadTileGen.h
+            path = "src/road/signage/SignpostParams.h",
+            name = "SignpostParams.h",
+            category = "Traffic Signage & Gantries",
+            lines = 35,
+            description = "FHWA MUTCD highway sign gantries, cantilever truss masts, emissive DMS LED matrices, curve chevrons, and butterfly gore split signs.",
+            codeSnippet = """// Modular Road Component: Signpost & Overhead Gantry Architecture
 #pragma once
-#include <vector>
-#include <glm/glm.hpp>
-
+namespace ApexAssets {
 namespace Road {
-struct RoadMesh {
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> uvs;
-    std::vector<uint32_t> indices;
+enum class SignpostType : uint32_t {
+    CantileverHighwaySign = 0,
+    FullSpanTrussGantry,
+    VariableMessageMatrix,
+    RegulatoryChevronCurveSet,
+    ButterflySplitSign
 };
-
-class RoadTileGen {
-public:
-    static RoadMesh generateRoadChunk(float startM, float endM, float width);
+struct SignpostParams {
+    SignpostType type = SignpostType::CantileverHighwaySign;
+    float gantrySpanWidthM = 18.0f;
+    float clearanceHeightM = 5.8f;
+    float signBoardWidthM = 6.5f;
+    uint32_t signCount = 3;
+    bool hasEmissiveDMS = true;
 };
-}"""
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/asphalt/AsphaltParams.h",
+            name = "AsphaltParams.h",
+            category = "Expressway Corridor",
+            lines = 35,
+            description = "AASHTO divided 6-lane freeways, elevated urban viaducts, exit gore merge tapers, smart inductive EV lanes, and mountain bench cuts.",
+            codeSnippet = """// Modular Road Component: Expressway Architecture
+#pragma once
+namespace ApexAssets {
+namespace Road {
+enum class ExpresswayType : uint32_t {
+    SixLaneDividedFreeway = 0,
+    ElevatedUrbanViaductDeck,
+    ExpresswayTollMergeTaper,
+    SmartManagedEVCorridor,
+    MountainSwitchbackCut
+};
+struct AsphaltParams {
+    ExpresswayType type = ExpresswayType::SixLaneDividedFreeway;
+    uint32_t laneCountPerDir = 3;
+    float sectionLengthM = 120.0f;
+    float curveBendAngleDeg = 14.0f;
+    float superelevationDeg = 4.5f;
+    bool hasStreetLighting = true;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/barriers/BarrierParams.h",
+            name = "BarrierParams.h",
+            category = "Safety Barriers & Guardrails",
+            lines = 33,
+            description = "MASH 2016 F-shape Jersey barriers, galvanized W-beam guardrails, 4-strand cable barriers, acoustic noise walls, and EVA roller crash cushions.",
+            codeSnippet = """// Modular Road Component: Safety Barrier & Guardrail Architecture
+#pragma once
+namespace ApexAssets {
+namespace Road {
+enum class BarrierType : uint32_t {
+    NewJerseyFShapeConcrete = 0,
+    GalvanizedWBeamGuardrail,
+    HighTensionCableBarrier,
+    AcousticNoiseBarrierWall,
+    RollerImpactCrashCushion
+};
+struct BarrierParams {
+    BarrierType type = BarrierType::NewJerseyFShapeConcrete;
+    float barrierLengthM = 48.0f;
+    float barrierHeightM = 1.10f;
+    float curveBendAngleDeg = 12.0f;
+    float postSpacingM = 2.0f;
+    bool hasReflectorDelineators = true;
+};
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/roadblocks/RoadBlockParams.h",
+            name = "RoadBlockParams.h",
+            category = "Road Blocks & Workzones",
+            lines = 33,
+            description = "MUTCD workzone drum tapers + LED trailers, water-filled Jersey barricades, ASTM F2656 K12 anti-ram bollards, spike chicanes, and dragon teeth.",
+            codeSnippet = """// Modular Road Component: Road Block & Security Checkpoint Architecture
+#pragma once
+namespace ApexAssets {
+namespace Road {
+enum class RoadBlockType : uint32_t {
+    JerseyAndWaterBarricadeLine = 0,
+    HydraAntiRamBollardArray,
+    TacticalSpikeAndChicane,
+    ConstructionLaneClosureZone,
+    ConcreteDragonTeethChicane
+};
+struct RoadBlockParams {
+    RoadBlockType type = RoadBlockType::JerseyAndWaterBarricadeLine;
+    float roadWidthM = 12.0f;
+    float zoneLengthM = 34.0f;
+    uint32_t unitCount = 6;
+    bool hasWarningBeacons = true;
+};
+}}"""
         )
     )
 

@@ -111,6 +111,7 @@ enum class MainAppView(
     val subtitle: String = "",
     val category: String = "Simulation"
 ) {
+    MAGADI_TOWN_3X5("Magadi Town 3×5km (1m)", "magadi_town", "🏙️", "OSM Roads, Buildings & 1m DEM", "Native Procedural C++"),
     KENYA_GRID_VIEW("Kenya Terrain Grid", "map", "🗺️", "16×26 Grid • 416 Cells @ 0.5°", "Native Procedural C++"),
     TERRAIN_VIEW("Procedural Terrain", "terrain", "⛰️", "Heightmaps, Caves, Cliffs, CDLOD", "Native Procedural C++"),
     ROAD_VIEW("Road Network System", "road", "🛣️", "Spline Graph, Lanes & Road Tiles", "Native Procedural C++"),

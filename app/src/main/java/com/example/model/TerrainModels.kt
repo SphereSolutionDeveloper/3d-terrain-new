@@ -53,7 +53,22 @@ data class TerrainState(
     val contourInterval: Float = 25.0f,
     val indexContourInterval: Float = 100.0f,
     val stepTerracingFactor: Float = 0.0f,
-    val showContourLines: Boolean = true
+    val showContourLines: Boolean = true,
+    val showGroundPiece: Boolean = true,
+    val groundPieceDatumM: Float = 400.0f
+)
+
+/**
+ * Solid Geological Ground Piece Foundation Metrics (400m ASL Baseline Datum)
+ * Evaluated directly from C++ Vulkan 1.3 engine (MagadiSceneEngine.cpp)
+ */
+data class GroundPieceMetrics(
+    val datumASLM: Float = 400.0f,
+    val depthMinM: Float = 198.0f,
+    val depthMaxM: Float = 1580.0f,
+    val depthRoadStartM: Float = 198.0f,
+    val depthRoadEndM: Float = 240.0f,
+    val verticalReliefM: Float = 1382.0f
 )
 
 data class TerrainVertex(
@@ -90,6 +105,22 @@ data class GameTerrainAssetPlacement(
     val scale: Float
 )
 
+data class RoadWaypoint3D(
+    val x: Float,
+    val y: Float,
+    val z: Float,
+    val rawElevation: Float,
+    val forwardM: Float,
+    val globalKmM: Float,
+    val lateralM: Float,
+    val gradePercent: Float,
+    val headingDeg: Float,
+    val naturalElevM: Float = 0f,
+    val cutFillDepthM: Float = 0f,
+    val nextContourElevM: Float = 0f,
+    val distToNextContourM: Float = 0f
+)
+
 data class TerrainMesh3D(
     val resolutionX: Int,
     val resolutionZ: Int,
@@ -98,7 +129,8 @@ data class TerrainMesh3D(
     val minHeight: Float,
     val maxHeight: Float,
     val avgSlope: Float,
-    val assetPlacements: List<GameTerrainAssetPlacement> = emptyList()
+    val assetPlacements: List<GameTerrainAssetPlacement> = emptyList(),
+    val roadCenterline: List<RoadWaypoint3D> = emptyList()
 )
 
 data class NativeFileTreeItem(
@@ -109,3 +141,24 @@ data class NativeFileTreeItem(
     val description: String,
     val codeSnippet: String
 )
+
+data class TerrainBuilding3D(
+    val id: Long,
+    val label: String,
+    val baseCornersXZ: List<Pair<Float, Float>>,
+    val baseY: Float,
+    val roofY: Float,
+    val isSelected: Boolean = false
+)
+
+data class TerrainRoadSeg3D(
+    val x0: Float,
+    val y0: Float,
+    val z0: Float,
+    val x1: Float,
+    val y1: Float,
+    val z1: Float,
+    val isPrimary: Boolean = false,
+    val isSelected: Boolean = false
+)
+

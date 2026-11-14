@@ -694,6 +694,10 @@ fun InteractiveControlsTab(
                         )
                     }
                 }
+                else -> {
+                    Text("ROAD COMPONENT PARAMETRIC CONTROLS", fontSize = 10.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = CyberCyan)
+                    Text("For real-time bending, size manipulation, cross-section design, and live C++ code inspection of this component, navigate to the dedicated Road Components view in the navigation drawer.", fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, color = TextSecondary)
+                }
             }
         }
     }

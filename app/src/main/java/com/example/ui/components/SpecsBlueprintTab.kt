@@ -83,6 +83,17 @@ fun SpecsBlueprintTab(
                 CppAssetType.TEST_VEHICLE_LORRY -> "Cyan Cab, Silver Cargo & Amber Lights"
                 CppAssetType.MODULAR_POWER_POST -> "Timber Mast, Porcelain & Crossarm"
                 CppAssetType.POWER_GRID_NETWORK -> "3-Phase ACSR & Guy Cables"
+                CppAssetType.MODULAR_BRIDGE -> "Asphalt, Concrete Box & High-Tensile Steel Cables"
+                CppAssetType.MODULAR_TOLL_PLAZA -> "Polycarbonate Canopy, Concrete Islands & LED VMS"
+                CppAssetType.MODULAR_TUNNEL -> "Shotcrete NATM Lining, Jet Fans & Reflective Niches"
+                CppAssetType.MODULAR_INTERCHANGE -> "Multi-Level Flyovers, Spiral Ramps & NJ Barriers"
+                CppAssetType.MODULAR_RETAINING_WALL -> "MSE Precast Panels & Wire Rock Gabions"
+                CppAssetType.CONNECTED_HIGHWAY_SCENE -> "Integrated Vulkan 1.3 AASHTO Highway Corridor"
+                CppAssetType.MODULAR_FOOTBRIDGE -> "Tubular Steel Spines, Glulam Timber & Architectural Glass"
+                CppAssetType.MODULAR_EXPRESSWAY -> "SMA Wearing Course, Jersey Median & Cobra-Head LED Poles"
+                CppAssetType.MODULAR_SIGNPOST -> "Galvanized Warren Trusses, Retroreflective Signs & LED Matrix"
+                CppAssetType.MODULAR_BARRIER -> "MASH Concrete F-Shape, W-Beam Steel & EVA Safety Rollers"
+                CppAssetType.MODULAR_ROAD_BLOCK -> "Safety Orange Barricades, K12 Stainless Bollards & Beacons"
             })
         }
     }

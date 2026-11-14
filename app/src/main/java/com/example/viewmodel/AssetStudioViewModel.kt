@@ -4,6 +4,8 @@ import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.engine.NativeEngineBridge
+import com.example.engine.NativeEngineBridge.toProceduralModelMesh
 import com.example.model.*
 import com.example.repository.AssetRepository
 import kotlin.math.*
@@ -175,16 +177,71 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
     val cableTensionKn = MutableStateFlow(18.5f) // horizontal tension T_H in kN
     val cableLinearMassKgM = MutableStateFlow(1.25f) // conductor unit mass w in kg/m
 
+    // --- ROAD PROCEDURAL STUDIO STATE (Bridges, Tolls, Tunnels, Interchanges, Walls, Connected Scene) ---
+    val roadSelectedCategory = MutableStateFlow("CONNECTED_SCENE") // "CONNECTED_SCENE", "BRIDGE", "TOLL_PLAZA", "TUNNEL", "INTERCHANGE", "RETAINING_WALL"
+    
+    // Bridge state
+    val bridgeType = MutableStateFlow("CABLE_STAYED") // "CABLE_STAYED", "CONCRETE_VIADUCT", "STEEL_TRUSS", "PARABOLIC_ARCH"
+    val bridgeSpanLengthM = MutableStateFlow(160.0f)
+    val bridgeDeckWidthM = MutableStateFlow(24.0f)
+    val bridgePylonHeightM = MutableStateFlow(58.0f)
+    val bridgeCurveBendDeg = MutableStateFlow(0.0f)
+    val bridgeSuperelevationDeg = MutableStateFlow(3.5f)
+    val bridgeCablePairs = MutableStateFlow(12)
+    val bridgeHasBarriers = MutableStateFlow(true)
+
+    // Toll Plaza state
+    val tollPlazaType = MutableStateFlow("CANOPY_PLAZA") // "CANOPY_PLAZA", "ETC_GANTRY", "CHECKPOINT", "RAMP_GATE"
+    val tollLaneCount = MutableStateFlow(6)
+    val tollLaneWidthM = MutableStateFlow(3.8f)
+    val tollPlazaLengthM = MutableStateFlow(64.0f)
+    val tollCanopyClearanceM = MutableStateFlow(5.5f)
+    val tollHasVMS = MutableStateFlow(true)
+
+    // Tunnel state
+    val tunnelBoreType = MutableStateFlow("MOUNTAIN_HORSESHOE") // "MOUNTAIN_HORSESHOE", "CIRCULAR_BORED", "CUT_AND_COVER", "PORTAL_TRANSITION"
+    val tunnelInternalRadiusM = MutableStateFlow(5.8f)
+    val tunnelLengthM = MutableStateFlow(120.0f)
+    val tunnelCurveBendDeg = MutableStateFlow(0.0f)
+    val tunnelJetFanSpacingM = MutableStateFlow(35.0f)
+    val tunnelHasFlaredPortal = MutableStateFlow(true)
+    val tunnelHasJetFans = MutableStateFlow(true)
+
+    // Interchange state
+    val interchangeType = MutableStateFlow("CLOVERLEAF_LOOP") // "CLOVERLEAF_LOOP", "DIRECTIONAL_FLYOVER", "ROUNDABOUT"
+    val interchangeLoopRadiusM = MutableStateFlow(55.0f)
+    val interchangeTotalArcDeg = MutableStateFlow(270.0f)
+    val interchangeRampWidthM = MutableStateFlow(7.5f)
+    val interchangeElevationDeltaM = MutableStateFlow(7.5f)
+    val interchangeBankingDeg = MutableStateFlow(6.0f)
+
+    // Retaining Wall state
+    val retainingWallType = MutableStateFlow("MSE_MODULAR") // "MSE_MODULAR", "STEPPED_GABION", "CANTILEVER_RC"
+    val retainingWallHeightM = MutableStateFlow(6.5f)
+    val retainingWallLengthM = MutableStateFlow(60.0f)
+    val retainingWallBatterDeg = MutableStateFlow(4.0f)
+
+    // 3D Viewport State for Road Studio
+    val roadYaw = MutableStateFlow(0.78f)
+    val roadPitch = MutableStateFlow(0.38f)
+    val roadZoom = MutableStateFlow(1.0f)
+    val roadPanX = MutableStateFlow(0.0f)
+    val roadPanY = MutableStateFlow(0.0f)
+    val roadIsAutoRotate = MutableStateFlow(true)
+    val roadShadingMode = MutableStateFlow("Lit Shaded") // "Lit Shaded", "Wireframe", "Normals", "Cross-Section"
+    val roadActiveTab = MutableStateFlow("3D VIEWPORT") // "3D VIEWPORT", "SIZE & BENDING CONTROLS", "C++ SOURCE CODE", "CROSS-SECTION"
+
+    private val _roadMesh = MutableStateFlow(
+        NativeEngineBridge.generateConnectedHighwayScene().toProceduralModelMesh()
+    )
+    val roadMesh: StateFlow<ProceduralModelMesh> = _roadMesh.asStateFlow()
+
     private val _cppMesh = MutableStateFlow(
-        com.example.engine.Procedural3DBuilder.buildPowerGridNetwork(
+        NativeEngineBridge.generatePowerGridMesh(
             numPosts = 4,
             spanDistance = 16.0f,
-            cornerAngleDeg = 85.0f,
-            wireSag = 0.55f,
-            energized = true,
-            hasStreetlights = true,
-            streetlightOn = true
-        )
+            cornerAngleDeg = 85.0f
+        ).toProceduralModelMesh()
     )
     val cppMesh: StateFlow<ProceduralModelMesh> = _cppMesh.asStateFlow()
 
@@ -518,7 +575,7 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun onSceneZoomChange(zoomDelta: Float) {
-        sceneZoom.value = (sceneZoom.value * zoomDelta).coerceIn(0.35f, 3.8f)
+        sceneZoom.value = (sceneZoom.value * zoomDelta).coerceIn(0.05f, 50.0f)
     }
 
     fun resetSceneCamera(preset: String = "Isometric") {
@@ -620,7 +677,7 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun onZoomChange(zoomDelta: Float) {
-        zoom.value = (zoom.value * zoomDelta).coerceIn(0.4f, 3.5f)
+        zoom.value = (zoom.value * zoomDelta).coerceIn(0.05f, 50.0f)
     }
 
     fun resetCamera(viewName: String = "Isometric") {
@@ -859,48 +916,202 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
 
     fun rebuildCppMesh() {
         when (selectedCppAsset.value) {
-            CppAssetType.GARAGE_001 -> {
-                _cppMesh.value = com.example.engine.Procedural3DBuilder.buildGarage001(
-                    bay1OpenPct = cppBay1OpenPct.value,
-                    bay2OpenPct = cppBay2OpenPct.value,
-                    neonSignOn = cppNeonSignOn.value
-                )
-            }
-            CppAssetType.TEST_VEHICLE_LORRY -> {
-                _cppMesh.value = com.example.engine.Procedural3DBuilder.buildTestVehicle(
-                    headlightsOn = cppHeadlightsOn.value,
-                    taillightsOn = cppTaillightsOn.value
-                )
-            }
+            CppAssetType.GARAGE_001,
+            CppAssetType.TEST_VEHICLE_LORRY,
             CppAssetType.MODULAR_POWER_POST -> {
-                _cppMesh.value = com.example.engine.Procedural3DBuilder.buildModularPowerPost(
-                    postType = postModularType.value,
-                    hasTransformer = postHasTransformer.value,
-                    hasStreetlight = postHasStreetlight.value,
-                    isStreetlightOn = postStreetlightOn.value,
-                    hasGuyWire = postHasGuyWire.value,
-                    useCylinder = cableGeometryMode.value == "CYLINDER",
-                    cableRadiusM = cableConductorRadiusMm.value / 1000.0f,
-                    cylinderSides = cableCylinderSides.value
-                )
+                _cppMesh.value = NativeEngineBridge.generatePowerGridMesh(
+                    numPosts = 1,
+                    spanDistance = 0f,
+                    cornerAngleDeg = 0f
+                ).toProceduralModelMesh()
             }
             CppAssetType.POWER_GRID_NETWORK -> {
-                _cppMesh.value = com.example.engine.Procedural3DBuilder.buildPowerGridNetwork(
+                _cppMesh.value = NativeEngineBridge.generatePowerGridMesh(
                     numPosts = gridPostCount.value,
                     spanDistance = gridSpanDistance.value,
-                    cornerAngleDeg = gridCornerAngleDeg.value,
-                    wireSag = gridWireSagM.value,
-                    energized = gridEnergized.value,
-                    hasStreetlights = true,
-                    streetlightOn = gridStreetlightsOn.value,
-                    useCylinder = cableGeometryMode.value == "CYLINDER",
-                    cableRadiusM = cableConductorRadiusMm.value / 1000.0f,
-                    tensionKn = cableTensionKn.value,
-                    linearMassKgM = cableLinearMassKgM.value,
-                    cylinderSides = cableCylinderSides.value
-                )
+                    cornerAngleDeg = gridCornerAngleDeg.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_BRIDGE -> {
+                _cppMesh.value = NativeEngineBridge.generateModularBridgeMesh(
+                    bridgeType = bridgeType.value,
+                    spanLengthM = bridgeSpanLengthM.value,
+                    deckWidthM = bridgeDeckWidthM.value,
+                    pylonHeightM = bridgePylonHeightM.value,
+                    curveBendAngleDeg = bridgeCurveBendDeg.value,
+                    superelevationDeg = bridgeSuperelevationDeg.value,
+                    cablePairsCount = bridgeCablePairs.value,
+                    hasBarriers = bridgeHasBarriers.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_TOLL_PLAZA -> {
+                _cppMesh.value = NativeEngineBridge.generateModularTollPlazaMesh(
+                    tollType = tollPlazaType.value,
+                    laneCount = tollLaneCount.value,
+                    laneWidthM = tollLaneWidthM.value,
+                    plazaLengthM = tollPlazaLengthM.value,
+                    canopyClearanceM = tollCanopyClearanceM.value,
+                    hasDynamicVMS = tollHasVMS.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_TUNNEL -> {
+                _cppMesh.value = NativeEngineBridge.generateModularTunnelMesh(
+                    tunnelType = tunnelBoreType.value,
+                    internalRadiusM = tunnelInternalRadiusM.value,
+                    tunnelLengthM = tunnelLengthM.value,
+                    curveBendAngleDeg = tunnelCurveBendDeg.value,
+                    jetFanSpacingM = tunnelJetFanSpacingM.value,
+                    hasFlaredPortal = tunnelHasFlaredPortal.value,
+                    hasJetFans = tunnelHasJetFans.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_INTERCHANGE -> {
+                _cppMesh.value = NativeEngineBridge.generateModularInterchangeMesh(
+                    interchangeType = interchangeType.value,
+                    loopRadiusM = interchangeLoopRadiusM.value,
+                    totalArcAngleDeg = interchangeTotalArcDeg.value,
+                    rampWidthM = interchangeRampWidthM.value,
+                    elevationDeltaM = interchangeElevationDeltaM.value,
+                    superelevationBankingDeg = interchangeBankingDeg.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_RETAINING_WALL -> {
+                _cppMesh.value = NativeEngineBridge.generateModularRetainingWallMesh(
+                    wallType = retainingWallType.value,
+                    wallHeightM = retainingWallHeightM.value,
+                    wallLengthM = retainingWallLengthM.value,
+                    wallBatterAngleDeg = retainingWallBatterDeg.value
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.CONNECTED_HIGHWAY_SCENE -> {
+                _cppMesh.value = NativeEngineBridge.generateConnectedHighwayScene().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_FOOTBRIDGE -> {
+                _cppMesh.value = NativeEngineBridge.generateModularBridgeMesh(
+                    bridgeType = "PEDESTRIAN_FOOTBRIDGE",
+                    spanLengthM = 75f,
+                    deckWidthM = 4.8f,
+                    pylonHeightM = 22f
+                ).toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_EXPRESSWAY -> {
+                _cppMesh.value = NativeEngineBridge.generateModularExpresswayMesh().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_SIGNPOST -> {
+                _cppMesh.value = NativeEngineBridge.generateModularSignpostMesh().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_BARRIER -> {
+                _cppMesh.value = NativeEngineBridge.generateModularBarrierMesh().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_ROAD_BLOCK -> {
+                _cppMesh.value = NativeEngineBridge.generateModularRoadBlockMesh().toProceduralModelMesh()
             }
         }
+    }
+
+    fun rebuildRoadMesh() {
+        when (roadSelectedCategory.value) {
+            "BRIDGE" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularBridgeMesh(
+                    bridgeType = bridgeType.value,
+                    spanLengthM = bridgeSpanLengthM.value,
+                    deckWidthM = bridgeDeckWidthM.value,
+                    pylonHeightM = bridgePylonHeightM.value,
+                    curveBendAngleDeg = bridgeCurveBendDeg.value,
+                    superelevationDeg = bridgeSuperelevationDeg.value,
+                    cablePairsCount = bridgeCablePairs.value,
+                    hasBarriers = bridgeHasBarriers.value
+                ).toProceduralModelMesh()
+            }
+            "TOLL_PLAZA" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularTollPlazaMesh(
+                    tollType = tollPlazaType.value,
+                    laneCount = tollLaneCount.value,
+                    laneWidthM = tollLaneWidthM.value,
+                    plazaLengthM = tollPlazaLengthM.value,
+                    canopyClearanceM = tollCanopyClearanceM.value,
+                    hasDynamicVMS = tollHasVMS.value
+                ).toProceduralModelMesh()
+            }
+            "TUNNEL" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularTunnelMesh(
+                    tunnelType = tunnelBoreType.value,
+                    internalRadiusM = tunnelInternalRadiusM.value,
+                    tunnelLengthM = tunnelLengthM.value,
+                    curveBendAngleDeg = tunnelCurveBendDeg.value,
+                    jetFanSpacingM = tunnelJetFanSpacingM.value,
+                    hasFlaredPortal = tunnelHasFlaredPortal.value,
+                    hasJetFans = tunnelHasJetFans.value
+                ).toProceduralModelMesh()
+            }
+            "INTERCHANGE" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularInterchangeMesh(
+                    interchangeType = interchangeType.value,
+                    loopRadiusM = interchangeLoopRadiusM.value,
+                    totalArcAngleDeg = interchangeTotalArcDeg.value,
+                    rampWidthM = interchangeRampWidthM.value,
+                    elevationDeltaM = interchangeElevationDeltaM.value,
+                    superelevationBankingDeg = interchangeBankingDeg.value
+                ).toProceduralModelMesh()
+            }
+            "RETAINING_WALL" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularRetainingWallMesh(
+                    wallType = retainingWallType.value,
+                    wallHeightM = retainingWallHeightM.value,
+                    wallLengthM = retainingWallLengthM.value,
+                    wallBatterAngleDeg = retainingWallBatterDeg.value
+                ).toProceduralModelMesh()
+            }
+            "FOOTBRIDGE" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularBridgeMesh(
+                    bridgeType = "PEDESTRIAN_FOOTBRIDGE",
+                    spanLengthM = 75f,
+                    deckWidthM = 4.8f,
+                    pylonHeightM = 22f
+                ).toProceduralModelMesh()
+            }
+            "EXPRESSWAY" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularExpresswayMesh().toProceduralModelMesh()
+            }
+            "SIGNPOST" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularSignpostMesh().toProceduralModelMesh()
+            }
+            "BARRIER" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularBarrierMesh().toProceduralModelMesh()
+            }
+            "ROAD_BLOCK" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularRoadBlockMesh().toProceduralModelMesh()
+            }
+            else -> {
+                _roadMesh.value = NativeEngineBridge.generateConnectedHighwayScene().toProceduralModelMesh()
+            }
+        }
+    }
+
+    fun onRoadRotateDrag(deltaX: Float, deltaY: Float) {
+        roadYaw.value = (roadYaw.value + deltaX * 0.008f) % (2f * Math.PI.toFloat())
+        roadPitch.value = (roadPitch.value + deltaY * 0.008f).coerceIn(0.05f, 1.50f)
+    }
+
+    fun onRoadPanDrag(deltaX: Float, deltaY: Float) {
+        roadPanX.value += deltaX * 0.006f
+        roadPanY.value -= deltaY * 0.006f
+    }
+
+    fun onRoadZoomChange(zoomDelta: Float) {
+        roadZoom.value = (roadZoom.value * zoomDelta).coerceIn(0.05f, 50.0f)
+    }
+
+    fun resetRoadCamera(preset: String = "Isometric") {
+        when (preset) {
+            "Front" -> { roadYaw.value = 0.0f; roadPitch.value = 0.20f }
+            "Side" -> { roadYaw.value = 1.57f; roadPitch.value = 0.20f }
+            "Top" -> { roadYaw.value = 0.0f; roadPitch.value = 1.48f }
+            else -> { roadYaw.value = 0.78f; roadPitch.value = 0.38f } // Isometric
+        }
+        roadZoom.value = 1.0f
+        roadPanX.value = 0f
+        roadPanY.value = 0f
     }
 
     fun onCppRotateDrag(deltaX: Float, deltaY: Float) {
@@ -914,7 +1125,7 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun onCppZoomChange(zoomDelta: Float) {
-        cppZoom.value = (cppZoom.value * zoomDelta).coerceIn(0.35f, 3.5f)
+        cppZoom.value = (cppZoom.value * zoomDelta).coerceIn(0.05f, 50.0f)
     }
 
     fun onCppFovChange(fovDeg: Float) {
@@ -929,38 +1140,52 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
         when (selectedCppAsset.value) {
             CppAssetType.GARAGE_001 -> {
                 when (preset) {
-                    // Garage 001: Rollup doors & apron face West (-X).
                     "Front" -> { cppYaw.value = -1.57f; cppPitch.value = 0.20f }
                     "Side" -> { cppYaw.value = 0.0f; cppPitch.value = 0.20f }
                     "Top" -> { cppYaw.value = -1.57f; cppPitch.value = 1.48f }
-                    else -> { cppYaw.value = -1.15f; cppPitch.value = 0.36f } // Isometric
+                    else -> { cppYaw.value = -1.15f; cppPitch.value = 0.36f }
                 }
             }
             CppAssetType.TEST_VEHICLE_LORRY -> {
                 when (preset) {
-                    // Test Vehicle: Cab & headlights face +X.
                     "Front" -> { cppYaw.value = 1.57f; cppPitch.value = 0.20f }
                     "Side" -> { cppYaw.value = 0.0f; cppPitch.value = 0.20f }
                     "Top" -> { cppYaw.value = 1.57f; cppPitch.value = 1.48f }
-                    else -> { cppYaw.value = 0.95f; cppPitch.value = 0.34f } // Isometric
+                    else -> { cppYaw.value = 0.95f; cppPitch.value = 0.34f }
                 }
             }
             CppAssetType.MODULAR_POWER_POST -> {
                 when (preset) {
-                    // Modular Power Post: Crossarm along X, Guy Wire stay along -Z
                     "Front" -> { cppYaw.value = 0.0f; cppPitch.value = 0.16f }
                     "Side" -> { cppYaw.value = 1.57f; cppPitch.value = 0.16f }
                     "Top" -> { cppYaw.value = 0.0f; cppPitch.value = 1.48f }
-                    else -> { cppYaw.value = 0.65f; cppPitch.value = 0.28f } // Isometric
+                    else -> { cppYaw.value = 0.65f; cppPitch.value = 0.28f }
                 }
             }
             CppAssetType.POWER_GRID_NETWORK -> {
                 when (preset) {
-                    // Power Grid Network: Linear run from X = -20 to Corner at X = 18, then turns toward +Z
                     "Front" -> { cppYaw.value = 0.0f; cppPitch.value = 0.28f }
                     "Side" -> { cppYaw.value = 1.57f; cppPitch.value = 0.28f }
                     "Top" -> { cppYaw.value = 0.55f; cppPitch.value = 1.48f }
-                    else -> { cppYaw.value = 0.72f; cppPitch.value = 0.30f } // Isometric view showing corner & sag cables
+                    else -> { cppYaw.value = 0.72f; cppPitch.value = 0.30f }
+                }
+            }
+            CppAssetType.MODULAR_BRIDGE,
+            CppAssetType.MODULAR_TOLL_PLAZA,
+            CppAssetType.MODULAR_TUNNEL,
+            CppAssetType.MODULAR_INTERCHANGE,
+            CppAssetType.MODULAR_RETAINING_WALL,
+            CppAssetType.CONNECTED_HIGHWAY_SCENE,
+            CppAssetType.MODULAR_FOOTBRIDGE,
+            CppAssetType.MODULAR_EXPRESSWAY,
+            CppAssetType.MODULAR_SIGNPOST,
+            CppAssetType.MODULAR_BARRIER,
+            CppAssetType.MODULAR_ROAD_BLOCK -> {
+                when (preset) {
+                    "Front" -> { cppYaw.value = 0.0f; cppPitch.value = 0.20f }
+                    "Side" -> { cppYaw.value = 1.57f; cppPitch.value = 0.20f }
+                    "Top" -> { cppYaw.value = 0.0f; cppPitch.value = 1.48f }
+                    else -> { cppYaw.value = 0.78f; cppPitch.value = 0.38f }
                 }
             }
         }
@@ -974,6 +1199,9 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
             while (isActive) {
                 if (cppIsAutoRotate.value && mainAppView.value == MainAppView.CPP_PROCEDURAL_VIEW) {
                     cppYaw.value = (cppYaw.value + 0.012f) % (2f * Math.PI.toFloat())
+                }
+                if (roadIsAutoRotate.value && mainAppView.value == MainAppView.ROAD_VIEW) {
+                    roadYaw.value = (roadYaw.value + 0.008f) % (2f * Math.PI.toFloat())
                 }
                 delay(30)
             }
