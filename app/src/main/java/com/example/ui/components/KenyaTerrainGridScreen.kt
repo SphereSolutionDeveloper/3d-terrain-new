@@ -132,6 +132,7 @@ data class TerrainChunkUiModel(
 
 enum class KenyaGridTab(val label: String, val icon: String) {
     MAGADI_TOWN_3X5("🏙️ Magadi Town 3×5km (1m)", "magadi_town"),
+    C58_CORRIDOR_3KM("🛣️ Route C58 ±1.5km Map", "c58_corridor"),
     ROAD_CORRIDOR("🛣️ Road & Chunks Visualizer", "corridor"),
     ELEVATION_2D_PROFILE("📈 2D Elevation Profile", "profile"),
     TERRAIN_CHUNKS_5X5("🧩 25 Terrain Chunks", "chunks"),
@@ -145,7 +146,9 @@ enum class KenyaGridTab(val label: String, val icon: String) {
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun KenyaTerrainGridScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFullScreenMap: Boolean = false,
+    onToggleFullScreenMap: ((Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -639,27 +642,29 @@ fun KenyaTerrainGridScreen(
             .fillMaxSize()
             .background(DarkBackground)
     ) {
-        // Navigation Tabs directly at top (No empty space or redundant header)
-        ScrollableTabRow(
-            selectedTabIndex = activeTab.ordinal,
-            containerColor = DarkSurface,
-            contentColor = CyberCyan,
-            edgePadding = 6.dp,
-            divider = { Divider(color = DarkSurfaceHighlight) }
-        ) {
-            KenyaGridTab.values().forEach { tab ->
-                Tab(
-                    selected = activeTab == tab,
-                    onClick = { activeTab = tab },
-                    text = {
-                        Text(
-                            text = tab.label,
-                            fontSize = 11.sp,
-                            fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal,
-                            color = if (activeTab == tab) CyberCyan else TextSecondary
-                        )
-                    }
-                )
+        // Navigation Tabs directly at top (hidden during fullscreen map inspection)
+        AnimatedVisibility(visible = !isFullScreenMap) {
+            ScrollableTabRow(
+                selectedTabIndex = activeTab.ordinal,
+                containerColor = DarkSurface,
+                contentColor = CyberCyan,
+                edgePadding = 6.dp,
+                divider = { Divider(color = DarkSurfaceHighlight) }
+            ) {
+                KenyaGridTab.values().forEach { tab ->
+                    Tab(
+                        selected = activeTab == tab,
+                        onClick = { activeTab = tab },
+                        text = {
+                            Text(
+                                text = tab.label,
+                                fontSize = 11.sp,
+                                fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal,
+                                color = if (activeTab == tab) CyberCyan else TextSecondary
+                            )
+                        }
+                    )
+                }
             }
         }
 
@@ -667,7 +672,18 @@ fun KenyaTerrainGridScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeTab) {
                 KenyaGridTab.MAGADI_TOWN_3X5 -> {
-                    MagadiTownScreen(modifier = Modifier.fillMaxSize())
+                    MagadiTownScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = isFullScreenMap,
+                        onToggleFullScreenMap = onToggleFullScreenMap
+                    )
+                }
+                KenyaGridTab.C58_CORRIDOR_3KM -> {
+                    C58CorridorScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = isFullScreenMap,
+                        onToggleFullScreenMap = onToggleFullScreenMap
+                    )
                 }
                 KenyaGridTab.ROAD_CORRIDOR -> {
                     // TAB: Real Surveyed Road Corridor, 2D Elevation Graph & 25 Terrain Chunks
@@ -3038,6 +3054,31 @@ val roadPoints = (0 until count).map {
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            if (isFullScreenMap && activeTab != KenyaGridTab.MAGADI_TOWN_3X5 && activeTab != KenyaGridTab.C58_CORRIDOR_3KM) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = DarkSurface.copy(alpha = 0.88f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .padding(10.dp)
+                ) {
+                    IconButton(
+                        onClick = { onToggleFullScreenMap?.invoke(false) },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("kenya_grid_restore_text_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = "Show Text & Controls",
+                            tint = NeonLime
+                        )
                     }
                 }
             }

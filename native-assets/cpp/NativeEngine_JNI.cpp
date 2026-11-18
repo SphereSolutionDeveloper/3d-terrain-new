@@ -3,6 +3,7 @@
 #include <jni.h>
 #include "MagadiSceneEngine.h"
 #include "MagadiTownEngine.h"
+#include "C58CorridorEngine.h"
 #include "ProceduralSceneEngine.h"
 #include "GlbParserEngine.h"
 #include "Math3D.h"
@@ -77,7 +78,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateHumanStartVertices(
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -90,7 +93,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateHumanStartIndices(
 
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray result = env->NewIntArray(count);
-    env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (result && count > 0) {
+        env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    }
     return result;
 }
 
@@ -130,7 +135,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadSegmentVertices(
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -143,7 +150,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadSegmentIndices(
 
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray result = env->NewIntArray(count);
-    env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (result && count > 0) {
+        env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    }
     return result;
 }
 
@@ -183,7 +192,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadSubSegmentVertices(
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -196,7 +207,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadSubSegmentIndices(
 
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray result = env->NewIntArray(count);
-    env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (result && count > 0) {
+        env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    }
     return result;
 }
 
@@ -236,7 +249,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerate1mResolutionVertices(
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -249,7 +264,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerate1mResolutionIndices(
 
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray result = env->NewIntArray(count);
-    env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (result && count > 0) {
+        env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    }
     return result;
 }
 
@@ -289,7 +306,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateWholeCombinedTerrainVer
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -302,7 +321,9 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateWholeCombinedTerrainInd
 
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray result = env->NewIntArray(count);
-    env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (result && count > 0) {
+        env->SetIntArrayRegion(result, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    }
     return result;
 }
 
@@ -1062,7 +1083,9 @@ static jfloatArray packMagadiMeshVertices(JNIEnv* env, const MagadiSceneMesh& me
     }
 
     jfloatArray result = env->NewFloatArray(static_cast<jsize>(floatCount));
-    env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    if (result && floatCount > 0) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(floatCount), packed.data());
+    }
     return result;
 }
 
@@ -1100,7 +1123,9 @@ Java_com_example_engine_NativeEngineBridge_nativeMagadiTownLatLonToLocalAndUtm(
 JNIEXPORT void JNICALL
 Java_com_example_engine_NativeEngineBridge_nativeSetMagadiTownDemGrid(
     JNIEnv* env, jobject /* this */, jint cols, jint rows, jfloatArray elevationsM) {
+    if (!env || !elevationsM) return;
     jsize len = env->GetArrayLength(elevationsM);
+    if (len <= 0) return;
     std::vector<float> buf(static_cast<size_t>(len));
     env->GetFloatArrayRegion(elevationsM, 0, len, buf.data());
     MagadiTownEngine::getInstance().setDemControlGrid(cols, rows, buf);
@@ -1109,8 +1134,9 @@ Java_com_example_engine_NativeEngineBridge_nativeSetMagadiTownDemGrid(
 JNIEXPORT void JNICALL
 Java_com_example_engine_NativeEngineBridge_nativeSetMagadiTownFootprints(
     JNIEnv* env, jobject /* this */, jfloatArray roadSegsPacked, jfloatArray buildingRectsPacked) {
-    jsize rLen = env->GetArrayLength(roadSegsPacked);
-    std::vector<float> rBuf(static_cast<size_t>(rLen));
+    if (!env) return;
+    jsize rLen = roadSegsPacked ? env->GetArrayLength(roadSegsPacked) : 0;
+    std::vector<float> rBuf(static_cast<size_t>(std::max<jsize>(0, rLen)));
     if (rLen > 0) env->GetFloatArrayRegion(roadSegsPacked, 0, rLen, rBuf.data());
 
     std::vector<MagadiTownRoadSegment2D> roads;
@@ -1120,8 +1146,8 @@ Java_com_example_engine_NativeEngineBridge_nativeSetMagadiTownFootprints(
         });
     }
 
-    jsize bLen = env->GetArrayLength(buildingRectsPacked);
-    std::vector<float> bBuf(static_cast<size_t>(bLen));
+    jsize bLen = buildingRectsPacked ? env->GetArrayLength(buildingRectsPacked) : 0;
+    std::vector<float> bBuf(static_cast<size_t>(std::max<jsize>(0, bLen)));
     if (bLen > 0) env->GetFloatArrayRegion(buildingRectsPacked, 0, bLen, bBuf.data());
 
     std::vector<MagadiTownBuildingRect2D> bldgs;
@@ -1138,12 +1164,13 @@ JNIEXPORT void JNICALL
 Java_com_example_engine_NativeEngineBridge_nativeSetMagadiTownLakeAndWater(
     JNIEnv* env, jobject /* this */,
     jfloat lakeLevelAslM, jintArray polyMetaPacked, jfloatArray coordsXY) {
-    jsize metaLen = env->GetArrayLength(polyMetaPacked);
-    std::vector<jint> metaBuf(static_cast<size_t>(metaLen));
+    if (!env) return;
+    jsize metaLen = polyMetaPacked ? env->GetArrayLength(polyMetaPacked) : 0;
+    std::vector<jint> metaBuf(static_cast<size_t>(std::max<jsize>(0, metaLen)));
     if (metaLen > 0) env->GetIntArrayRegion(polyMetaPacked, 0, metaLen, metaBuf.data());
 
-    jsize cLen = env->GetArrayLength(coordsXY);
-    std::vector<float> coordBuf(static_cast<size_t>(cLen));
+    jsize cLen = coordsXY ? env->GetArrayLength(coordsXY) : 0;
+    std::vector<float> coordBuf(static_cast<size_t>(std::max<jsize>(0, cLen)));
     if (cLen > 0) env->GetFloatArrayRegion(coordsXY, 0, cLen, coordBuf.data());
 
     std::vector<MagadiTownWaterPolygon2D> polys;
@@ -1182,7 +1209,7 @@ Java_com_example_engine_NativeEngineBridge_nativeSampleMagadiTownRaster(
         minXM, maxXM, minYM, maxYM, cols, rows);
     jsize len = static_cast<jsize>(raster.size());
     jfloatArray res = env->NewFloatArray(len);
-    env->SetFloatArrayRegion(res, 0, len, raster.data());
+    if (res && len > 0) env->SetFloatArrayRegion(res, 0, len, raster.data());
     return res;
 }
 
@@ -1226,7 +1253,7 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateMagadiTownOverviewIndic
         resX, resZ, contourInterval, stepTerracing, verticalExaggeration);
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray res = env->NewIntArray(count);
-    env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (res && count > 0) env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
     return res;
 }
 
@@ -1247,9 +1274,239 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateMagadiTown1mWindowIndic
         centerXM, centerYM, windowCells, contourInterval, stepTerracing, verticalExaggeration);
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray res = env->NewIntArray(count);
-    env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    if (res && count > 0) env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    return res;
+}
+
+// ----------------------------------------------------------------------------
+// Route C58 Non-Box 3 km Corridor (+/- 1.5 km Left/Right) JNI Bindings
+// ----------------------------------------------------------------------------
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGetC58DefaultCenterlineLatLon(
+    JNIEnv* env, jobject /* this */) {
+    std::vector<double> coords = C58CorridorEngine::getInstance().getDefaultCenterlineLatLon();
+    jsize len = static_cast<jsize>(coords.size());
+    jdoubleArray res = env->NewDoubleArray(len);
+    if (res && len > 0) env->SetDoubleArrayRegion(res, 0, len, coords.data());
+    return res;
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeSetC58Centerline(
+    JNIEnv* env, jobject /* this */, jdoubleArray latLonPairs) {
+    if (!env || !latLonPairs) return;
+    jsize len = env->GetArrayLength(latLonPairs);
+    if (len <= 0) return;
+    std::vector<double> buf(static_cast<size_t>(len));
+    env->GetDoubleArrayRegion(latLonPairs, 0, len, buf.data());
+    C58CorridorEngine::getInstance().setCenterline(buf);
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGetC58Summary(
+    JNIEnv* env, jobject /* this */) {
+    C58CorridorSummary s = C58CorridorEngine::getInstance().getSummary();
+    jdouble buf[11] = {
+        s.totalLengthM,
+        static_cast<jdouble>(s.halfWidthM),
+        static_cast<jdouble>(s.centerlinePoints),
+        s.minUtmEast,
+        s.maxUtmEast,
+        s.minUtmNorth,
+        s.maxUtmNorth,
+        s.minLat,
+        s.maxLat,
+        s.minLon,
+        s.maxLon
+    };
+    jdoubleArray res = env->NewDoubleArray(11);
+    env->SetDoubleArrayRegion(res, 0, 11, buf);
+    return res;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGetC58CorridorRibbonUtm(
+    JNIEnv* env, jobject /* this */) {
+    std::vector<double> ribbon = C58CorridorEngine::getInstance().getCorridorRibbonUtm();
+    jsize len = static_cast<jsize>(ribbon.size());
+    jdoubleArray res = env->NewDoubleArray(len);
+    if (res && len > 0) env->SetDoubleArrayRegion(res, 0, len, ribbon.data());
+    return res;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeProjectLatLonToC58(
+    JNIEnv* env, jobject /* this */, jdouble lat, jdouble lon) {
+    C58ProjectionResult p = C58CorridorEngine::getInstance().projectLatLon(lat, lon);
+    jdouble buf[5] = {
+        p.utmEast,
+        p.utmNorth,
+        p.chainageM,
+        static_cast<jdouble>(p.lateralOffsetM),
+        p.insideCorridor ? 1.0 : 0.0
+    };
+    jdoubleArray res = env->NewDoubleArray(5);
+    if (res) env->SetDoubleArrayRegion(res, 0, 5, buf);
+    return res;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeC58UtmToLatLon(
+    JNIEnv* env, jobject /* this */, jdouble utmEast, jdouble utmNorth) {
+    double lat = 0.0, lon = 0.0;
+    C58CorridorEngine::getInstance().utm37SToLatLon(utmEast, utmNorth, lat, lon);
+    jdouble buf[2] = { lat, lon };
+    jdoubleArray res = env->NewDoubleArray(2);
+    if (res) env->SetDoubleArrayRegion(res, 0, 2, buf);
+    return res;
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeSetC58DemGrid(
+    JNIEnv* env, jobject /* this */,
+    jint uCols, jint vRows, jfloatArray elevationsM) {
+    if (!env || !elevationsM) return;
+    jsize len = env->GetArrayLength(elevationsM);
+    if (len <= 0) return;
+    std::vector<float> buf(static_cast<size_t>(len));
+    env->GetFloatArrayRegion(elevationsM, 0, len, buf.data());
+    C58CorridorEngine::getInstance().setDemControlGrid(uCols, vRows, buf);
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeSetC58Footprints(
+    JNIEnv* env, jobject /* this */,
+    jdoubleArray roadSegsUtm5, jdoubleArray buildingRectsUtm4) {
+    if (!env) return;
+    jsize rLen = roadSegsUtm5 ? env->GetArrayLength(roadSegsUtm5) : 0;
+    std::vector<double> rBuf(static_cast<size_t>(std::max<jsize>(0, rLen)));
+    if (rLen > 0) env->GetDoubleArrayRegion(roadSegsUtm5, 0, rLen, rBuf.data());
+
+    jsize bLen = buildingRectsUtm4 ? env->GetArrayLength(buildingRectsUtm4) : 0;
+    std::vector<double> bBuf(static_cast<size_t>(std::max<jsize>(0, bLen)));
+    if (bLen > 0) env->GetDoubleArrayRegion(buildingRectsUtm4, 0, bLen, bBuf.data());
+
+    C58CorridorEngine::getInstance().setFeatureFootprintsUtm(rBuf, bBuf);
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeSetC58LakeAndWater(
+    JNIEnv* env, jobject /* this */,
+    jfloat lakeLevelAslM, jintArray polyMetaPacked, jdoubleArray coordsEN) {
+    if (!env) return;
+    jsize metaLen = polyMetaPacked ? env->GetArrayLength(polyMetaPacked) : 0;
+    std::vector<int> metaBuf(static_cast<size_t>(std::max<jsize>(0, metaLen)));
+    if (metaLen > 0) {
+        std::vector<jint> tmp(static_cast<size_t>(metaLen));
+        env->GetIntArrayRegion(polyMetaPacked, 0, metaLen, tmp.data());
+        for (jsize i = 0; i < metaLen; ++i) metaBuf[i] = static_cast<int>(tmp[i]);
+    }
+    jsize cLen = coordsEN ? env->GetArrayLength(coordsEN) : 0;
+    std::vector<double> coordBuf(static_cast<size_t>(std::max<jsize>(0, cLen)));
+    if (cLen > 0) env->GetDoubleArrayRegion(coordsEN, 0, cLen, coordBuf.data());
+
+    C58CorridorEngine::getInstance().setLakeAndWaterPolygonsUtm(lakeLevelAslM, metaBuf, coordBuf);
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeSampleC58UtmRaster(
+    JNIEnv* env, jobject /* this */,
+    jdouble minUtmE, jdouble maxUtmE, jdouble minUtmN, jdouble maxUtmN, jint cols, jint rows) {
+    std::vector<float> raster = C58CorridorEngine::getInstance().sampleUtmRaster(
+        minUtmE, maxUtmE, minUtmN, maxUtmN, cols, rows);
+    jsize len = static_cast<jsize>(raster.size());
+    jfloatArray res = env->NewFloatArray(len);
+    if (res && len > 0) env->SetFloatArrayRegion(res, 0, len, raster.data());
+    return res;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGetC58TelemetryAtUtm(
+    JNIEnv* env, jobject /* this */, jdouble utmE, jdouble utmN) {
+    C58PointTelemetry t = C58CorridorEngine::getInstance().getTelemetryAtUtm(utmE, utmN);
+    jdouble buf[11] = {
+        t.lat,
+        t.lon,
+        t.utmEast,
+        t.utmNorth,
+        t.chainageM,
+        static_cast<jdouble>(t.lateralOffsetM),
+        t.insideCorridor ? 1.0 : 0.0,
+        static_cast<jdouble>(t.elevM),
+        static_cast<jdouble>(t.slopeDeg),
+        static_cast<jdouble>(t.waterDepthM),
+        t.isWater ? 1.0 : 0.0
+    };
+    jdoubleArray res = env->NewDoubleArray(11);
+    env->SetDoubleArrayRegion(res, 0, 11, buf);
+    return res;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGetC58Sector3dTransform(
+    JNIEnv* env, jobject /* this */,
+    jdouble sectorStartM, jdouble sectorEndM, jint resU, jint resV, jfloat verticalExaggeration) {
+    C58Sector3dTransform tr = C58CorridorEngine::getInstance().getSector3dTransform(
+        sectorStartM, sectorEndM, resU, resV, verticalExaggeration);
+    jdouble buf[5] = {
+        tr.centerUtmE,
+        tr.centerUtmN,
+        static_cast<jdouble>(tr.sceneScaleXZ),
+        static_cast<jdouble>(tr.yScalePerM),
+        static_cast<jdouble>(tr.baseDatumElev)
+    };
+    jdoubleArray res = env->NewDoubleArray(5);
+    env->SetDoubleArrayRegion(res, 0, 5, buf);
+    return res;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateC58SectorVertices(
+    JNIEnv* env, jobject /* this */,
+    jdouble sectorStartM, jdouble sectorEndM, jint resU, jint resV,
+    jfloat contourInterval, jfloat stepTerracing, jfloat verticalExaggeration) {
+    MagadiSceneMesh mesh = C58CorridorEngine::getInstance().generateSector3dMesh(
+        sectorStartM, sectorEndM, resU, resV, contourInterval, stepTerracing, verticalExaggeration);
+    return packMagadiMeshVertices(env, mesh);
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateC58SectorIndices(
+    JNIEnv* env, jobject /* this */,
+    jdouble sectorStartM, jdouble sectorEndM, jint resU, jint resV,
+    jfloat contourInterval, jfloat stepTerracing, jfloat verticalExaggeration) {
+    MagadiSceneMesh mesh = C58CorridorEngine::getInstance().generateSector3dMesh(
+        sectorStartM, sectorEndM, resU, resV, contourInterval, stepTerracing, verticalExaggeration);
+    jsize count = static_cast<jsize>(mesh.indices.size());
+    jintArray res = env->NewIntArray(count);
+    if (res && count > 0) env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    return res;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateC581mWindowVertices(
+    JNIEnv* env, jobject /* this */,
+    jdouble centerUtmE, jdouble centerUtmN, jint windowCells,
+    jfloat contourInterval, jfloat stepTerracing, jfloat verticalExaggeration) {
+    MagadiSceneMesh mesh = C58CorridorEngine::getInstance().generateWindow1mMesh(
+        centerUtmE, centerUtmN, windowCells, contourInterval, stepTerracing, verticalExaggeration);
+    return packMagadiMeshVertices(env, mesh);
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateC581mWindowIndices(
+    JNIEnv* env, jobject /* this */,
+    jdouble centerUtmE, jdouble centerUtmN, jint windowCells,
+    jfloat contourInterval, jfloat stepTerracing, jfloat verticalExaggeration) {
+    MagadiSceneMesh mesh = C58CorridorEngine::getInstance().generateWindow1mMesh(
+        centerUtmE, centerUtmN, windowCells, contourInterval, stepTerracing, verticalExaggeration);
+    jsize count = static_cast<jsize>(mesh.indices.size());
+    jintArray res = env->NewIntArray(count);
+    if (res && count > 0) env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
     return res;
 }
 
 } // extern "C"
+
 

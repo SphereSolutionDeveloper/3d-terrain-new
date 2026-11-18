@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,7 +35,9 @@ import kotlin.math.roundToInt
 @Composable
 fun MagadiTownScreen(
     modifier: Modifier = Modifier,
-    magadiViewModel: MagadiTownViewModel = viewModel()
+    magadiViewModel: MagadiTownViewModel = viewModel(),
+    isFullScreenMap: Boolean = false,
+    onToggleFullScreenMap: ((Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val bounds by magadiViewModel.bounds.collectAsStateWithLifecycle()
@@ -52,6 +57,7 @@ fun MagadiTownScreen(
     val showWater by magadiViewModel.showWater.collectAsStateWithLifecycle()
     val showContours by magadiViewModel.showContours.collectAsStateWithLifecycle()
     val showRoads by magadiViewModel.showRoads.collectAsStateWithLifecycle()
+    val showRoadSymbols by magadiViewModel.showRoadSymbols.collectAsStateWithLifecycle()
     val showBuildings by magadiViewModel.showBuildings.collectAsStateWithLifecycle()
     val showPois by magadiViewModel.showPois.collectAsStateWithLifecycle()
 
@@ -73,9 +79,22 @@ fun MagadiTownScreen(
     val mesh3d by magadiViewModel.terrainMesh3D.collectAsStateWithLifecycle()
     val buildings3d by magadiViewModel.overlayBuildings3D.collectAsStateWithLifecycle()
     val roads3d by magadiViewModel.overlayRoads3D.collectAsStateWithLifecycle()
+    val symbols3d by magadiViewModel.overlayRoadSymbols3D.collectAsStateWithLifecycle()
 
     val dataTabIndex by magadiViewModel.dataTabIndex.collectAsStateWithLifecycle()
     val searchQuery by magadiViewModel.searchQuery.collectAsStateWithLifecycle()
+
+    var localFullScreen by remember { mutableStateOf(false) }
+    val fullScreen = if (onToggleFullScreenMap != null) isFullScreenMap else localFullScreen
+    val setFullScreen: (Boolean) -> Unit = { v ->
+        if (onToggleFullScreenMap != null) onToggleFullScreenMap(v) else localFullScreen = v
+    }
+    val effectiveFullScreen = fullScreen && activeSubView != MagadiSubView.DATA_COORDS
+    var showEnvSliders by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = effectiveFullScreen) {
+        setFullScreen(false)
+    }
 
     val bundle = magadiViewModel.activeBundleOrNull()
     val demResM = bundle?.metadata?.demResolutionM ?: 9.5f
@@ -90,44 +109,51 @@ fun MagadiTownScreen(
             .fillMaxSize()
             .background(DarkBackground)
     ) {
-        // 1. Live Extraction & Domain Status Banner
-        MagadiStatusHeader(
-            extractionState = extractionState,
-            roadCount = bundle?.roads?.size ?: 0,
-            buildingCount = bundle?.buildings?.size ?: 0,
-            waterCount = bundle?.waterPolygons?.size ?: 0,
-            demSourceLabel = demSourceLabel,
-            lakeLevelAslM = lakeLevelAslM,
-            onExtractLive = { magadiViewModel.extractLiveData() }
-        )
+        AnimatedVisibility(visible = !effectiveFullScreen) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // 1. Compact Single-Row Status Banner
+                MagadiStatusHeader(
+                    extractionState = extractionState,
+                    roadCount = bundle?.roads?.size ?: 0,
+                    buildingCount = bundle?.buildings?.size ?: 0,
+                    waterCount = bundle?.waterPolygons?.size ?: 0,
+                    lakeLevelAslM = lakeLevelAslM,
+                    showEnvSliders = showEnvSliders,
+                    canHideText = activeSubView != MagadiSubView.DATA_COORDS,
+                    onReloadBinary = { magadiViewModel.reloadBinaryPack() },
+                    onToggleEnvSliders = { showEnvSliders = !showEnvSliders },
+                    onEnterFullScreen = { setFullScreen(true) }
+                )
 
-        // 2. Mode Switcher Row: 2D 1M MAP | SPLIT 2D+3D | 3D TERRAIN | DATA & COORDS
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            MagadiSubView.values().forEach { sub ->
-                val isSelected = activeSubView == sub
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = if (isSelected) CyberCyan.copy(alpha = 0.22f) else DarkSurface,
-                    border = BorderStroke(1.dp, if (isSelected) CyberCyan else DarkSurfaceHighlight),
+                // 2. Mode Switcher Row: 2D 1M MAP | SPLIT 2D+3D | 3D TERRAIN | DATA & COORDS
+                Row(
                     modifier = Modifier
-                        .defaultMinSize(minHeight = 48.dp)
-                        .clickable { magadiViewModel.setSubView(sub) }
-                        .testTag("magadi_subview_${sub.name.lowercase()}")
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-                        Text(
-                            text = sub.label,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) CyberCyan else TextSecondary
-                        )
+                    MagadiSubView.values().forEach { sub ->
+                        val isSelected = activeSubView == sub
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) CyberCyan.copy(alpha = 0.22f) else DarkSurface,
+                            border = BorderStroke(1.dp, if (isSelected) CyberCyan else DarkSurfaceHighlight),
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clickable { magadiViewModel.setSubView(sub) }
+                                .testTag("magadi_subview_${sub.name.lowercase()}")
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                                Text(
+                                    text = sub.label,
+                                    fontSize = 10.5.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) CyberCyan else TextSecondary
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -136,37 +162,50 @@ fun MagadiTownScreen(
         // 3. Main Viewport Area
         when (activeSubView) {
             MagadiSubView.MAP_2D -> {
-                MagadiMapToolbar(
-                    viewWidthM = viewWidthM,
-                    show1mGrid = show1mGrid,
-                    showElevationRaster = showElevationRaster,
-                    showWater = showWater,
-                    showContours = showContours,
-                    showRoads = showRoads,
-                    showBuildings = showBuildings,
-                    showPois = showPois,
-                    onZoomPreset = { magadiViewModel.setZoomPreset(it) },
-                    onToggleGrid = { magadiViewModel.show1mGrid.value = !show1mGrid },
-                    onToggleRaster = { magadiViewModel.showElevationRaster.value = !showElevationRaster },
-                    onToggleWater = { magadiViewModel.showWater.value = !showWater },
-                    onToggleContours = { magadiViewModel.showContours.value = !showContours },
-                    onToggleRoads = { magadiViewModel.showRoads.value = !showRoads },
-                    onToggleBuildings = { magadiViewModel.showBuildings.value = !showBuildings },
-                    onTogglePois = { magadiViewModel.showPois.value = !showPois }
-                )
+                AnimatedVisibility(visible = !effectiveFullScreen) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        MagadiMapToolbar(
+                            viewWidthM = viewWidthM,
+                            show1mGrid = show1mGrid,
+                            showElevationRaster = showElevationRaster,
+                            showWater = showWater,
+                            showContours = showContours,
+                            showRoads = showRoads,
+                            showRoadSymbols = showRoadSymbols,
+                            showBuildings = showBuildings,
+                            showPois = showPois,
+                            showEnvSliders = showEnvSliders,
+                            onZoomPreset = { magadiViewModel.setZoomPreset(it) },
+                            onToggleGrid = { magadiViewModel.show1mGrid.value = !show1mGrid },
+                            onToggleRaster = { magadiViewModel.showElevationRaster.value = !showElevationRaster },
+                            onToggleWater = { magadiViewModel.showWater.value = !showWater },
+                            onToggleContours = { magadiViewModel.showContours.value = !showContours },
+                            onToggleRoads = { magadiViewModel.showRoads.value = !showRoads },
+                            onToggleRoadSymbols = { magadiViewModel.showRoadSymbols.value = !showRoadSymbols },
+                            onToggleBuildings = { magadiViewModel.showBuildings.value = !showBuildings },
+                            onTogglePois = { magadiViewModel.showPois.value = !showPois },
+                            onToggleEnvSliders = { showEnvSliders = !showEnvSliders }
+                        )
 
-                MagadiLakeAndDepthBar(
-                    lakeLevelAslM = lakeLevelAslM,
-                    verticalExaggeration = verticalExaggeration,
-                    onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
-                    onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
-                )
+                        AnimatedVisibility(visible = showEnvSliders) {
+                            MagadiLakeAndDepthBar(
+                                lakeLevelAslM = lakeLevelAslM,
+                                verticalExaggeration = verticalExaggeration,
+                                onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
+                                onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
+                            )
+                        }
+                    }
+                }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(
+                            horizontal = if (effectiveFullScreen) 0.dp else 6.dp,
+                            vertical = if (effectiveFullScreen) 0.dp else 2.dp
+                        )
                 ) {
                     MagadiTownMap2D(
                         bundle = bundle,
@@ -182,10 +221,13 @@ fun MagadiTownScreen(
                         showWater = showWater,
                         showContours = showContours,
                         showRoads = showRoads,
+                        showRoadSymbols = showRoadSymbols,
                         showBuildings = showBuildings,
                         showPois = showPois,
                         lakeLevelAslM = lakeLevelAslM,
                         demSourceLabel = demSourceLabel,
+                        hideAllText = effectiveFullScreen,
+                        onToggleHideAllText = { setFullScreen(!fullScreen) },
                         onPan = { dx, dy, w -> magadiViewModel.pan2D(dx, dy, w) },
                         onZoom = { f -> magadiViewModel.zoom2D(f) },
                         onTapInspect = { x, y, w, h -> magadiViewModel.inspectPointAtScreen(x, y, w, h) },
@@ -194,13 +236,15 @@ fun MagadiTownScreen(
                     )
                 }
 
-                MagadiCellTelemetryCard(
-                    inspectedCell = inspectedCell,
-                    lakeLevelAslM = lakeLevelAslM,
-                    selectedBuilding = selectedBuilding,
-                    selectedRoad = selectedRoad,
-                    onOpen3d1m = { magadiViewModel.viewInspectedCellIn3d1m() }
-                )
+                AnimatedVisibility(visible = !effectiveFullScreen) {
+                    MagadiCellTelemetryCard(
+                        inspectedCell = inspectedCell,
+                        lakeLevelAslM = lakeLevelAslM,
+                        selectedBuilding = selectedBuilding,
+                        selectedRoad = selectedRoad,
+                        onOpen3d1m = { magadiViewModel.viewInspectedCellIn3d1m() }
+                    )
+                }
             }
 
             MagadiSubView.SPLIT_VIEW -> {
@@ -208,7 +252,10 @@ fun MagadiTownScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .padding(
+                            horizontal = if (effectiveFullScreen) 0.dp else 6.dp,
+                            vertical = if (effectiveFullScreen) 0.dp else 2.dp
+                        )
                 ) {
                     MagadiTownMap2D(
                         bundle = bundle,
@@ -224,10 +271,13 @@ fun MagadiTownScreen(
                         showWater = showWater,
                         showContours = showContours,
                         showRoads = showRoads,
+                        showRoadSymbols = showRoadSymbols,
                         showBuildings = showBuildings,
                         showPois = showPois,
                         lakeLevelAslM = lakeLevelAslM,
                         demSourceLabel = demSourceLabel,
+                        hideAllText = effectiveFullScreen,
+                        onToggleHideAllText = { setFullScreen(!fullScreen) },
                         onPan = { dx, dy, w -> magadiViewModel.pan2D(dx, dy, w) },
                         onZoom = { f -> magadiViewModel.zoom2D(f) },
                         onTapInspect = { x, y, w, h -> magadiViewModel.inspectPointAtScreen(x, y, w, h) },
@@ -236,30 +286,39 @@ fun MagadiTownScreen(
                     )
                 }
 
-                Magadi3dControlsBar(
-                    terrain3dMode = terrain3dMode,
-                    terrainRenderMode = terrainRenderMode,
-                    is3dWireframe = is3dWireframe,
-                    showWater = showWater,
-                    onSelect3dMode = { magadiViewModel.set3dMode(it) },
-                    onSelectRenderMode = { magadiViewModel.terrainRenderMode.value = it },
-                    onToggleWireframe = { magadiViewModel.is3dWireframe.value = !is3dWireframe },
-                    onToggleWater = { magadiViewModel.showWater.value = !showWater },
-                    onResetCamera = { magadiViewModel.reset3dCamera() }
-                )
+                AnimatedVisibility(visible = !effectiveFullScreen) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Magadi3dControlsBar(
+                            terrain3dMode = terrain3dMode,
+                            terrainRenderMode = terrainRenderMode,
+                            is3dWireframe = is3dWireframe,
+                            showWater = showWater,
+                            onSelect3dMode = { magadiViewModel.set3dMode(it) },
+                            onSelectRenderMode = { magadiViewModel.terrainRenderMode.value = it },
+                            onToggleWireframe = { magadiViewModel.is3dWireframe.value = !is3dWireframe },
+                            onToggleWater = { magadiViewModel.showWater.value = !showWater },
+                            onResetCamera = { magadiViewModel.reset3dCamera() }
+                        )
 
-                MagadiLakeAndDepthBar(
-                    lakeLevelAslM = lakeLevelAslM,
-                    verticalExaggeration = verticalExaggeration,
-                    onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
-                    onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
-                )
+                        AnimatedVisibility(visible = showEnvSliders) {
+                            MagadiLakeAndDepthBar(
+                                lakeLevelAslM = lakeLevelAslM,
+                                verticalExaggeration = verticalExaggeration,
+                                onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
+                                onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
+                            )
+                        }
+                    }
+                }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(
+                            horizontal = if (effectiveFullScreen) 0.dp else 6.dp,
+                            vertical = if (effectiveFullScreen) 0.dp else 2.dp
+                        )
                 ) {
                     Terrain3DCanvas(
                         mesh = mesh3d,
@@ -280,6 +339,7 @@ fun MagadiTownScreen(
                         lakeLevelAslM = if (showWater) lakeLevelAslM else null,
                         overlayBuildings3D = buildings3d,
                         overlayRoadSegments3D = roads3d,
+                        overlayRoadSymbols3D = symbols3d,
                         onRotateDrag = { dx, dy ->
                             magadiViewModel.yaw3d.value += dx * 0.007f
                             magadiViewModel.pitch3d.value = (magadiViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -296,30 +356,39 @@ fun MagadiTownScreen(
             }
 
             MagadiSubView.TERRAIN_3D -> {
-                Magadi3dControlsBar(
-                    terrain3dMode = terrain3dMode,
-                    terrainRenderMode = terrainRenderMode,
-                    is3dWireframe = is3dWireframe,
-                    showWater = showWater,
-                    onSelect3dMode = { magadiViewModel.set3dMode(it) },
-                    onSelectRenderMode = { magadiViewModel.terrainRenderMode.value = it },
-                    onToggleWireframe = { magadiViewModel.is3dWireframe.value = !is3dWireframe },
-                    onToggleWater = { magadiViewModel.showWater.value = !showWater },
-                    onResetCamera = { magadiViewModel.reset3dCamera() }
-                )
+                AnimatedVisibility(visible = !effectiveFullScreen) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Magadi3dControlsBar(
+                            terrain3dMode = terrain3dMode,
+                            terrainRenderMode = terrainRenderMode,
+                            is3dWireframe = is3dWireframe,
+                            showWater = showWater,
+                            onSelect3dMode = { magadiViewModel.set3dMode(it) },
+                            onSelectRenderMode = { magadiViewModel.terrainRenderMode.value = it },
+                            onToggleWireframe = { magadiViewModel.is3dWireframe.value = !is3dWireframe },
+                            onToggleWater = { magadiViewModel.showWater.value = !showWater },
+                            onResetCamera = { magadiViewModel.reset3dCamera() }
+                        )
 
-                MagadiLakeAndDepthBar(
-                    lakeLevelAslM = lakeLevelAslM,
-                    verticalExaggeration = verticalExaggeration,
-                    onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
-                    onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
-                )
+                        AnimatedVisibility(visible = showEnvSliders) {
+                            MagadiLakeAndDepthBar(
+                                lakeLevelAslM = lakeLevelAslM,
+                                verticalExaggeration = verticalExaggeration,
+                                onLakeLevelChange = { magadiViewModel.setLakeLevel(it) },
+                                onVerticalExagChange = { magadiViewModel.setVerticalExaggeration(it) }
+                            )
+                        }
+                    }
+                }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(
+                            horizontal = if (effectiveFullScreen) 0.dp else 6.dp,
+                            vertical = if (effectiveFullScreen) 0.dp else 2.dp
+                        )
                 ) {
                     Terrain3DCanvas(
                         mesh = mesh3d,
@@ -340,6 +409,7 @@ fun MagadiTownScreen(
                         lakeLevelAslM = if (showWater) lakeLevelAslM else null,
                         overlayBuildings3D = buildings3d,
                         overlayRoadSegments3D = roads3d,
+                        overlayRoadSymbols3D = symbols3d,
                         onRotateDrag = { dx, dy ->
                             magadiViewModel.yaw3d.value += dx * 0.007f
                             magadiViewModel.pitch3d.value = (magadiViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -352,15 +422,42 @@ fun MagadiTownScreen(
                             magadiViewModel.zoom3d.value = (magadiViewModel.zoom3d.value * f).coerceIn(0.15f, 35f)
                         }
                     )
+
+                    if (effectiveFullScreen) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = DarkSurface.copy(alpha = 0.88f),
+                            border = BorderStroke(1.dp, NeonLime),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .windowInsetsPadding(WindowInsets.safeDrawing)
+                                .padding(10.dp)
+                        ) {
+                            IconButton(
+                                onClick = { setFullScreen(false) },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .testTag("magadi_3d_restore_text_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Visibility,
+                                    contentDescription = "Show Text & Controls",
+                                    tint = NeonLime
+                                )
+                            }
+                        }
+                    }
                 }
 
-                MagadiCellTelemetryCard(
-                    inspectedCell = inspectedCell,
-                    lakeLevelAslM = lakeLevelAslM,
-                    selectedBuilding = selectedBuilding,
-                    selectedRoad = selectedRoad,
-                    onOpen3d1m = { magadiViewModel.viewInspectedCellIn3d1m() }
-                )
+                AnimatedVisibility(visible = !effectiveFullScreen) {
+                    MagadiCellTelemetryCard(
+                        inspectedCell = inspectedCell,
+                        lakeLevelAslM = lakeLevelAslM,
+                        selectedBuilding = selectedBuilding,
+                        selectedRoad = selectedRoad,
+                        onOpen3d1m = { magadiViewModel.viewInspectedCellIn3d1m() }
+                    )
+                }
             }
 
             MagadiSubView.DATA_COORDS -> {
@@ -392,9 +489,12 @@ private fun MagadiStatusHeader(
     roadCount: Int,
     buildingCount: Int,
     waterCount: Int,
-    demSourceLabel: String,
     lakeLevelAslM: Float,
-    onExtractLive: () -> Unit
+    showEnvSliders: Boolean,
+    canHideText: Boolean,
+    onReloadBinary: () -> Unit,
+    onToggleEnvSliders: () -> Unit,
+    onEnterFullScreen: () -> Unit
 ) {
     Surface(
         color = DarkSurface,
@@ -402,65 +502,82 @@ private fun MagadiStatusHeader(
         shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "MAGADI TOWN • 3×5 KM • $demSourceLabel",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
-                        color = CyberCyan
-                    )
-                    val statusLine = when (extractionState) {
-                        is MagadiExtractionUiState.Extracting -> extractionState.stage
-                        is MagadiExtractionUiState.Ready -> {
-                            val src = if (extractionState.isFromCache) "CACHED" else "LIVE"
-                            "$src • Roads:$roadCount | Bldgs:$buildingCount | Water:$waterCount | Lake:${"%.1f".format(lakeLevelAslM)}m"
-                        }
-                        is MagadiExtractionUiState.Error -> "OFFLINE: ${extractionState.message}"
-                        MagadiExtractionUiState.Idle -> "Initializing C++ 1m DEM engine..."
+                val statusLine = when (extractionState) {
+                    is MagadiExtractionUiState.Extracting -> extractionState.stage
+                    is MagadiExtractionUiState.Ready -> {
+                        "R:$roadCount • B:$buildingCount • W:$waterCount • ${"%.1f".format(lakeLevelAslM)}m"
                     }
-                    Text(
-                        text = statusLine,
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = if (extractionState is MagadiExtractionUiState.Error) LaserOrange else TextSecondary,
-                        maxLines = 1
+                    is MagadiExtractionUiState.Error -> "ERROR: ${extractionState.message}"
+                    MagadiExtractionUiState.Idle -> "Loading 3×5km binary GIS pack..."
+                }
+                Text(
+                    text = statusLine,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace,
+                    color = if (extractionState is MagadiExtractionUiState.Error) LaserOrange else TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 6.dp)
+                )
+
+                IconButton(
+                    onClick = onReloadBinary,
+                    enabled = extractionState !is MagadiExtractionUiState.Extracting,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag("magadi_extract_live_btn")
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Reload Binary GIS Pack", tint = NeonLime)
+                }
+
+                IconButton(
+                    onClick = onToggleEnvSliders,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag("magadi_toggle_sliders_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = "Toggle Lake & Terrain Sliders",
+                        tint = if (showEnvSliders) CyberCyan else TextSecondary
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Button(
-                    onClick = onExtractLive,
-                    enabled = extractionState !is MagadiExtractionUiState.Extracting,
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonLime.copy(alpha = 0.22f)),
-                    border = BorderStroke(1.dp, NeonLime),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    modifier = Modifier
-                        .defaultMinSize(minHeight = 48.dp)
-                        .testTag("magadi_extract_live_btn")
-                ) {
-                    Icon(Icons.Default.CloudDownload, contentDescription = "Extract Live Data", tint = NeonLime, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("LIVE SYNC", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = NeonLime)
+                if (canHideText) {
+                    IconButton(
+                        onClick = onEnterFullScreen,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("magadi_header_hide_text_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VisibilityOff,
+                            contentDescription = "Hide All Text for Fullscreen Map",
+                            tint = NeonLime
+                        )
+                    }
                 }
             }
 
             if (extractionState is MagadiExtractionUiState.Extracting) {
-                Spacer(modifier = Modifier.height(6.dp))
                 LinearProgressIndicator(
                     progress = { extractionState.progress },
                     color = CyberCyan,
                     trackColor = DarkSurfaceElevated,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
                 )
             }
         }
@@ -545,16 +662,20 @@ private fun MagadiMapToolbar(
     showWater: Boolean,
     showContours: Boolean,
     showRoads: Boolean,
+    showRoadSymbols: Boolean,
     showBuildings: Boolean,
     showPois: Boolean,
+    showEnvSliders: Boolean,
     onZoomPreset: (Float) -> Unit,
     onToggleGrid: () -> Unit,
     onToggleRaster: () -> Unit,
     onToggleWater: () -> Unit,
     onToggleContours: () -> Unit,
     onToggleRoads: () -> Unit,
+    onToggleRoadSymbols: () -> Unit,
     onToggleBuildings: () -> Unit,
-    onTogglePois: () -> Unit
+    onTogglePois: () -> Unit,
+    onToggleEnvSliders: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -581,11 +702,13 @@ private fun MagadiMapToolbar(
                     onClick = { onZoomPreset(wM) }
                 )
             }
+            ToggleChipPill("Lake/Depth", showEnvSliders, CyberCyan, "magadi_layer_env_sliders", onToggleEnvSliders)
             ToggleChipPill("Water", showWater, CyberCyan, "magadi_layer_water", onToggleWater)
             ToggleChipPill("1m Grid", show1mGrid, CyberCyan, "magadi_layer_grid", onToggleGrid)
             ToggleChipPill("DEM", showElevationRaster, CyberCyan, "magadi_layer_dem", onToggleRaster)
             ToggleChipPill("Contours", showContours, CyberCyan, "magadi_layer_contours", onToggleContours)
             ToggleChipPill("Roads", showRoads, LaserOrange, "magadi_layer_roads", onToggleRoads)
+            ToggleChipPill("Symbols", showRoadSymbols, Color(0xFFFFD54F), "magadi_layer_symbols", onToggleRoadSymbols)
             ToggleChipPill("Bldgs", showBuildings, LaserOrange, "magadi_layer_buildings", onToggleBuildings)
             ToggleChipPill("POIs", showPois, NeonLime, "magadi_layer_pois", onTogglePois)
         }
@@ -678,58 +801,54 @@ private fun MagadiCellTelemetryCard(
         border = BorderStroke(1.dp, if (inspectedCell.isWater) CyberCyan else GlowingCyanBorder),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
             .testTag("magadi_cell_telemetry_card")
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 val primaryLine = if (inspectedCell.isWater) {
-                    "1m CELL [${inspectedCell.cellCol}, ${inspectedCell.cellRow}] • LAKE BED ${"%.2f".format(inspectedCell.elevM)}m • DEPTH -${"%.2f".format(inspectedCell.waterDepthM)}m"
+                    "CELL [${inspectedCell.cellCol},${inspectedCell.cellRow}] • BED ${"%.2f".format(inspectedCell.elevM)}m (-${"%.2f".format(inspectedCell.waterDepthM)}m)"
                 } else {
-                    "1m CELL [${inspectedCell.cellCol}, ${inspectedCell.cellRow}] • ELEV ${"%.2f".format(inspectedCell.elevM)}m (+${"%.1f".format(inspectedCell.elevM - lakeLevelAslM)}m) • ${"%.1f".format(inspectedCell.slopeDeg)}°"
+                    "CELL [${inspectedCell.cellCol},${inspectedCell.cellRow}] • ${"%.1f".format(inspectedCell.elevM)}m (+${"%.1f".format(inspectedCell.elevM - lakeLevelAslM)}m) • ${"%.1f".format(inspectedCell.slopeDeg)}°"
                 }
                 Text(
                     text = primaryLine,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace,
-                    color = if (inspectedCell.isWater) CyberCyan else NeonLime
+                    color = if (inspectedCell.isWater) CyberCyan else NeonLime,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                val secondLine = when {
+                    selectedBuilding != null -> "BLDG: ${selectedBuilding.name} (${"%.0f".format(selectedBuilding.footprintAreaM2)}m²)"
+                    selectedRoad != null -> "ROAD: ${selectedRoad.name} (${selectedRoad.highwayType})"
+                    else -> "${"%.5f".format(inspectedCell.lat)}, ${"%.5f".format(inspectedCell.lon)} • ${inspectedCell.utmEast.roundToInt()}E, ${inspectedCell.utmNorth.roundToInt()}N"
+                }
                 Text(
-                    text = "WGS84: ${"%.6f".format(inspectedCell.lat)}, ${"%.6f".format(inspectedCell.lon)} | UTM37S: ${inspectedCell.utmEast.roundToInt()}E, ${inspectedCell.utmNorth.roundToInt()}N",
+                    text = secondLine,
                     fontSize = 9.5.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = CyberCyan
+                    color = if (selectedBuilding != null || selectedRoad != null) LaserOrange else CyberCyan,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                if (selectedBuilding != null) {
-                    Text(
-                        text = "BLDG: ${selectedBuilding.name} • ${selectedBuilding.buildingType} • ${"%.1f".format(selectedBuilding.footprintAreaM2)}m² • H=${"%.1f".format(selectedBuilding.heightM)}m",
-                        fontSize = 10.sp,
-                        color = LaserOrange
-                    )
-                } else if (selectedRoad != null) {
-                    Text(
-                        text = "ROAD: ${selectedRoad.name} (${selectedRoad.highwayType}, ${selectedRoad.surface}, ${"%.0f".format(selectedRoad.lengthM)}m)",
-                        fontSize = 10.sp,
-                        color = LaserOrange
-                    )
-                }
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Button(
                 onClick = onOpen3d1m,
                 colors = ButtonDefaults.buttonColors(containerColor = CyberCyan.copy(alpha = 0.22f)),
                 border = BorderStroke(1.dp, CyberCyan),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 modifier = Modifier
                     .defaultMinSize(minHeight = 48.dp)
                     .testTag("magadi_view_in_3d_1m_btn")
             ) {
-                Text("VIEW 3D 1M", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                Text("3D 1M", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
             }
         }
     }
@@ -752,7 +871,7 @@ private fun ToggleChipPill(
             .clickable(onClick = onClick)
             .testTag(testTag)
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
             Text(
                 text = label,
                 fontSize = 10.sp,

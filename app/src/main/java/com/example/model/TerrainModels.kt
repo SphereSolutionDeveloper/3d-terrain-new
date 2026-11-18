@@ -162,3 +162,22 @@ data class TerrainRoadSeg3D(
     val isSelected: Boolean = false
 )
 
+enum class RoadSymbolType3D {
+    ROUTE_SHIELD,
+    DIRECTION_ARROW,
+    BRIDGE_ABUTMENT,
+    ROUNDABOUT_RING,
+    BARRIER_GATE,
+    CROSSING_SIGNAL
+}
+
+data class TerrainRoadSymbol3D(
+    val x: Float,
+    val y: Float,
+    val z: Float,
+    val dirX: Float = 0f,
+    val dirZ: Float = 1f,
+    val label: String = "",
+    val type: RoadSymbolType3D = RoadSymbolType3D.ROUTE_SHIELD
+)
+

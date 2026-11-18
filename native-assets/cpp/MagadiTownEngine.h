@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <shared_mutex>
 
 namespace custom_vulkan {
 
@@ -77,11 +78,11 @@ public:
 
     // Ingest real high-res DEM control grid (Terrarium ~9.5m / SRTM 30m / COP-DEM) covering 3km x 5km
     void setDemControlGrid(int cols, int rows, const std::vector<float>& elevationsM);
-    bool hasLiveDemData() const { return m_hasLiveDem; }
+    bool hasLiveDemData() const;
 
     // Configure Lake Magadi water level datum (meters ASL) and extracted OSM water/salt-pan polygons
     void setLakeAndWaterPolygons(float lakeLevelAslM, const std::vector<MagadiTownWaterPolygon2D>& waterPolys);
-    float getLakeLevelAslM() const { return m_lakeLevelAslM; }
+    float getLakeLevelAslM() const;
 
     // Register extracted road segments & building bounding pads for 1m terrain surface classification
     void setFeatureFootprints(const std::vector<MagadiTownRoadSegment2D>& roads,
@@ -123,7 +124,9 @@ private:
     bool isPointOnBuilding(float xM, float yM) const;
     bool isPointInWaterPolygon(float xM, float yM, bool& outIsSaltPan, float& outDepthFactor) const;
     float sampleLandElevationRaw(float xM, float yM) const;
+    float sampleElevationAt1mUnlocked(float xM, float yM, float contourInterval = 0.0f, float stepTerracing = 0.0f) const;
 
+    mutable std::shared_mutex m_mutex;
     MagadiTownGeoBounds m_bounds;
     bool m_hasLiveDem = false;
     int m_demCols = 0;

@@ -1,32 +1,19 @@
 package com.example.repository
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import com.example.engine.NativeEngineBridge
 import com.example.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.FormBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import java.util.concurrent.TimeUnit
+import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.math.*
 
 class MagadiTownRepository(private val context: Context) {
-
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(25, TimeUnit.SECONDS)
-        .readTimeout(45, TimeUnit.SECONDS)
-        .writeTimeout(25, TimeUnit.SECONDS)
-        .build()
 
     private val cacheFile = File(context.filesDir, "magadi_town_3x5km_1m_v2_cache.json")
 
@@ -63,20 +50,23 @@ class MagadiTownRepository(private val context: Context) {
 
     fun convertLatLonToCoord(lat: Double, lon: Double, bounds: MagadiTownBounds): MagadiGeoCoord {
         if (NativeEngineBridge.isLoaded()) {
-            val res = NativeEngineBridge.nativeMagadiTownLatLonToLocalAndUtm(lat, lon)
-            if (res.size >= 4) {
-                val xM = res[0].toFloat()
-                val yM = res[1].toFloat()
-                return MagadiGeoCoord(
-                    lat = lat,
-                    lon = lon,
-                    xM = xM,
-                    yM = yM,
-                    utmEast = res[2],
-                    utmNorth = res[3],
-                    cellCol = floor(xM).toInt().coerceIn(0, bounds.gridCols - 1),
-                    cellRow = floor(yM).toInt().coerceIn(0, bounds.gridRows - 1)
-                )
+            try {
+                val res = NativeEngineBridge.nativeMagadiTownLatLonToLocalAndUtm(lat, lon)
+                if (res.size >= 4) {
+                    val xM = res[0].toFloat()
+                    val yM = res[1].toFloat()
+                    return MagadiGeoCoord(
+                        lat = lat,
+                        lon = lon,
+                        xM = xM,
+                        yM = yM,
+                        utmEast = res[2],
+                        utmNorth = res[3],
+                        cellCol = floor(xM).toInt().coerceIn(0, bounds.gridCols - 1),
+                        cellRow = floor(yM).toInt().coerceIn(0, bounds.gridRows - 1)
+                    )
+                }
+            } catch (_: Throwable) {
             }
         }
         val mPerLat = 110574.0
@@ -99,35 +89,38 @@ class MagadiTownRepository(private val context: Context) {
         val clampedX = xM.coerceIn(0f, 3000f)
         val clampedY = yM.coerceIn(0f, 5000f)
         if (NativeEngineBridge.isLoaded()) {
-            val d = NativeEngineBridge.nativeGetMagadiTownTelemetryAt(clampedX, clampedY)
-            if (d.size >= 12) {
-                return Inspected1mCell(
-                    xM = d[0].toFloat(),
-                    yM = d[1].toFloat(),
-                    cellCol = d[2].toInt(),
-                    cellRow = d[3].toInt(),
-                    lat = d[4],
-                    lon = d[5],
-                    utmEast = d[6],
-                    utmNorth = d[7],
-                    elevM = d[8].toFloat(),
-                    slopeDeg = d[9].toFloat(),
-                    waterDepthM = d[10].toFloat(),
-                    isWater = d[11] > 0.5
-                )
-            } else if (d.size >= 10) {
-                return Inspected1mCell(
-                    xM = d[0].toFloat(),
-                    yM = d[1].toFloat(),
-                    cellCol = d[2].toInt(),
-                    cellRow = d[3].toInt(),
-                    lat = d[4],
-                    lon = d[5],
-                    utmEast = d[6],
-                    utmNorth = d[7],
-                    elevM = d[8].toFloat(),
-                    slopeDeg = d[9].toFloat()
-                )
+            try {
+                val d = NativeEngineBridge.nativeGetMagadiTownTelemetryAt(clampedX, clampedY)
+                if (d.size >= 12) {
+                    return Inspected1mCell(
+                        xM = d[0].toFloat(),
+                        yM = d[1].toFloat(),
+                        cellCol = d[2].toInt(),
+                        cellRow = d[3].toInt(),
+                        lat = d[4],
+                        lon = d[5],
+                        utmEast = d[6],
+                        utmNorth = d[7],
+                        elevM = d[8].toFloat(),
+                        slopeDeg = d[9].toFloat(),
+                        waterDepthM = d[10].toFloat(),
+                        isWater = d[11] > 0.5
+                    )
+                } else if (d.size >= 10) {
+                    return Inspected1mCell(
+                        xM = d[0].toFloat(),
+                        yM = d[1].toFloat(),
+                        cellCol = d[2].toInt(),
+                        cellRow = d[3].toInt(),
+                        lat = d[4],
+                        lon = d[5],
+                        utmEast = d[6],
+                        utmNorth = d[7],
+                        elevM = d[8].toFloat(),
+                        slopeDeg = d[9].toFloat()
+                    )
+                }
+            } catch (_: Throwable) {
             }
         }
         val b = getNativeBounds()
@@ -147,6 +140,268 @@ class MagadiTownRepository(private val context: Context) {
         )
     }
 
+    suspend fun loadBinaryAssetBundle(): MagadiTownBundle? = withContext(Dispatchers.IO) {
+        return@withContext try {
+            context.assets.open("terrain_grid/magadi_town_3x5km.bin").use { stream ->
+                val bundle = parseBinaryStream(stream)
+                syncBundleToCpp(bundle)
+                bundle
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun parseBinaryStream(stream: InputStream): MagadiTownBundle {
+        val bytes = stream.readBytes()
+        val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+
+        val magic = ByteArray(4)
+        buf.get(magic)
+        check(String(magic, Charsets.US_ASCII) == "MAGT") { "Invalid MAGT binary header" }
+        buf.short // version
+        buf.short // flags
+
+        fun readStr(): String {
+            val len = buf.short.toInt() and 0xFFFF
+            if (len == 0) return ""
+            val arr = ByteArray(len)
+            buf.get(arr)
+            return String(arr, Charsets.UTF_8)
+        }
+
+        val centerLat = buf.double
+        val centerLon = buf.double
+        val widthM = buf.double
+        val heightM = buf.double
+        val minLat = buf.double
+        val maxLat = buf.double
+        val minLon = buf.double
+        val maxLon = buf.double
+        val originUtmE = buf.double
+        val originUtmN = buf.double
+
+        val bounds = MagadiTownBounds(
+            centerLat = centerLat,
+            centerLon = centerLon,
+            widthM = widthM,
+            heightM = heightM,
+            areaKm2 = (widthM * heightM) / 1_000_000.0,
+            gridResolutionM = 1.0,
+            gridCols = widthM.toInt(),
+            gridRows = heightM.toInt(),
+            totalGridCells = widthM.toLong() * heightM.toLong(),
+            minLat = minLat,
+            maxLat = maxLat,
+            minLon = minLon,
+            maxLon = maxLon,
+            originUtmEast = originUtmE,
+            originUtmNorth = originUtmN
+        )
+
+        val mPerLat = 110574.0
+        val mPerLon = 111320.0 * cos(Math.toRadians(centerLat))
+
+        fun readLocalCoord(): MagadiGeoCoord {
+            val xM = buf.float
+            val yM = buf.float
+            val lat = minLat + yM / mPerLat
+            val lon = minLon + xM / mPerLon
+            return MagadiGeoCoord(
+                lat = lat,
+                lon = lon,
+                xM = xM,
+                yM = yM,
+                utmEast = originUtmE + xM,
+                utmNorth = originUtmN + yM,
+                cellCol = floor(xM).toInt().coerceIn(0, bounds.gridCols - 1),
+                cellRow = floor(yM).toInt().coerceIn(0, bounds.gridRows - 1)
+            )
+        }
+
+        val placeName = readStr()
+        val extractedAtIso = readStr()
+        val osmSourceUrl = readStr()
+        val demSourceUrl = readStr()
+        val demResolutionM = buf.float
+        val lakeLevelAslM = buf.float
+        val elevMinM = buf.float
+        val elevMaxM = buf.float
+        val elevMeanM = buf.float
+
+        val demSource = readStr()
+        val demCols = buf.int
+        val demRows = buf.int
+        val demNativeRes = buf.float
+        val demMinE = buf.float
+        val demMaxE = buf.float
+        val demMeanE = buf.float
+        val demCount = demCols * demRows
+        val demElevs = FloatArray(demCount)
+        for (i in 0 until demCount) {
+            demElevs[i] = buf.float
+        }
+        val demGrid = if (demCount > 0) {
+            DemControlGrid(
+                source = demSource,
+                nativeResolutionM = demNativeRes,
+                cols = demCols,
+                rows = demRows,
+                elevationsM = demElevs,
+                minElevM = demMinE,
+                maxElevM = demMaxE,
+                meanElevM = demMeanE
+            )
+        } else null
+
+        val roadCount = buf.int
+        val roads = ArrayList<ExtractedRoadWay>(roadCount)
+        for (i in 0 until roadCount) {
+            val osmId = buf.long
+            val name = readStr()
+            val ref = readStr()
+            val hType = readStr()
+            val surface = readStr()
+            val lanes = buf.get().toInt() and 0xFF
+            val rFlags = buf.get().toInt() and 0xFF
+            val widthR = buf.float
+            val lengthM = buf.float
+            val nCount = buf.int
+            val nodes = ArrayList<MagadiGeoCoord>(nCount)
+            for (k in 0 until nCount) nodes.add(readLocalCoord())
+            roads.add(
+                ExtractedRoadWay(
+                    osmId = osmId,
+                    name = name,
+                    highwayType = hType,
+                    surface = surface,
+                    lanes = lanes,
+                    oneWay = (rFlags and 1) != 0,
+                    widthM = widthR,
+                    lengthM = lengthM,
+                    nodes = nodes,
+                    ref = ref,
+                    isBridge = (rFlags and 2) != 0,
+                    isRoundabout = (rFlags and 4) != 0
+                )
+            )
+        }
+
+        val bldgCount = buf.int
+        val buildings = ArrayList<ExtractedBuilding>(bldgCount)
+        for (i in 0 until bldgCount) {
+            val osmId = buf.long
+            val name = readStr()
+            val bType = readStr()
+            val amenity = readStr()
+            val levels = buf.get().toInt() and 0xFF
+            val heightM = buf.float
+            val elevM = buf.float
+            val areaM2 = buf.float
+            val perimM = buf.float
+            val centX = buf.float
+            val centY = buf.float
+            val polyCount = buf.int
+            val poly = ArrayList<MagadiGeoCoord>(polyCount)
+            for (k in 0 until polyCount) poly.add(readLocalCoord())
+            val centroid = MagadiGeoCoord(
+                lat = minLat + centY / mPerLat,
+                lon = minLon + centX / mPerLon,
+                xM = centX,
+                yM = centY,
+                utmEast = originUtmE + centX,
+                utmNorth = originUtmN + centY,
+                cellCol = floor(centX).toInt().coerceIn(0, bounds.gridCols - 1),
+                cellRow = floor(centY).toInt().coerceIn(0, bounds.gridRows - 1)
+            )
+            buildings.add(
+                ExtractedBuilding(
+                    osmId = osmId,
+                    name = name,
+                    buildingType = bType,
+                    amenity = amenity,
+                    levels = levels,
+                    heightM = heightM,
+                    centroid = centroid,
+                    elevM = elevM,
+                    footprintAreaM2 = areaM2,
+                    perimeterM = perimM,
+                    polygon = poly
+                )
+            )
+        }
+
+        val waterCount = buf.int
+        val waters = ArrayList<ExtractedWaterPolygon>(waterCount)
+        for (i in 0 until waterCount) {
+            val osmId = buf.long
+            val name = readStr()
+            val wType = readStr()
+            val meanE = buf.float
+            val polyCount = buf.int
+            val poly = ArrayList<MagadiGeoCoord>(polyCount)
+            for (k in 0 until polyCount) poly.add(readLocalCoord())
+            waters.add(
+                ExtractedWaterPolygon(
+                    osmId = osmId,
+                    name = name,
+                    waterType = wType,
+                    polygon = poly,
+                    meanElevM = meanE
+                )
+            )
+        }
+
+        val poiCount = buf.int
+        val pois = ArrayList<ExtractedPoiMetadata>(poiCount)
+        for (i in 0 until poiCount) {
+            val osmId = buf.long
+            val name = readStr()
+            val cat = readStr()
+            val coord = readLocalCoord()
+            val elevM = buf.float
+            pois.add(
+                ExtractedPoiMetadata(
+                    osmId = osmId,
+                    name = name,
+                    category = cat,
+                    coord = coord,
+                    elevM = elevM
+                )
+            )
+        }
+
+        val metadata = MagadiTownMetadata(
+            placeName = placeName,
+            extractedAtIso = extractedAtIso,
+            osmSourceUrl = "Binary Pack ($osmSourceUrl)",
+            demSourceUrl = demSourceUrl,
+            demResolutionM = demResolutionM,
+            lakeLevelAslM = lakeLevelAslM,
+            isLiveExtracted = false,
+            roadCount = roads.size,
+            totalRoadLengthKm = roads.sumOf { it.lengthM.toDouble() }.toFloat() / 1000f,
+            buildingCount = buildings.size,
+            totalBuildingFootprintM2 = buildings.sumOf { it.footprintAreaM2.toDouble() }.toFloat(),
+            waterCount = waters.size,
+            poiCount = pois.size,
+            elevMinM = elevMinM,
+            elevMaxM = elevMaxM,
+            elevMeanM = elevMeanM,
+            isBinaryServed = true
+        )
+
+        return MagadiTownBundle(
+            bounds = bounds,
+            metadata = metadata,
+            demGrid = demGrid,
+            roads = roads,
+            buildings = buildings,
+            pois = pois,
+            waterPolygons = waters
+        )
+    }
+
     suspend fun loadCachedBundle(): MagadiTownBundle? = withContext(Dispatchers.IO) {
         if (!cacheFile.exists()) return@withContext null
         return@withContext try {
@@ -159,641 +414,80 @@ class MagadiTownRepository(private val context: Context) {
         }
     }
 
-    suspend fun extractLiveMagadiTownData(
-        onProgress: (stage: String, progress: Float) -> Unit
-    ): Result<MagadiTownBundle> = withContext(Dispatchers.IO) {
-        try {
-            val bounds = getNativeBounds()
-
-            onProgress("Querying OpenStreetMap Overpass (Roads, Buildings, Lake & Waterbodies)...", 0.16f)
-            val (osmJson, osmUrl) = fetchOverpassJson(bounds)
-
-            onProgress("Fetching high-resolution Terrarium ~9.5m / SRTM 30m DEM tiles...", 0.48f)
-            val (demGrid, demUrl) = fetchBestHighResDemGrid(bounds)
-
-            onProgress("Calibrating C++ 1m DEM, Lake Magadi shoreline & UTM 37S projection...", 0.80f)
-            if (demGrid != null && NativeEngineBridge.isLoaded()) {
-                NativeEngineBridge.nativeSetMagadiTownDemGrid(
-                    demGrid.cols,
-                    demGrid.rows,
-                    demGrid.elevationsM
-                )
-            }
-
-            val parsed = parseOverpassIntoBundle(
-                osmJson = osmJson,
-                osmUrl = osmUrl,
-                demGrid = demGrid,
-                demUrl = demUrl,
-                bounds = bounds
-            )
-
-            syncBundleToCpp(parsed)
-
-            onProgress("Saving high-res spatial cache...", 0.96f)
-            cacheFile.writeText(serializeBundle(parsed).toString())
-
-            Result.success(parsed)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     fun syncLakeLevelToCpp(lakeLevelAslM: Float, waterPolygons: List<ExtractedWaterPolygon>) {
         if (!NativeEngineBridge.isLoaded()) return
-        val metaList = ArrayList<Int>(waterPolygons.size * 2)
-        val coordList = ArrayList<Float>()
-        for (wp in waterPolygons) {
-            if (wp.polygon.size < 3) continue
-            metaList.add(wp.polygon.size)
-            val isSalt = if (wp.waterType.contains("salt") || wp.waterType.contains("mud")) 1 else 0
-            metaList.add(isSalt)
-            for (pt in wp.polygon) {
-                coordList.add(pt.xM)
-                coordList.add(pt.yM)
+        try {
+            val metaList = ArrayList<Int>(waterPolygons.size * 2)
+            val coordList = ArrayList<Float>()
+            for (wp in waterPolygons) {
+                if (wp.polygon.size < 3) continue
+                metaList.add(wp.polygon.size)
+                val isSalt = if (wp.waterType.contains("salt") || wp.waterType.contains("mud")) 1 else 0
+                metaList.add(isSalt)
+                for (pt in wp.polygon) {
+                    coordList.add(pt.xM)
+                    coordList.add(pt.yM)
+                }
             }
+            NativeEngineBridge.nativeSetMagadiTownLakeAndWater(
+                lakeLevelAslM,
+                metaList.toIntArray(),
+                coordList.toFloatArray()
+            )
+        } catch (_: Throwable) {
         }
-        NativeEngineBridge.nativeSetMagadiTownLakeAndWater(
-            lakeLevelAslM,
-            metaList.toIntArray(),
-            coordList.toFloatArray()
-        )
     }
 
     fun syncBundleToCpp(bundle: MagadiTownBundle) {
         if (!NativeEngineBridge.isLoaded()) return
-        bundle.demGrid?.let { dem ->
-            NativeEngineBridge.nativeSetMagadiTownDemGrid(dem.cols, dem.rows, dem.elevationsM)
+        try {
+            bundle.demGrid?.let { dem ->
+                NativeEngineBridge.nativeSetMagadiTownDemGrid(dem.cols, dem.rows, dem.elevationsM)
+            }
+            syncLakeLevelToCpp(bundle.metadata.lakeLevelAslM, bundle.waterPolygons)
+
+            // Pack road segments: [x0, y0, x1, y1, halfWidthM] * N
+            val segCount = bundle.roads.sumOf { max(0, it.nodes.size - 1) }
+            val roadFloats = FloatArray(segCount * 5)
+            var rIdx = 0
+            for (road in bundle.roads) {
+                val hw = (road.widthM * 0.5f).coerceAtLeast(2.0f)
+                for (i in 0 until road.nodes.size - 1) {
+                    val p0 = road.nodes[i]
+                    val p1 = road.nodes[i + 1]
+                    roadFloats[rIdx++] = p0.xM
+                    roadFloats[rIdx++] = p0.yM
+                    roadFloats[rIdx++] = p1.xM
+                    roadFloats[rIdx++] = p1.yM
+                    roadFloats[rIdx++] = hw
+                }
+            }
+            // Pack building bounding rects: [minX, minY, maxX, maxY] * M
+            val bldgFloats = FloatArray(bundle.buildings.size * 4)
+            var bIdx = 0
+            for (b in bundle.buildings) {
+                if (b.polygon.isEmpty()) continue
+                var minX = Float.MAX_VALUE
+                var minY = Float.MAX_VALUE
+                var maxX = -Float.MAX_VALUE
+                var maxY = -Float.MAX_VALUE
+                for (v in b.polygon) {
+                    if (v.xM < minX) minX = v.xM
+                    if (v.yM < minY) minY = v.yM
+                    if (v.xM > maxX) maxX = v.xM
+                    if (v.yM > maxY) maxY = v.yM
+                }
+                bldgFloats[bIdx++] = minX
+                bldgFloats[bIdx++] = minY
+                bldgFloats[bIdx++] = maxX
+                bldgFloats[bIdx++] = maxY
+            }
+            NativeEngineBridge.nativeSetMagadiTownFootprints(
+                roadFloats.copyOf(rIdx),
+                bldgFloats.copyOf(bIdx)
+            )
+        } catch (_: Throwable) {
         }
-        syncLakeLevelToCpp(bundle.metadata.lakeLevelAslM, bundle.waterPolygons)
-
-        // Pack road segments: [x0, y0, x1, y1, halfWidthM] * N
-        val segCount = bundle.roads.sumOf { max(0, it.nodes.size - 1) }
-        val roadFloats = FloatArray(segCount * 5)
-        var rIdx = 0
-        for (road in bundle.roads) {
-            val hw = (road.widthM * 0.5f).coerceAtLeast(2.0f)
-            for (i in 0 until road.nodes.size - 1) {
-                val p0 = road.nodes[i]
-                val p1 = road.nodes[i + 1]
-                roadFloats[rIdx++] = p0.xM
-                roadFloats[rIdx++] = p0.yM
-                roadFloats[rIdx++] = p1.xM
-                roadFloats[rIdx++] = p1.yM
-                roadFloats[rIdx++] = hw
-            }
-        }
-        // Pack building bounding rects: [minX, minY, maxX, maxY] * M
-        val bldgFloats = FloatArray(bundle.buildings.size * 4)
-        var bIdx = 0
-        for (b in bundle.buildings) {
-            if (b.polygon.isEmpty()) continue
-            var minX = Float.MAX_VALUE
-            var minY = Float.MAX_VALUE
-            var maxX = -Float.MAX_VALUE
-            var maxY = -Float.MAX_VALUE
-            for (v in b.polygon) {
-                if (v.xM < minX) minX = v.xM
-                if (v.yM < minY) minY = v.yM
-                if (v.xM > maxX) maxX = v.xM
-                if (v.yM > maxY) maxY = v.yM
-            }
-            bldgFloats[bIdx++] = minX
-            bldgFloats[bIdx++] = minY
-            bldgFloats[bIdx++] = maxX
-            bldgFloats[bIdx++] = maxY
-        }
-        NativeEngineBridge.nativeSetMagadiTownFootprints(
-            roadFloats.copyOf(rIdx),
-            bldgFloats.copyOf(bIdx)
-        )
-    }
-
-    private fun fetchOverpassJson(bounds: MagadiTownBounds): Pair<JSONObject, String> {
-        val bboxStr = String.format(
-            Locale.US,
-            "%.6f,%.6f,%.6f,%.6f",
-            bounds.minLat,
-            bounds.minLon,
-            bounds.maxLat,
-            bounds.maxLon
-        )
-        val query = """
-            [out:json][timeout:30];
-            (
-              way["highway"]($bboxStr);
-              way["building"]($bboxStr);
-              way["natural"="water"]($bboxStr);
-              relation["natural"="water"]($bboxStr);
-              way["natural"="wetland"]($bboxStr);
-              way["natural"="mud"]($bboxStr);
-              way["landuse"="salt_pond"]($bboxStr);
-              relation["landuse"="salt_pond"]($bboxStr);
-              way["landuse"="reservoir"]($bboxStr);
-              node["place"]($bboxStr);
-              node["amenity"]($bboxStr);
-              node["man_made"]($bboxStr);
-              node["shop"]($bboxStr);
-              node["aeroway"]($bboxStr);
-              node["tourism"]($bboxStr);
-            );
-            (._;>;);
-            out body;
-        """.trimIndent()
-
-        val endpoints = listOf(
-            "https://overpass-api.de/api/interpreter",
-            "https://overpass.kumi.systems/api/interpreter",
-            "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
-        )
-
-        var lastError: Exception? = null
-        for (endpoint in endpoints) {
-            try {
-                val formBody = FormBody.Builder()
-                    .add("data", query)
-                    .build()
-                val req = Request.Builder()
-                    .url(endpoint)
-                    .header("User-Agent", "Apex3DAssets-MagadiGIS/1.0")
-                    .post(formBody)
-                    .build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) {
-                        throw IllegalStateException("Overpass HTTP ${resp.code}")
-                    }
-                    val body = resp.body?.string() ?: throw IllegalStateException("Empty Overpass body")
-                    return JSONObject(body) to endpoint
-                }
-            } catch (e: Exception) {
-                lastError = e
-            }
-        }
-        throw IllegalStateException("OSM Overpass extraction failed: ${lastError?.message ?: "Network unavailable"}")
-    }
-
-    private fun fetchBestHighResDemGrid(bounds: MagadiTownBounds): Pair<DemControlGrid?, String> {
-        // Tier 1: Mapzen / AWS Terrarium Elevation PNG Tiles @ Zoom 14 (~9.5 m/px real pixel resolution!)
-        fetchTerrariumZoom14Grid(bounds)?.let { return it }
-
-        // Tier 2: OpenTopoData SRTM GL1 30m DEM (batched 12 x 16 = 192 samples)
-        fetchOpenTopoDataSrtm30Grid(bounds)?.let { return it }
-
-        // Tier 3: Batched Open-Meteo Copernicus DEM 90m fallback (20 x 28 = 560 samples)
-        return fetchOpenMeteoDemGrid(bounds)
-    }
-
-    private fun fetchTerrariumZoom14Grid(bounds: MagadiTownBounds): Pair<DemControlGrid, String>? {
-        return try {
-            val z = 14
-            val n = 1 shl z
-
-            fun lonToTileX(lon: Double): Double = ((lon + 180.0) / 360.0) * n
-            fun latToTileY(lat: Double): Double {
-                val rad = Math.toRadians(lat)
-                return ((1.0 - ln(tan(rad) + 1.0 / cos(rad)) / PI) / 2.0) * n
-            }
-
-            val minTX = floor(lonToTileX(bounds.minLon)).toInt()
-            val maxTX = floor(lonToTileX(bounds.maxLon)).toInt()
-            val minTY = floor(latToTileY(bounds.maxLat)).toInt()
-            val maxTY = floor(latToTileY(bounds.minLat)).toInt()
-
-            val tiles = HashMap<Pair<Int, Int>, Bitmap>()
-            for (ty in minTY..maxTY) {
-                for (tx in minTX..maxTX) {
-                    val url = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/$z/$tx/$ty.png"
-                    val req = Request.Builder()
-                        .url(url)
-                        .header("User-Agent", "Apex3DAssets-MagadiGIS/1.0")
-                        .get()
-                        .build()
-                    client.newCall(req).execute().use { resp ->
-                        if (!resp.isSuccessful) return null
-                        val bmp = resp.body?.byteStream()?.use { BitmapFactory.decodeStream(it) } ?: return null
-                        tiles[tx to ty] = bmp
-                    }
-                }
-            }
-            if (tiles.isEmpty()) return null
-
-            // Sample high-density 120 x 200 DEM control matrix (~25m spacing directly from ~9.5m/px tiles)
-            val cols = 120
-            val rows = 200
-            val vals = FloatArray(cols * rows)
-            var minE = Float.MAX_VALUE
-            var maxE = -Float.MAX_VALUE
-            var sumE = 0.0
-
-            for (r in 0 until rows) {
-                val lat = bounds.minLat + (r.toDouble() / (rows - 1)) * (bounds.maxLat - bounds.minLat)
-                val worldTy = latToTileY(lat)
-                val ty = floor(worldTy).toInt().coerceIn(minTY, maxTY)
-                val py = ((worldTy - ty) * 256.0).toInt().coerceIn(0, 255)
-                for (c in 0 until cols) {
-                    val lon = bounds.minLon + (c.toDouble() / (cols - 1)) * (bounds.maxLon - bounds.minLon)
-                    val worldTx = lonToTileX(lon)
-                    val tx = floor(worldTx).toInt().coerceIn(minTX, maxTX)
-                    val px = ((worldTx - tx) * 256.0).toInt().coerceIn(0, 255)
-                    val bmp = tiles[tx to ty] ?: continue
-                    val argb = bmp.getPixel(px, py)
-                    val red = (argb shr 16) and 0xFF
-                    val green = (argb shr 8) and 0xFF
-                    val blue = argb and 0xFF
-                    val elev = ((red * 256.0) + green + (blue / 256.0) - 32768.0).toFloat()
-                    vals[r * cols + c] = elev
-                    if (elev < minE) minE = elev
-                    if (elev > maxE) maxE = elev
-                    sumE += elev
-                }
-            }
-            tiles.values.forEach { it.recycle() }
-
-            if (minE < 300f || maxE > 3000f || maxE - minE < 0.5f) return null
-            val meanE = (sumE / vals.size).toFloat()
-            val srcUrl = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/{x}/{y}.png"
-            DemControlGrid(
-                source = "Terrarium ~9.5m/px DEM (120×200 -> 1m C++ Bicubic)",
-                nativeResolutionM = 9.5f,
-                cols = cols,
-                rows = rows,
-                elevationsM = vals,
-                minElevM = minE,
-                maxElevM = maxE,
-                meanElevM = meanE
-            ) to srcUrl
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun fetchOpenTopoDataSrtm30Grid(bounds: MagadiTownBounds): Pair<DemControlGrid, String>? {
-        return try {
-            val cols = 12
-            val rows = 16 // 192 points across 2 requests of <= 100 points
-            val points = ArrayList<Pair<Double, Double>>(cols * rows)
-            for (r in 0 until rows) {
-                val lat = bounds.minLat + (r.toDouble() / (rows - 1)) * (bounds.maxLat - bounds.minLat)
-                for (c in 0 until cols) {
-                    val lon = bounds.minLon + (c.toDouble() / (cols - 1)) * (bounds.maxLon - bounds.minLon)
-                    points.add(lat to lon)
-                }
-            }
-            val vals = FloatArray(points.size)
-            var idx = 0
-            for (chunk in points.chunked(96)) {
-                val locs = chunk.joinToString("|") { String.format(Locale.US, "%.6f,%.6f", it.first, it.second) }
-                val url = "https://api.opentopodata.org/v1/srtm30m?locations=$locs"
-                val req = Request.Builder().url(url).header("User-Agent", "Apex3DAssets-MagadiGIS/1.0").get().build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null
-                    val obj = JSONObject(resp.body?.string() ?: return null)
-                    val results = obj.getJSONArray("results")
-                    for (k in 0 until results.length()) {
-                        vals[idx++] = results.getJSONObject(k).optDouble("elevation", 605.0).toFloat()
-                    }
-                }
-            }
-            if (idx < vals.size) return null
-            val minE = vals.minOrNull() ?: 595f
-            val maxE = vals.maxOrNull() ?: 720f
-            val meanE = vals.average().toFloat()
-            DemControlGrid(
-                source = "SRTM GL1 30m DEM (12×16 -> 1m C++ Bicubic)",
-                nativeResolutionM = 30.0f,
-                cols = cols,
-                rows = rows,
-                elevationsM = vals,
-                minElevM = minE,
-                maxElevM = maxE,
-                meanElevM = meanE
-            ) to "https://api.opentopodata.org/v1/srtm30m"
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun fetchOpenMeteoDemGrid(bounds: MagadiTownBounds): Pair<DemControlGrid?, String> {
-        val cols = 16
-        val rows = 24 // 384 points batched in chunks of 96
-        val points = ArrayList<Pair<Double, Double>>(cols * rows)
-        for (r in 0 until rows) {
-            val lat = bounds.minLat + (r.toDouble() / (rows - 1)) * (bounds.maxLat - bounds.minLat)
-            for (c in 0 until cols) {
-                val lon = bounds.minLon + (c.toDouble() / (cols - 1)) * (bounds.maxLon - bounds.minLon)
-                points.add(lat to lon)
-            }
-        }
-        return try {
-            val vals = FloatArray(points.size)
-            var idx = 0
-            for (chunk in points.chunked(96)) {
-                val lats = chunk.joinToString(",") { String.format(Locale.US, "%.6f", it.first) }
-                val lons = chunk.joinToString(",") { String.format(Locale.US, "%.6f", it.second) }
-                val url = "https://api.open-meteo.com/v1/elevation?latitude=$lats&longitude=$lons"
-                val req = Request.Builder().url(url).header("User-Agent", "Apex3DAssets-MagadiGIS/1.0").get().build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null to "Open-Meteo HTTP ${resp.code}"
-                    val obj = JSONObject(resp.body?.string() ?: return null to "Empty DEM response")
-                    val elevArr = obj.getJSONArray("elevation")
-                    for (i in 0 until elevArr.length()) {
-                        if (idx < vals.size) vals[idx++] = elevArr.getDouble(i).toFloat()
-                    }
-                }
-            }
-            val minE = vals.minOrNull() ?: 595f
-            val maxE = vals.maxOrNull() ?: 720f
-            val meanE = vals.average().toFloat()
-            DemControlGrid(
-                source = "Open-Meteo Copernicus DEM 90m (16×24 fallback)",
-                nativeResolutionM = 90.0f,
-                cols = cols,
-                rows = rows,
-                elevationsM = vals,
-                minElevM = minE,
-                maxElevM = maxE,
-                meanElevM = meanE
-            ) to "https://api.open-meteo.com/v1/elevation"
-        } catch (e: Exception) {
-            null to "DEM fallback (${e.message})"
-        }
-    }
-
-    private fun parseOverpassIntoBundle(
-        osmJson: JSONObject,
-        osmUrl: String,
-        demGrid: DemControlGrid?,
-        demUrl: String,
-        bounds: MagadiTownBounds
-    ): MagadiTownBundle {
-        val elements = osmJson.optJSONArray("elements") ?: JSONArray()
-        val nodeMap = HashMap<Long, Pair<Double, Double>>(elements.length())
-        val wayNodeCoordsMap = HashMap<Long, List<MagadiGeoCoord>>()
-        val pois = ArrayList<ExtractedPoiMetadata>()
-        val roads = ArrayList<ExtractedRoadWay>()
-        val buildings = ArrayList<ExtractedBuilding>()
-        val waterPolygons = ArrayList<ExtractedWaterPolygon>()
-
-        // Pass 1: Collect all node coordinates & named POIs
-        for (i in 0 until elements.length()) {
-            val el = elements.optJSONObject(i) ?: continue
-            if (el.optString("type") == "node") {
-                val id = el.optLong("id")
-                val lat = el.optDouble("lat", Double.NaN)
-                val lon = el.optDouble("lon", Double.NaN)
-                if (!lat.isNaN() && !lon.isNaN()) {
-                    nodeMap[id] = lat to lon
-                    val tagsObj = el.optJSONObject("tags")
-                    if (tagsObj != null && (tagsObj.has("place") || tagsObj.has("amenity") ||
-                                tagsObj.has("man_made") || tagsObj.has("aeroway") ||
-                                tagsObj.has("tourism") || tagsObj.has("shop") || tagsObj.has("name"))
-                    ) {
-                        val tags = jsonToMap(tagsObj)
-                        val name = tags["name"] ?: tags["amenity"] ?: tags["man_made"] ?: tags["place"] ?: "POI #$id"
-                        val cat = tags["place"] ?: tags["amenity"] ?: tags["man_made"]
-                            ?: tags["aeroway"] ?: tags["tourism"] ?: tags["shop"] ?: "landmark"
-                        val coord = convertLatLonToCoord(lat, lon, bounds)
-                        val elev = inspect1mCell(coord.xM, coord.yM).elevM
-                        pois.add(
-                            ExtractedPoiMetadata(
-                                osmId = id,
-                                name = name,
-                                category = cat,
-                                coord = coord,
-                                elevM = elev,
-                                tags = tags
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // Pass 2: Extract ways (roads, buildings, water polygons) and save wayMap for multipolygon relations
-        for (i in 0 until elements.length()) {
-            val el = elements.optJSONObject(i) ?: continue
-            if (el.optString("type") != "way") continue
-            val id = el.optLong("id")
-            val nds = el.optJSONArray("nodes") ?: continue
-            val coords = ArrayList<MagadiGeoCoord>(nds.length())
-            for (j in 0 until nds.length()) {
-                val nid = nds.optLong(j)
-                val ll = nodeMap[nid] ?: continue
-                coords.add(convertLatLonToCoord(ll.first, ll.second, bounds))
-            }
-            if (coords.size < 2) continue
-            wayNodeCoordsMap[id] = coords
-
-            val tagsObj = el.optJSONObject("tags") ?: continue
-            val tags = jsonToMap(tagsObj)
-
-            if (tags.containsKey("highway")) {
-                val hType = tags["highway"] ?: "unclassified"
-                val roadName = tags["name"] ?: tags["ref"] ?: "Magadi ${hType.replace('_', ' ').replaceFirstChar { it.uppercase() }} #$id"
-                val surface = tags["surface"] ?: when (hType) {
-                    "primary", "secondary", "trunk", "tertiary" -> "asphalt"
-                    "residential", "service" -> "compacted / paved"
-                    else -> "unpaved / murram"
-                }
-                val lanes = tags["lanes"]?.toIntOrNull() ?: when (hType) {
-                    "primary", "trunk", "secondary" -> 2
-                    else -> 1
-                }
-                val width = when (hType) {
-                    "trunk", "primary" -> 8.0f
-                    "secondary", "tertiary" -> 7.0f
-                    "residential", "unclassified" -> 5.5f
-                    else -> 3.5f
-                }
-                var lengthM = 0f
-                for (k in 0 until coords.size - 1) {
-                    val dx = coords[k + 1].xM - coords[k].xM
-                    val dy = coords[k + 1].yM - coords[k].yM
-                    lengthM += sqrt(dx * dx + dy * dy)
-                }
-                roads.add(
-                    ExtractedRoadWay(
-                        osmId = id,
-                        name = roadName,
-                        highwayType = hType,
-                        surface = surface,
-                        lanes = lanes,
-                        oneWay = tags["oneway"] == "yes",
-                        widthM = width,
-                        lengthM = lengthM,
-                        nodes = coords,
-                        tags = tags
-                    )
-                )
-            } else if (tags.containsKey("building") && coords.size >= 3) {
-                val bType = tags["building"] ?: "yes"
-                val amenity = tags["amenity"] ?: tags["shop"] ?: tags["industrial"] ?: ""
-                val bName = tags["name"] ?: when {
-                    amenity.isNotBlank() -> amenity.replace('_', ' ').replaceFirstChar { it.uppercase() }
-                    bType != "yes" -> "${bType.replace('_', ' ').replaceFirstChar { it.uppercase() }} #$id"
-                    else -> "Building #$id"
-                }
-                val levels = tags["building:levels"]?.toIntOrNull() ?: 1
-                val height = tags["height"]?.replace("m", "")?.trim()?.toFloatOrNull() ?: (levels * 3.4f)
-
-                val polyNoDup = if (coords.first().xM == coords.last().xM && coords.first().yM == coords.last().yM && coords.size > 3) {
-                    coords.dropLast(1)
-                } else coords
-
-                var areaSum = 0.0
-                var cx = 0.0
-                var cy = 0.0
-                var perim = 0.0
-                for (k in polyNoDup.indices) {
-                    val p0 = polyNoDup[k]
-                    val p1 = polyNoDup[(k + 1) % polyNoDup.size]
-                    val cross = p0.xM.toDouble() * p1.yM.toDouble() - p1.xM.toDouble() * p0.yM.toDouble()
-                    areaSum += cross
-                    cx += (p0.xM + p1.xM) * cross
-                    cy += (p0.yM + p1.yM) * cross
-                    perim += hypot((p1.xM - p0.xM).toDouble(), (p1.yM - p0.yM).toDouble())
-                }
-                val area = abs(areaSum * 0.5).toFloat().coerceAtLeast(4f)
-                val centLat: Double
-                val centLon: Double
-                if (abs(areaSum) > 1e-3) {
-                    val mx = (cx / (3.0 * areaSum)).toFloat()
-                    val my = (cy / (3.0 * areaSum)).toFloat()
-                    val cSample = inspect1mCell(mx, my)
-                    centLat = if (mx in -200f..3200f && my in -200f..5200f) cSample.lat else polyNoDup.map { it.lat }.average()
-                    centLon = if (mx in -200f..3200f && my in -200f..5200f) cSample.lon else polyNoDup.map { it.lon }.average()
-                } else {
-                    centLat = polyNoDup.map { it.lat }.average()
-                    centLon = polyNoDup.map { it.lon }.average()
-                }
-                val centroid = convertLatLonToCoord(centLat, centLon, bounds)
-                val elev = inspect1mCell(centroid.xM, centroid.yM).elevM
-
-                buildings.add(
-                    ExtractedBuilding(
-                        osmId = id,
-                        name = bName,
-                        buildingType = bType,
-                        amenity = amenity,
-                        levels = levels,
-                        heightM = height,
-                        centroid = centroid,
-                        elevM = elev,
-                        footprintAreaM2 = area,
-                        perimeterM = perim.toFloat(),
-                        polygon = coords,
-                        tags = tags
-                    )
-                )
-            } else if ((tags["natural"] in setOf("water", "wetland", "mud") ||
-                        tags["landuse"] in setOf("salt_pond", "reservoir")) && coords.size >= 3
-            ) {
-                val wType = tags["water"] ?: tags["landuse"] ?: tags["natural"] ?: "water"
-                val wName = tags["name"] ?: if (wType == "salt_pond") "Magadi Salt Pan #$id" else "Lake Magadi Basin #$id"
-                val meanE = coords.map { inspect1mCell(it.xM, it.yM).elevM }.average().toFloat()
-                waterPolygons.add(
-                    ExtractedWaterPolygon(
-                        osmId = id,
-                        name = wName,
-                        waterType = wType,
-                        polygon = coords,
-                        meanElevM = meanE
-                    )
-                )
-            }
-        }
-
-        // Pass 3: Reconstruct multipolygon water relations (e.g., Lake Magadi main shore rings)
-        for (i in 0 until elements.length()) {
-            val el = elements.optJSONObject(i) ?: continue
-            if (el.optString("type") != "relation") continue
-            val tagsObj = el.optJSONObject("tags") ?: continue
-            val tags = jsonToMap(tagsObj)
-            if (tags["natural"] !in setOf("water", "wetland") && tags["landuse"] !in setOf("salt_pond", "reservoir")) {
-                continue
-            }
-            val relId = el.optLong("id")
-            val wName = tags["name"] ?: "Lake Magadi #$relId"
-            val wType = tags["water"] ?: tags["landuse"] ?: tags["natural"] ?: "lake"
-            val members = el.optJSONArray("members") ?: continue
-            for (m in 0 until members.length()) {
-                val mem = members.optJSONObject(m) ?: continue
-                if (mem.optString("type") == "way" && mem.optString("role") != "inner") {
-                    val wayCoords = wayNodeCoordsMap[mem.optLong("ref")] ?: continue
-                    if (wayCoords.size >= 3) {
-                        val meanE = wayCoords.map { inspect1mCell(it.xM, it.yM).elevM }.average().toFloat()
-                        waterPolygons.add(
-                            ExtractedWaterPolygon(
-                                osmId = relId * 1000L + m,
-                                name = wName,
-                                waterType = wType,
-                                polygon = wayCoords,
-                                meanElevM = meanE
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // Auto-calibrate Lake Level ASL from extracted Lake Magadi shore elevations or basin lowest percentile
-        val demMin = demGrid?.minElevM ?: 595.5f
-        val demMax = demGrid?.maxElevM ?: 720.0f
-        val sortedDem = demGrid?.elevationsM?.sortedArray()
-        val p15Elev = sortedDem?.getOrNull((sortedDem.size * 0.14f).toInt().coerceIn(0, sortedDem.lastIndex))
-        val autoLakeLevel = when {
-            waterPolygons.isNotEmpty() -> {
-                val shoreAvg = waterPolygons.map { it.meanElevM }.average().toFloat()
-                (shoreAvg + 0.8f).coerceIn(demMin + 0.5f, demMax - 4.0f)
-            }
-            p15Elev != null -> (p15Elev + 1.2f).coerceIn(demMin + 0.8f, demMax - 4.0f)
-            else -> 602.5f
-        }
-
-        val totalRoadKm = roads.sumOf { it.lengthM.toDouble() }.toFloat() / 1000f
-        val totalBldgArea = buildings.sumOf { it.footprintAreaM2.toDouble() }.toFloat()
-        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-
-        val metadata = MagadiTownMetadata(
-            placeName = "Magadi Town, Kajiado County, Kenya",
-            extractedAtIso = isoFormatter.format(Date()),
-            osmSourceUrl = osmUrl,
-            demSourceUrl = demUrl,
-            demResolutionM = demGrid?.nativeResolutionM ?: 9.5f,
-            lakeLevelAslM = autoLakeLevel,
-            isLiveExtracted = true,
-            roadCount = roads.size,
-            totalRoadLengthKm = totalRoadKm,
-            buildingCount = buildings.size,
-            totalBuildingFootprintM2 = totalBldgArea,
-            waterCount = waterPolygons.size,
-            poiCount = pois.size,
-            elevMinM = demMin,
-            elevMaxM = demMax,
-            elevMeanM = demGrid?.meanElevM ?: 625f
-        )
-
-        return MagadiTownBundle(
-            bounds = bounds,
-            metadata = metadata,
-            demGrid = demGrid,
-            roads = roads.sortedByDescending { it.lengthM },
-            buildings = buildings.sortedByDescending { it.footprintAreaM2 },
-            pois = pois,
-            waterPolygons = waterPolygons
-        )
-    }
-
-    private fun jsonToMap(obj: JSONObject): Map<String, String> {
-        val map = LinkedHashMap<String, String>()
-        val keys = obj.keys()
-        while (keys.hasNext()) {
-            val k = keys.next()
-            map[k] = obj.optString(k, "")
-        }
-        return map
     }
 
     fun exportGeoJson(bundle: MagadiTownBundle): JSONObject {

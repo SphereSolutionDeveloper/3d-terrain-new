@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -160,17 +161,29 @@ fun AssetStudioScreen(
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+    var isFullScreenMap by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = drawerState.isOpen || mainAppView != MainAppView.TERRAIN_VIEW) {
-        if (drawerState.isOpen) {
-            coroutineScope.launch { drawerState.close() }
-        } else {
-            viewModel.setMainAppView(MainAppView.TERRAIN_VIEW)
+    LaunchedEffect(mainAppView) {
+        isFullScreenMap = false
+    }
+
+    val isMapCapableView = mainAppView == MainAppView.MAGADI_TOWN_3X5 ||
+        mainAppView == MainAppView.C58_CORRIDOR_3KM ||
+        mainAppView == MainAppView.KENYA_GRID_VIEW ||
+        mainAppView == MainAppView.TERRAIN_VIEW
+    val effectiveFullScreen = isFullScreenMap && isMapCapableView
+
+    BackHandler(enabled = drawerState.isOpen || effectiveFullScreen || mainAppView != MainAppView.TERRAIN_VIEW) {
+        when {
+            drawerState.isOpen -> coroutineScope.launch { drawerState.close() }
+            effectiveFullScreen -> isFullScreenMap = false
+            else -> viewModel.setMainAppView(MainAppView.TERRAIN_VIEW)
         }
     }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = !effectiveFullScreen,
         drawerContent = {
             ApexDrawerContent(
                 currentView = mainAppView,
@@ -182,100 +195,123 @@ fun AssetStudioScreen(
         }
     ) {
         Scaffold(
+            contentWindowInsets = if (effectiveFullScreen) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
             topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
-                                }
-                            },
-                            modifier = Modifier.testTag("top_bar_hamburger_btn")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Open Navigation Menu",
-                                tint = CyberCyan,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    },
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = CyberCyan.copy(alpha = 0.15f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, GlowingCyanBorder),
-                                modifier = Modifier.size(34.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(mainAppView.emoji, fontSize = 16.sp)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = mainAppView.label.uppercase(),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Black,
-                                        letterSpacing = 0.8.sp,
-                                        color = TextPrimary
-                                    )
-                                )
-                                Text(
-                                    text = mainAppView.subtitle.ifEmpty { "Vulkan 1.3 Procedural Suite" },
-                                    fontSize = 10.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = when (mainAppView) {
-                                        MainAppView.MAGADI_TOWN_3X5 -> NeonLime
-                                        MainAppView.KENYA_GRID_VIEW -> CyberCyan
-                                        MainAppView.TERRAIN_VIEW -> CyberCyan
-                                        MainAppView.ROAD_VIEW -> NeonLime
-                                        MainAppView.AUDIO_VIEW -> HologramBlue
-                                        MainAppView.SCENE_3D_VIEW -> LaserOrange
-                                        MainAppView.CPP_PROCEDURAL_VIEW -> NeonLime
-                                        MainAppView.SINGLE_ASSET_INSPECTOR -> ElectricViolet
+                if (!effectiveFullScreen) {
+                    TopAppBar(
+                        navigationIcon = {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
                                     }
+                                },
+                                modifier = Modifier.testTag("top_bar_hamburger_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = "Open Navigation Menu",
+                                    tint = CyberCyan,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = DarkBackground,
-                        titleContentColor = TextPrimary
-                    ),
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                val allViews = MainAppView.values()
-                                val nextIndex = (allViews.indexOf(mainAppView) + 1) % allViews.size
-                                viewModel.setMainAppView(allViews[nextIndex])
-                            },
-                            modifier = Modifier.testTag("top_bar_switch_view_btn")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ViewInAr,
-                                contentDescription = "Cycle Screen",
-                                tint = CyberCyan
-                            )
-                        }
-
-                        IconButton(
-                            onClick = {
-                                when (mainAppView) {
-                                    MainAppView.SCENE_3D_VIEW -> viewModel.resetSceneCamera("Isometric")
-                                    MainAppView.SINGLE_ASSET_INSPECTOR -> viewModel.resetCamera("Isometric")
-                                    MainAppView.CPP_PROCEDURAL_VIEW -> viewModel.resetCppCamera("Isometric")
-                                    else -> {}
+                        },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = CyberCyan.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, GlowingCyanBorder),
+                                    modifier = Modifier.size(34.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(mainAppView.emoji, fontSize = 16.sp)
+                                    }
                                 }
-                            },
-                            modifier = Modifier.testTag("app_bar_reset_camera")
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reset Camera", tint = TextSecondary)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = mainAppView.label.uppercase(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Black,
+                                            letterSpacing = 0.6.sp,
+                                            color = TextPrimary
+                                        )
+                                    )
+                                    Text(
+                                        text = mainAppView.subtitle.ifEmpty { "Vulkan 1.3 Procedural Suite" },
+                                        fontSize = 10.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = when (mainAppView) {
+                                            MainAppView.MAGADI_TOWN_3X5 -> NeonLime
+                                            MainAppView.C58_CORRIDOR_3KM -> CyberCyan
+                                            MainAppView.KENYA_GRID_VIEW -> CyberCyan
+                                            MainAppView.TERRAIN_VIEW -> CyberCyan
+                                            MainAppView.ROAD_VIEW -> NeonLime
+                                            MainAppView.AUDIO_VIEW -> HologramBlue
+                                            MainAppView.SCENE_3D_VIEW -> LaserOrange
+                                            MainAppView.CPP_PROCEDURAL_VIEW -> NeonLime
+                                            MainAppView.SINGLE_ASSET_INSPECTOR -> ElectricViolet
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = DarkBackground,
+                            titleContentColor = TextPrimary
+                        ),
+                        actions = {
+                            if (isMapCapableView) {
+                                IconButton(
+                                    onClick = { isFullScreenMap = true },
+                                    modifier = Modifier.testTag("top_bar_fullscreen_map_btn")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.VisibilityOff,
+                                        contentDescription = "Hide All Text for Fullscreen Map",
+                                        tint = NeonLime
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    val allViews = MainAppView.values()
+                                    val nextIndex = (allViews.indexOf(mainAppView) + 1) % allViews.size
+                                    viewModel.setMainAppView(allViews[nextIndex])
+                                },
+                                modifier = Modifier.testTag("top_bar_switch_view_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ViewInAr,
+                                    contentDescription = "Cycle Screen",
+                                    tint = CyberCyan
+                                )
+                            }
+
+                            if (!isMapCapableView) {
+                                IconButton(
+                                    onClick = {
+                                        when (mainAppView) {
+                                            MainAppView.SCENE_3D_VIEW -> viewModel.resetSceneCamera("Isometric")
+                                            MainAppView.SINGLE_ASSET_INSPECTOR -> viewModel.resetCamera("Isometric")
+                                            MainAppView.CPP_PROCEDURAL_VIEW -> viewModel.resetCppCamera("Isometric")
+                                            else -> {}
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("app_bar_reset_camera")
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = "Reset Camera", tint = TextSecondary)
+                                }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             },
             containerColor = DarkBackground,
             modifier = modifier.fillMaxSize()
@@ -288,17 +324,30 @@ fun AssetStudioScreen(
             when (mainAppView) {
                 MainAppView.MAGADI_TOWN_3X5 -> {
                     MagadiTownScreen(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = effectiveFullScreen,
+                        onToggleFullScreenMap = { isFullScreenMap = it }
+                    )
+                }
+                MainAppView.C58_CORRIDOR_3KM -> {
+                    C58CorridorScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = effectiveFullScreen,
+                        onToggleFullScreenMap = { isFullScreenMap = it }
                     )
                 }
                 MainAppView.KENYA_GRID_VIEW -> {
                     KenyaTerrainGridScreen(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = effectiveFullScreen,
+                        onToggleFullScreenMap = { isFullScreenMap = it }
                     )
                 }
                 MainAppView.TERRAIN_VIEW -> {
                     TerrainProceduralScreen(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        isFullScreenMap = effectiveFullScreen,
+                        onToggleFullScreenMap = { isFullScreenMap = it }
                     )
                 }
                 MainAppView.ROAD_VIEW -> {
@@ -956,6 +1005,7 @@ private fun MainAppNavBar(
                 val isSelected = currentView == viewItem
                 val itemColor = when (viewItem) {
                     MainAppView.MAGADI_TOWN_3X5 -> NeonLime
+                    MainAppView.C58_CORRIDOR_3KM -> CyberCyan
                     MainAppView.KENYA_GRID_VIEW -> CyberCyan
                     MainAppView.TERRAIN_VIEW -> CyberCyan
                     MainAppView.ROAD_VIEW -> NeonLime

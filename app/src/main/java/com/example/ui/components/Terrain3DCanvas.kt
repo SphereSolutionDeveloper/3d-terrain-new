@@ -1,5 +1,8 @@
 package com.example.ui.components
 
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,23 +22,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.model.RoadSymbolType3D
 import com.example.model.TerrainBuilding3D
 import com.example.model.TerrainMesh3D
 import com.example.model.TerrainRenderMode
 import com.example.model.TerrainRoadSeg3D
+import com.example.model.TerrainRoadSymbol3D
 import com.example.ui.theme.*
 import kotlin.math.*
+
+private fun Float.finiteOr(fallback: Float = 0f): Float = if (isFinite()) this else fallback
+
+private fun safeColor(r: Float, g: Float, b: Float, a: Float = 1f): Color = Color(
+    red = r.finiteOr(0f).coerceIn(0f, 1f),
+    green = g.finiteOr(0f).coerceIn(0f, 1f),
+    blue = b.finiteOr(0f).coerceIn(0f, 1f),
+    alpha = a.finiteOr(1f).coerceIn(0f, 1f)
+)
 
 /**
  * High-Precision 3D Procedural Terrain Canvas
@@ -65,11 +82,24 @@ fun Terrain3DCanvas(
     lakeLevelAslM: Float? = null,
     overlayBuildings3D: List<TerrainBuilding3D> = emptyList(),
     overlayRoadSegments3D: List<TerrainRoadSeg3D> = emptyList(),
+    overlayRoadSymbols3D: List<TerrainRoadSymbol3D> = emptyList(),
     onRotateDrag: (Float, Float) -> Unit,
     onPanDrag: (Float, Float) -> Unit,
     onZoomChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val safeZoom = zoom.finiteOr(1f).coerceAtLeast(0.01f)
+    val safeLakeLevel = lakeLevelAslM?.takeIf { it.isFinite() }
+    val safeWalkDistM = walkDistanceM.finiteOr(0f)
+    val safeSelectedRoadDistM = selectedRoadDistanceM.finiteOr(0f)
+    val shieldTextPaint3d = remember {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#FFD54F")
+            textSize = 18f
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        }
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -124,8 +154,16 @@ fun Terrain3DCanvas(
             val canvasH = size.height
             if (canvasW <= 0f || canvasH <= 0f) return@Canvas
 
-            val centerX = canvasW * 0.5f + panX
-            val centerY = canvasH * 0.52f + panY
+            val safeYaw = yaw.finiteOr(0.75f)
+            val safePitch = pitch.finiteOr(0.6f)
+            val safePanX = panX.finiteOr(0f)
+            val safePanY = panY.finiteOr(0f)
+            val safeLightAngle = lightAngleRad.finiteOr(0.85f)
+            val safeContourInterval = contourInterval.finiteOr(25f).coerceAtLeast(5f)
+            val safeDatumAsl = groundPieceDatumASL.finiteOr(400f)
+
+            val centerX = canvasW * 0.5f + safePanX
+            val centerY = canvasH * 0.52f + safePanY
 
             // In Human Viewpoint mode: Draw atmospheric East African Rift Valley sky and distant escarpment silhouette
             if (isHumanView) {
@@ -182,16 +220,16 @@ fun Terrain3DCanvas(
                 )
             }
 
-            val cosY = cos(yaw)
-            val sinY = sin(yaw)
-            val cosP = cos(pitch)
-            val sinP = sin(pitch)
+            val cosY = cos(safeYaw)
+            val sinY = sin(safeYaw)
+            val cosP = cos(safePitch)
+            val sinP = sin(safePitch)
 
             // Directional Light Vector
-            val lx = cos(lightAngleRad)
+            val lx = cos(safeLightAngle)
             val ly = 1.15f
-            val lz = sin(lightAngleRad)
-            val lLen = sqrt(lx * lx + ly * ly + lz * lz).coerceAtLeast(0.001f)
+            val lz = sin(safeLightAngle)
+            val lLen = sqrt(lx * lx + ly * ly + lz * lz).finiteOr(1f).coerceAtLeast(0.001f)
             val nlx = lx / lLen
             val nly = ly / lLen
             val nlz = lz / lLen
@@ -202,17 +240,20 @@ fun Terrain3DCanvas(
 
             val resX = mesh.resolutionX.coerceAtLeast(2)
             val resZ = mesh.resolutionZ.coerceAtLeast(2)
+            val hasValidGrid = resX >= 2 && resZ >= 2 && resX.toLong() * resZ.toLong() <= count.toLong()
 
-            val minY = verts.minOfOrNull { it.y } ?: 0f
-            val maxY = verts.maxOfOrNull { it.y } ?: 0f
-            val midH = (minY + maxY) * 0.5f
-            val baseLevelH = minY - (maxY - minY).coerceAtLeast(4f) * 0.15f
+            val minY = verts.asSequence().map { it.y.finiteOr(0f) }.minOrNull() ?: 0f
+            val maxY = verts.asSequence().map { it.y.finiteOr(0f) }.maxOrNull() ?: 0f
+            val midH = ((minY + maxY) * 0.5f).finiteOr(0f)
+            val safeMeshMinH = mesh.minHeight.finiteOr(minY)
+            val safeMeshMaxH = mesh.maxHeight.finiteOr(maxY)
+            val safeHeightSpan = (safeMeshMaxH - safeMeshMinH).coerceAtLeast(1f)
 
             // Unrestricted camera perspective: stable orbit distance prevents near-plane clipping
             val cameraDist = 260f
-            val focal = canvasW.coerceAtMost(canvasH) * 2.1f
+            val focal = (canvasW.coerceAtMost(canvasH) * 2.1f).finiteOr(400f).coerceAtLeast(1f)
             // Dynamic scale factor directly drives effective focal length without artificial clamps
-            val effectiveFocal = focal * zoom
+            val effectiveFocal = (focal * safeZoom).finiteOr(focal).coerceAtLeast(1f)
 
             // 1. Project all terrain vertices
             val projX = FloatArray(count)
@@ -225,19 +266,17 @@ fun Terrain3DCanvas(
             val baseEyeZ = FloatArray(count)
 
             // Geological Foundation Datum in Scene Y Units
-            val hasRealElevation = verts.any { it.rawElevation > 0f }
-            val safeUnitsPerM = groundPieceUnitsPerMeter.coerceAtLeast(0.01f)
-            val baseRelY: Float = if (hasRealElevation) {
-                val sample = verts.first { it.rawElevation > 0f }
-                (sample.y - midH) - (sample.rawElevation - groundPieceDatumASL) * safeUnitsPerM
+            val firstRealSample = verts.firstOrNull { it.rawElevation.isFinite() && it.rawElevation > 0f }
+            val safeUnitsPerM = groundPieceUnitsPerMeter.finiteOr(0.12f).coerceAtLeast(0.01f)
+            val baseRelY: Float = if (firstRealSample != null) {
+                ((firstRealSample.y.finiteOr(0f) - midH) - (firstRealSample.rawElevation - safeDatumAsl) * safeUnitsPerM).finiteOr(-18f)
             } else {
-                minY - midH - 18.0f
+                (minY - midH - 18.0f).finiteOr(-18f)
             }
 
             // Horizontal Lake Water Level in Scene Y Units (when enabled)
-            val lakeRelY: Float? = if (lakeLevelAslM != null && hasRealElevation) {
-                val sample = verts.first { it.rawElevation > 0f }
-                (sample.y - midH) + (lakeLevelAslM - sample.rawElevation) * safeUnitsPerM
+            val lakeRelY: Float? = if (safeLakeLevel != null && firstRealSample != null) {
+                ((firstRealSample.y.finiteOr(0f) - midH) + (safeLakeLevel - firstRealSample.rawElevation) * safeUnitsPerM).finiteOr(0f)
             } else null
 
             val hasWaterPlane = lakeRelY != null
@@ -247,9 +286,9 @@ fun Terrain3DCanvas(
 
             for (i in 0 until count) {
                 val v = verts[i]
-                val x0 = v.x
-                val y0 = v.y - midH
-                val z0 = v.z
+                val x0 = v.x.finiteOr(0f)
+                val y0 = v.y.finiteOr(0f) - midH
+                val z0 = v.z.finiteOr(0f)
 
                 // Terrain surface vertex: Y-rotation (yaw)
                 val rx = x0 * cosY - z0 * sinY
@@ -259,10 +298,10 @@ fun Terrain3DCanvas(
                 // Pitch rotation around X (viewing down at landscape)
                 val cy = ry * cosP + rz * sinP
                 val cz = -ry * sinP + rz * cosP
-                val ez = (cameraDist + cz).coerceAtLeast(8f)
+                val ez = (cameraDist + cz).finiteOr(cameraDist).coerceAtLeast(8f)
 
-                projX[i] = centerX + (rx / ez) * effectiveFocal
-                projY[i] = centerY - (cy / ez) * effectiveFocal
+                projX[i] = (centerX + (rx / ez) * effectiveFocal).finiteOr(centerX)
+                projY[i] = (centerY - (cy / ez) * effectiveFocal).finiteOr(centerY)
                 eyeZ[i] = ez
 
                 // Bedrock foundation vertex at datum
@@ -272,19 +311,19 @@ fun Terrain3DCanvas(
 
                 val bcy = bry * cosP + brz * sinP
                 val bcz = -bry * sinP + brz * cosP
-                val bez = (cameraDist + bcz).coerceAtLeast(8f)
+                val bez = (cameraDist + bcz).finiteOr(cameraDist).coerceAtLeast(8f)
 
-                baseProjX[i] = centerX + (brx / bez) * effectiveFocal
-                baseProjY[i] = centerY - (bcy / bez) * effectiveFocal
+                baseProjX[i] = (centerX + (brx / bez) * effectiveFocal).finiteOr(centerX)
+                baseProjY[i] = (centerY - (bcy / bez) * effectiveFocal).finiteOr(centerY)
                 baseEyeZ[i] = bez
 
                 // Lake water level vertex
                 if (lakeRelY != null) {
                     val wcy = lakeRelY * cosP + rz * sinP
                     val wcz = -lakeRelY * sinP + rz * cosP
-                    val wez = (cameraDist + wcz).coerceAtLeast(8f)
-                    waterProjX[i] = centerX + (rx / wez) * effectiveFocal
-                    waterProjY[i] = centerY - (wcy / wez) * effectiveFocal
+                    val wez = (cameraDist + wcz).finiteOr(cameraDist).coerceAtLeast(8f)
+                    waterProjX[i] = (centerX + (rx / wez) * effectiveFocal).finiteOr(centerX)
+                    waterProjY[i] = (centerY - (wcy / wez) * effectiveFocal).finiteOr(centerY)
                     waterEyeZ[i] = wez
                 }
             }
@@ -292,41 +331,49 @@ fun Terrain3DCanvas(
             // 2. Build list of all renderable faces: terrain surface triangles + water quads + solid ground piece skirts
             val indices = mesh.indices
             val triCount = indices.size / 3
-            val skirtFaceCount = if (showGroundPiece) (resX + resZ) * 2 + 1 else 0
-            val renderList = ArrayList<RenderFace>(triCount + skirtFaceCount + if (hasWaterPlane) triCount / 2 else 0)
+            val skirtFaceCount = if (showGroundPiece && hasValidGrid) (resX + resZ) * 2 + 1 else 0
+            val renderList = ArrayList<RenderFace>(triCount + skirtFaceCount + if (hasWaterPlane && hasValidGrid) triCount / 2 else 0)
 
-            // Add all terrain surface triangles
+            // Add all terrain surface triangles with strict bounds check
             for (t in 0 until triCount) {
                 val i0 = indices[t * 3]
                 val i1 = indices[t * 3 + 1]
                 val i2 = indices[t * 3 + 2]
-                val avgDist = (eyeZ[i0] + eyeZ[i1] + eyeZ[i2]) / 3f
-                renderList.add(RenderFace.TerrainTri(t, i0, i1, i2, avgDist))
+                if (i0 in 0 until count && i1 in 0 until count && i2 in 0 until count) {
+                    val avgDist = ((eyeZ[i0] + eyeZ[i1] + eyeZ[i2]) / 3f).finiteOr(1000f)
+                    renderList.add(RenderFace.TerrainTri(t, i0, i1, i2, avgDist))
+                }
             }
 
             // Add translucent Lake Magadi Water Sheet quads where basin lies at or below lakeLevelAslM
-            if (lakeLevelAslM != null && hasWaterPlane) {
+            if (safeLakeLevel != null && hasWaterPlane && hasValidGrid) {
                 for (iz in 0 until (resZ - 1)) {
                     for (ix in 0 until (resX - 1)) {
                         val tl = iz * resX + ix
                         val tr = tl + 1
                         val bl = (iz + 1) * resX + ix
                         val br = bl + 1
+                        if (br >= count) continue
                         val vTL = verts[tl]; val vTR = verts[tr]
                         val vBL = verts[bl]; val vBR = verts[br]
 
-                        val tlSub = vTL.isWaterSurface || vTL.rawElevation < lakeLevelAslM
-                        val trSub = vTR.isWaterSurface || vTR.rawElevation < lakeLevelAslM
-                        val blSub = vBL.isWaterSurface || vBL.rawElevation < lakeLevelAslM
-                        val brSub = vBR.isWaterSurface || vBR.rawElevation < lakeLevelAslM
+                        val eTL = vTL.rawElevation.finiteOr(safeLakeLevel)
+                        val eTR = vTR.rawElevation.finiteOr(safeLakeLevel)
+                        val eBL = vBL.rawElevation.finiteOr(safeLakeLevel)
+                        val eBR = vBR.rawElevation.finiteOr(safeLakeLevel)
+
+                        val tlSub = vTL.isWaterSurface || eTL < safeLakeLevel
+                        val trSub = vTR.isWaterSurface || eTR < safeLakeLevel
+                        val blSub = vBL.isWaterSurface || eBL < safeLakeLevel
+                        val brSub = vBR.isWaterSurface || eBR < safeLakeLevel
 
                         if (tlSub || trSub || blSub || brSub) {
-                            val dSum = (lakeLevelAslM - vTL.rawElevation).coerceAtLeast(0f) +
-                                (lakeLevelAslM - vTR.rawElevation).coerceAtLeast(0f) +
-                                (lakeLevelAslM - vBL.rawElevation).coerceAtLeast(0f) +
-                                (lakeLevelAslM - vBR.rawElevation).coerceAtLeast(0f)
-                            val avgDepth = (dSum * 0.25f).coerceAtLeast(0.15f)
-                            val wDist = (waterEyeZ[tl] + waterEyeZ[tr] + waterEyeZ[br] + waterEyeZ[bl]) * 0.25f - 0.08f
+                            val dSum = (safeLakeLevel - eTL).coerceAtLeast(0f) +
+                                (safeLakeLevel - eTR).coerceAtLeast(0f) +
+                                (safeLakeLevel - eBL).coerceAtLeast(0f) +
+                                (safeLakeLevel - eBR).coerceAtLeast(0f)
+                            val avgDepth = (dSum * 0.25f).finiteOr(0.15f).coerceAtLeast(0.15f)
+                            val wDist = ((waterEyeZ[tl] + waterEyeZ[tr] + waterEyeZ[br] + waterEyeZ[bl]) * 0.25f - 0.08f).finiteOr(1000f)
                             val isShoreEdge = !(tlSub && trSub && blSub && brSub)
                             renderList.add(RenderFace.WaterQuad(tl, tr, br, bl, avgDepth, isShoreEdge, wDist))
                         }
@@ -335,37 +382,45 @@ fun Terrain3DCanvas(
             }
 
             // Add 4 vertical perimeter walls & bottom slab down to geological datum
-            if (showGroundPiece) {
+            if (showGroundPiece && hasValidGrid) {
                 // South Skirt Wall (KM Start / iz = 0)
                 for (ix in 0 until (resX - 1)) {
                     val iA = 0 * resX + ix
                     val iB = 0 * resX + (ix + 1)
-                    val avgDist = (eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f
-                    renderList.add(RenderFace.SkirtQuad(iA, iB, 0f, 0f, -1f, WallType.SOUTH, avgDist))
+                    if (iB < count) {
+                        val avgDist = ((eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f).finiteOr(1000f)
+                        renderList.add(RenderFace.SkirtQuad(iA, iB, 0f, 0f, -1f, WallType.SOUTH, avgDist))
+                    }
                 }
 
                 // North Skirt Wall (KM End / iz = resZ - 1)
                 for (ix in 0 until (resX - 1)) {
                     val iA = (resZ - 1) * resX + ix
                     val iB = (resZ - 1) * resX + (ix + 1)
-                    val avgDist = (eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f
-                    renderList.add(RenderFace.SkirtQuad(iA, iB, 0f, 0f, 1f, WallType.NORTH, avgDist))
+                    if (iB < count) {
+                        val avgDist = ((eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f).finiteOr(1000f)
+                        renderList.add(RenderFace.SkirtQuad(iA, iB, 0f, 0f, 1f, WallType.NORTH, avgDist))
+                    }
                 }
 
                 // West Skirt Wall (Left Boundary / ix = 0)
                 for (iz in 0 until (resZ - 1)) {
                     val iA = iz * resX + 0
                     val iB = (iz + 1) * resX + 0
-                    val avgDist = (eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f
-                    renderList.add(RenderFace.SkirtQuad(iA, iB, -1f, 0f, 0f, WallType.WEST, avgDist))
+                    if (iB < count) {
+                        val avgDist = ((eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f).finiteOr(1000f)
+                        renderList.add(RenderFace.SkirtQuad(iA, iB, -1f, 0f, 0f, WallType.WEST, avgDist))
+                    }
                 }
 
                 // East Skirt Wall (Right Boundary / ix = resX - 1)
                 for (iz in 0 until (resZ - 1)) {
                     val iA = iz * resX + (resX - 1)
                     val iB = (iz + 1) * resX + (resX - 1)
-                    val avgDist = (eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f
-                    renderList.add(RenderFace.SkirtQuad(iA, iB, 1f, 0f, 0f, WallType.EAST, avgDist))
+                    if (iB < count) {
+                        val avgDist = ((eyeZ[iA] + eyeZ[iB] + baseEyeZ[iA] + baseEyeZ[iB]) * 0.25f).finiteOr(1000f)
+                        renderList.add(RenderFace.SkirtQuad(iA, iB, 1f, 0f, 0f, WallType.EAST, avgDist))
+                    }
                 }
 
                 // Basal Foundation Plate (Flat horizontal plane at datum)
@@ -373,8 +428,10 @@ fun Terrain3DCanvas(
                 val cSE = resX - 1
                 val cNE = (resZ - 1) * resX + (resX - 1)
                 val cNW = (resZ - 1) * resX
-                val slabDist = (baseEyeZ[cSW] + baseEyeZ[cSE] + baseEyeZ[cNE] + baseEyeZ[cNW]) * 0.25f
-                renderList.add(RenderFace.BottomSlab(cSW, cSE, cNE, cNW, slabDist))
+                if (cNE < count && cNW < count && cSE < count) {
+                    val slabDist = ((baseEyeZ[cSW] + baseEyeZ[cSE] + baseEyeZ[cNE] + baseEyeZ[cNW]) * 0.25f).finiteOr(1000f)
+                    renderList.add(RenderFace.BottomSlab(cSW, cSE, cNE, cNW, slabDist))
+                }
             }
 
             // 3. Painter's Algorithm: Sort faces from farthest to nearest (DESCENDING DISTANCE)
@@ -394,18 +451,18 @@ fun Terrain3DCanvas(
                         val v2 = verts[i2]
 
                         // Lighting calculation (bold valley/scarp contrast)
-                        val avgNx = (v0.nx + v1.nx + v2.nx) / 3f
-                        val avgNy = (v0.ny + v1.ny + v2.ny) / 3f
-                        val avgNz = (v0.nz + v1.nz + v2.nz) / 3f
-                        val dot = (avgNx * nlx + avgNy * nly + avgNz * nlz).coerceIn(0.08f, 1.0f)
+                        val avgNx = (v0.nx.finiteOr(0f) + v1.nx.finiteOr(0f) + v2.nx.finiteOr(0f)) / 3f
+                        val avgNy = (v0.ny.finiteOr(1f) + v1.ny.finiteOr(1f) + v2.ny.finiteOr(1f)) / 3f
+                        val avgNz = (v0.nz.finiteOr(0f) + v1.nz.finiteOr(0f) + v2.nz.finiteOr(0f)) / 3f
+                        val dot = (avgNx * nlx + avgNy * nly + avgNz * nlz).finiteOr(0.5f).coerceIn(0.08f, 1.0f)
                         val diffuse = 0.30f + 0.70f * dot
 
-                        val avgY = (v0.y + v1.y + v2.y) / 3f
-                        val avgSlope = (v0.slopeDeg + v1.slopeDeg + v2.slopeDeg) / 3f
-                        val avgGrass = (v0.grassWeight + v1.grassWeight + v2.grassWeight) / 3f
-                        val avgDirt = (v0.dirtWeight + v1.dirtWeight + v2.dirtWeight) / 3f
-                        val avgRock = (v0.rockWeight + v1.rockWeight + v2.rockWeight) / 3f
-                        val avgSnow = (v0.snowWeight + v1.snowWeight + v2.snowWeight) / 3f
+                        val avgY = (v0.y.finiteOr(0f) + v1.y.finiteOr(0f) + v2.y.finiteOr(0f)) / 3f
+                        val avgSlope = (v0.slopeDeg.finiteOr(0f) + v1.slopeDeg.finiteOr(0f) + v2.slopeDeg.finiteOr(0f)) / 3f
+                        val avgGrass = (v0.grassWeight.finiteOr(0f) + v1.grassWeight.finiteOr(0f) + v2.grassWeight.finiteOr(0f)) / 3f
+                        val avgDirt = (v0.dirtWeight.finiteOr(0f) + v1.dirtWeight.finiteOr(0f) + v2.dirtWeight.finiteOr(0f)) / 3f
+                        val avgRock = (v0.rockWeight.finiteOr(0f) + v1.rockWeight.finiteOr(0f) + v2.rockWeight.finiteOr(0f)) / 3f
+                        val avgSnow = (v0.snowWeight.finiteOr(0f) + v1.snowWeight.finiteOr(0f) + v2.snowWeight.finiteOr(0f)) / 3f
 
                         val isCave = v0.isCaveHollow || v1.isCaveHollow || v2.isCaveHollow
                         val isPureRoad = v0.isRoadSurface && v1.isRoadSurface && v2.isRoadSurface
@@ -413,119 +470,103 @@ fun Terrain3DCanvas(
                         val isWater = v0.isWaterSurface || v1.isWaterSurface || v2.isWaterSurface
                         val isMud = v0.isMudSurface || v1.isMudSurface || v2.isMudSurface
                         val isGravel = v0.isGravelSurface || v1.isGravelSurface || v2.isGravelSurface
-                        val bedDepthT = if (lakeLevelAslM != null) {
-                            val avgRaw = (v0.rawElevation + v1.rawElevation + v2.rawElevation) / 3f
-                            ((lakeLevelAslM - avgRaw) / 4.5f).coerceIn(0f, 1f)
+                        val bedDepthT = if (safeLakeLevel != null) {
+                            val avgRaw = (v0.rawElevation.finiteOr(safeLakeLevel) + v1.rawElevation.finiteOr(safeLakeLevel) + v2.rawElevation.finiteOr(safeLakeLevel)) / 3f
+                            ((safeLakeLevel - avgRaw) / 4.5f).finiteOr(0.35f).coerceIn(0f, 1f)
                         } else 0.35f
 
                         val faceColor: Color = when (renderMode) {
                             TerrainRenderMode.SHADED_TRIPLANAR -> {
                                 if (isWater) {
-                                    Color(
-                                        red = (0.14f - 0.10f * bedDepthT) * diffuse,
-                                        green = (0.48f - 0.24f * bedDepthT) * diffuse + 0.06f,
-                                        blue = (0.64f - 0.20f * bedDepthT) * diffuse
+                                    safeColor(
+                                        r = (0.14f - 0.10f * bedDepthT) * diffuse,
+                                        g = (0.48f - 0.24f * bedDepthT) * diffuse + 0.06f,
+                                        b = (0.64f - 0.20f * bedDepthT) * diffuse
                                     )
                                 } else if (isPureRoad) {
-                                    // Engineered asphalt pavement deck
-                                    val r = (0.24f + 0.12f * diffuse).coerceIn(0f, 1f)
-                                    val g = (0.26f + 0.12f * diffuse).coerceIn(0f, 1f)
-                                    val b = (0.30f + 0.12f * diffuse).coerceIn(0f, 1f)
-                                    Color(r, g, b)
+                                    safeColor(
+                                        r = 0.24f + 0.12f * diffuse,
+                                        g = 0.26f + 0.12f * diffuse,
+                                        b = 0.30f + 0.12f * diffuse
+                                    )
                                 } else if (isRoadTransition) {
-                                    // Engineered roadbed cut/fill gravel verge and embankment
-                                    val r = (0.52f * diffuse + 0.08f).coerceIn(0f, 1f)
-                                    val g = (0.44f * diffuse + 0.06f).coerceIn(0f, 1f)
-                                    val b = (0.35f * diffuse + 0.04f).coerceIn(0f, 1f)
-                                    Color(r, g, b)
+                                    safeColor(
+                                        r = 0.52f * diffuse + 0.08f,
+                                        g = 0.44f * diffuse + 0.06f,
+                                        b = 0.35f * diffuse + 0.04f
+                                    )
                                 } else if (isMud) {
-                                    Color(
-                                        red = (0.78f * diffuse).coerceIn(0f, 1f),
-                                        green = (0.72f * diffuse).coerceIn(0f, 1f),
-                                        blue = (0.65f * diffuse).coerceIn(0f, 1f)
-                                    )
+                                    safeColor(0.78f * diffuse, 0.72f * diffuse, 0.65f * diffuse)
                                 } else if (isGravel) {
-                                    Color(
-                                        red = (0.55f * diffuse).coerceIn(0f, 1f),
-                                        green = (0.48f * diffuse).coerceIn(0f, 1f),
-                                        blue = (0.40f * diffuse).coerceIn(0f, 1f)
-                                    )
+                                    safeColor(0.55f * diffuse, 0.48f * diffuse, 0.40f * diffuse)
                                 } else {
-                                    // East African Rift Valley biome palette
                                     val r = (0.80f * avgGrass + 0.65f * avgDirt + 0.32f * avgRock + 0.95f * avgSnow) * diffuse
                                     val g = (0.70f * avgGrass + 0.46f * avgDirt + 0.30f * avgRock + 0.97f * avgSnow) * diffuse
                                     val b = (0.42f * avgGrass + 0.32f * avgDirt + 0.32f * avgRock + 1.00f * avgSnow) * diffuse
-                                    Color(r.coerceIn(0f, 1f), g.coerceIn(0f, 1f), b.coerceIn(0f, 1f))
+                                    safeColor(r, g, b)
                                 }
                             }
                             TerrainRenderMode.CONTOURS_3D_ELEVATION,
                             TerrainRenderMode.HYPSOMETRIC_CONTOURS -> {
                                 if (isWater) {
-                                    Color(
-                                        red = (0.10f - 0.08f * bedDepthT) * diffuse,
-                                        green = (0.42f - 0.22f * bedDepthT) * diffuse + 0.06f,
-                                        blue = (0.62f - 0.18f * bedDepthT) * diffuse
+                                    safeColor(
+                                        r = (0.10f - 0.08f * bedDepthT) * diffuse,
+                                        g = (0.42f - 0.22f * bedDepthT) * diffuse + 0.06f,
+                                        b = (0.62f - 0.18f * bedDepthT) * diffuse
                                     )
                                 } else if (isPureRoad) {
-                                    val r = (0.24f + 0.10f * diffuse).coerceIn(0f, 1f)
-                                    val g = (0.26f + 0.10f * diffuse).coerceIn(0f, 1f)
-                                    val b = (0.30f + 0.10f * diffuse).coerceIn(0f, 1f)
-                                    Color(r, g, b)
-                                } else if (isRoadTransition) {
-                                    val r = (0.48f * diffuse + 0.08f).coerceIn(0f, 1f)
-                                    val g = (0.42f * diffuse + 0.06f).coerceIn(0f, 1f)
-                                    val b = (0.34f * diffuse + 0.04f).coerceIn(0f, 1f)
-                                    Color(r, g, b)
-                                } else if (isGravel) {
-                                    Color(0xFF607D8B).copy(
-                                        red = 0.40f * diffuse,
-                                        green = 0.44f * diffuse,
-                                        blue = 0.48f * diffuse
+                                    safeColor(
+                                        r = 0.24f + 0.10f * diffuse,
+                                        g = 0.26f + 0.10f * diffuse,
+                                        b = 0.30f + 0.10f * diffuse
                                     )
+                                } else if (isRoadTransition) {
+                                    safeColor(
+                                        r = 0.48f * diffuse + 0.08f,
+                                        g = 0.42f * diffuse + 0.06f,
+                                        b = 0.34f * diffuse + 0.04f
+                                    )
+                                } else if (isGravel) {
+                                    safeColor(0.40f * diffuse, 0.44f * diffuse, 0.48f * diffuse)
                                 } else {
-                                    val avgRawE = if (v0.rawElevation > 0f) {
-                                        (v0.rawElevation + v1.rawElevation + v2.rawElevation) / 3f
+                                    val avgRawE = if (v0.rawElevation.isFinite() && v0.rawElevation > 0f) {
+                                        (v0.rawElevation + v1.rawElevation.finiteOr(v0.rawElevation) + v2.rawElevation.finiteOr(v0.rawElevation)) / 3f
                                     } else {
-                                        590f + ((avgY - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+                                        590f + ((avgY - safeMeshMinH) / safeHeightSpan) * 1390f
                                     }
-                                    val t = ((avgRawE - 590f) / 1390f).coerceIn(0f, 1f)
+                                    val t = ((avgRawE - 590f) / 1390f).finiteOr(0f).coerceIn(0f, 1f)
                                     val br: Float
                                     val bg: Float
                                     val bb: Float
                                     if (t < 0.12f) {
-                                        // Lake Magadi Trona soda flats
                                         br = 0.92f; bg = 0.96f; bb = 0.98f
                                     } else if (t < 0.35f) {
-                                        // Savannah scrub
                                         br = 0.82f; bg = 0.74f; bb = 0.45f
                                     } else if (t < 0.65f) {
-                                        // Volcanic ash & Tinga
                                         br = 0.70f; bg = 0.46f; bb = 0.32f
                                     } else if (t < 0.88f) {
-                                        // Highland green
                                         br = 0.30f; bg = 0.52f; bb = 0.26f
                                     } else {
-                                        // Escarpment rock summit
                                         br = 0.42f; bg = 0.38f; bb = 0.36f
                                     }
-                                    Color((br * diffuse).coerceIn(0f, 1f), (bg * diffuse).coerceIn(0f, 1f), (bb * diffuse).coerceIn(0f, 1f))
+                                    safeColor(br * diffuse, bg * diffuse, bb * diffuse)
                                 }
                             }
                             TerrainRenderMode.HEIGHTMAP_HEATMAP -> {
-                                val hNorm = ((avgY - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                                val hNorm = ((avgY - safeMeshMinH) / safeHeightSpan).finiteOr(0f).coerceIn(0f, 1f)
                                 val r = (sin(hNorm * 3.14159f) * 0.95f).coerceIn(0f, 1f)
                                 val g = (sin((hNorm + 0.25f) * 3.14159f) * 0.85f).coerceIn(0f, 1f)
                                 val b = (cos(hNorm * 3.14159f * 0.5f) * 0.95f).coerceIn(0f, 1f)
-                                Color(r * diffuse, g * diffuse, b * diffuse)
+                                safeColor(r * diffuse, g * diffuse, b * diffuse)
                             }
                             TerrainRenderMode.WIREFRAME_CDLOD -> {
                                 Color(0xFF0F1E2E).copy(alpha = 0.88f)
                             }
                             TerrainRenderMode.SLOPE_ANALYSIS -> {
-                                val sNorm = (avgSlope / 55f).coerceIn(0f, 1f)
+                                val sNorm = (avgSlope / 55f).finiteOr(0f).coerceIn(0f, 1f)
                                 val r = (sNorm * 1.4f).coerceIn(0f, 1f)
                                 val g = ((1f - sNorm) * 1.3f).coerceIn(0f, 1f)
-                                Color(r * diffuse, g * diffuse, 0.18f)
+                                safeColor(r * diffuse, g * diffuse, 0.18f)
                             }
                             TerrainRenderMode.CAVE_VOXEL_SLICE -> {
                                 if (isCave) Color(0xFFFF0055).copy(alpha = 0.92f) else Color(0xFF1E293B).copy(alpha = 0.75f)
@@ -537,70 +578,77 @@ fun Terrain3DCanvas(
                             }
                         }
 
-                        path.reset()
-                        path.moveTo(projX[i0], projY[i0])
-                        path.lineTo(projX[i1], projY[i1])
-                        path.lineTo(projX[i2], projY[i2])
-                        path.close()
+                        if (projX[i0].isFinite() && projY[i0].isFinite() &&
+                            projX[i1].isFinite() && projY[i1].isFinite() &&
+                            projX[i2].isFinite() && projY[i2].isFinite()
+                        ) {
+                            path.reset()
+                            path.moveTo(projX[i0], projY[i0])
+                            path.lineTo(projX[i1], projY[i1])
+                            path.lineTo(projX[i2], projY[i2])
+                            path.close()
 
-                        drawPath(path, color = faceColor)
+                            drawPath(path, color = faceColor)
+                        }
 
                         // 3D Topographic Contour Isolines
                         if (showGridContours || renderMode == TerrainRenderMode.CONTOURS_3D_ELEVATION || renderMode == TerrainRenderMode.HYPSOMETRIC_CONTOURS) {
-                            val e0 = if (v0.rawElevation > 0f) v0.rawElevation else 590f + ((v0.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
-                            val e1 = if (v1.rawElevation > 0f) v1.rawElevation else 590f + ((v1.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
-                            val e2 = if (v2.rawElevation > 0f) v2.rawElevation else 590f + ((v2.y - mesh.minHeight) / (mesh.maxHeight - mesh.minHeight).coerceAtLeast(1f)) * 1390f
+                            val e0 = if (v0.rawElevation.isFinite() && v0.rawElevation > 0f) v0.rawElevation else 590f + ((v0.y.finiteOr(0f) - safeMeshMinH) / safeHeightSpan) * 1390f
+                            val e1 = if (v1.rawElevation.isFinite() && v1.rawElevation > 0f) v1.rawElevation else 590f + ((v1.y.finiteOr(0f) - safeMeshMinH) / safeHeightSpan) * 1390f
+                            val e2 = if (v2.rawElevation.isFinite() && v2.rawElevation > 0f) v2.rawElevation else 590f + ((v2.y.finiteOr(0f) - safeMeshMinH) / safeHeightSpan) * 1390f
 
-                            val minE = minOf(e0, minOf(e1, e2))
-                            val maxE = maxOf(e0, maxOf(e1, e2))
+                            if (e0.isFinite() && e1.isFinite() && e2.isFinite()) {
+                                val minE = minOf(e0, minOf(e1, e2))
+                                val maxE = maxOf(e0, maxOf(e1, e2))
 
-                            val cStep = contourInterval.coerceAtLeast(5f)
-                            var hc = ceil(minE / cStep) * cStep
-                            while (hc <= maxE) {
-                                var pCount = 0
-                                var xA = 0f; var yA = 0f
-                                var xB = 0f; var yB = 0f
+                                var hc = ceil(minE / safeContourInterval) * safeContourInterval
+                                var iter = 0
+                                while (hc <= maxE && iter++ < 96) {
+                                    var pCount = 0
+                                    var xA = 0f; var yA = 0f
+                                    var xB = 0f; var yB = 0f
 
-                                if ((e0 <= hc && hc < e1) || (e1 <= hc && hc < e0)) {
-                                    val tEdge = (hc - e0) / (e1 - e0)
-                                    xA = projX[i0] + tEdge * (projX[i1] - projX[i0])
-                                    yA = projY[i0] + tEdge * (projY[i1] - projY[i0])
-                                    pCount++
-                                }
-                                if ((e1 <= hc && hc < e2) || (e2 <= hc && hc < e1)) {
-                                    val tEdge = (hc - e1) / (e2 - e1)
-                                    val px = projX[i1] + tEdge * (projX[i2] - projX[i1])
-                                    val py = projY[i1] + tEdge * (projY[i2] - projY[i1])
-                                    if (pCount == 0) {
-                                        xA = px; yA = py; pCount++
-                                    } else {
-                                        xB = px; yB = py; pCount++
+                                    if (((e0 <= hc && hc < e1) || (e1 <= hc && hc < e0)) && abs(e1 - e0) > 1e-4f) {
+                                        val tEdge = ((hc - e0) / (e1 - e0)).coerceIn(0f, 1f)
+                                        xA = projX[i0] + tEdge * (projX[i1] - projX[i0])
+                                        yA = projY[i0] + tEdge * (projY[i1] - projY[i0])
+                                        pCount++
                                     }
-                                }
-                                if (pCount < 2 && ((e2 <= hc && hc < e0) || (e0 <= hc && hc < e2))) {
-                                    val tEdge = (hc - e2) / (e0 - e2)
-                                    val px = projX[i2] + tEdge * (projX[i0] - projX[i2])
-                                    val py = projY[i2] + tEdge * (projY[i0] - projY[i2])
-                                    if (pCount == 0) {
-                                        xA = px; yA = py; pCount++
-                                    } else {
-                                        xB = px; yB = py; pCount++
+                                    if (((e1 <= hc && hc < e2) || (e2 <= hc && hc < e1)) && abs(e2 - e1) > 1e-4f) {
+                                        val tEdge = ((hc - e1) / (e2 - e1)).coerceIn(0f, 1f)
+                                        val px = projX[i1] + tEdge * (projX[i2] - projX[i1])
+                                        val py = projY[i1] + tEdge * (projY[i2] - projY[i1])
+                                        if (pCount == 0) {
+                                            xA = px; yA = py; pCount++
+                                        } else {
+                                            xB = px; yB = py; pCount++
+                                        }
                                     }
-                                }
+                                    if (pCount < 2 && ((e2 <= hc && hc < e0) || (e0 <= hc && hc < e2)) && abs(e0 - e2) > 1e-4f) {
+                                        val tEdge = ((hc - e2) / (e0 - e2)).coerceIn(0f, 1f)
+                                        val px = projX[i2] + tEdge * (projX[i0] - projX[i2])
+                                        val py = projY[i2] + tEdge * (projY[i0] - projY[i2])
+                                        if (pCount == 0) {
+                                            xA = px; yA = py; pCount++
+                                        } else {
+                                            xB = px; yB = py; pCount++
+                                        }
+                                    }
 
-                                if (pCount == 2) {
-                                    val isIndexContour = (abs(round(hc / 100f) * 100f - hc) < 1.0f)
-                                    val lineColor = if (isIndexContour) Color(0xFFFFD700) else Color(0xFF00E5FF).copy(alpha = 0.88f)
-                                    val strokeW = if (isIndexContour) 2.2f else 1.1f
-                                    drawLine(
-                                        color = lineColor,
-                                        start = Offset(xA, yA),
-                                        end = Offset(xB, yB),
-                                        strokeWidth = strokeW
-                                    )
-                                }
+                                    if (pCount == 2 && xA.isFinite() && yA.isFinite() && xB.isFinite() && yB.isFinite()) {
+                                        val isIndexContour = (abs(round(hc / 100f) * 100f - hc) < 1.0f)
+                                        val lineColor = if (isIndexContour) Color(0xFFFFD700) else Color(0xFF00E5FF).copy(alpha = 0.88f)
+                                        val strokeW = if (isIndexContour) 2.2f else 1.1f
+                                        drawLine(
+                                            color = lineColor,
+                                            start = Offset(xA, yA),
+                                            end = Offset(xB, yB),
+                                            strokeWidth = strokeW
+                                        )
+                                    }
 
-                                hc += cStep
+                                    hc += safeContourInterval
+                                }
                             }
                         }
 
@@ -616,15 +664,12 @@ fun Terrain3DCanvas(
                     is RenderFace.SkirtQuad -> {
                         val iA = face.iA
                         val iB = face.iB
+                        if (iA !in 0 until count || iB !in 0 until count) continue
 
-                        // Normal vector dot light vector
-                        val dot = (face.nx * nlx + face.ny * nly + face.nz * nlz).coerceIn(-1f, 1f)
+                        val dot = (face.nx * nlx + face.ny * nly + face.nz * nlz).finiteOr(0f).coerceIn(-1f, 1f)
                         val diffuse = (dot * 0.38f + 0.62f).coerceIn(0.24f, 1.0f)
 
-                        val baseR = (0.15f * diffuse).coerceIn(0f, 1f)
-                        val baseG = (0.17f * diffuse).coerceIn(0f, 1f)
-                        val baseB = (0.23f * diffuse).coerceIn(0f, 1f)
-                        val wallColor = Color(baseR, baseG, baseB, 1f)
+                        val wallColor = safeColor(0.15f * diffuse, 0.17f * diffuse, 0.23f * diffuse, 1f)
 
                         path.reset()
                         path.moveTo(projX[iA], projY[iA])
@@ -635,8 +680,7 @@ fun Terrain3DCanvas(
 
                         drawPath(path, color = wallColor)
 
-                        // Geological horizontal strata bands across vertical cut (Phonolite & Basalt layers)
-                        val strataAlpha = (0.32f * diffuse).coerceIn(0.10f, 0.55f)
+                        val strataAlpha = (0.32f * diffuse).finiteOr(0.2f).coerceIn(0.10f, 0.55f)
                         val strataColor = Color(0xFF4A5568).copy(alpha = strataAlpha)
 
                         for (step in 1..3) {
@@ -653,7 +697,6 @@ fun Terrain3DCanvas(
                             )
                         }
 
-                        // Vertical columnar jointing seam
                         drawLine(
                             color = Color(0xFF1E2430).copy(alpha = 0.55f),
                             start = Offset(projX[iA], projY[iA]),
@@ -661,7 +704,6 @@ fun Terrain3DCanvas(
                             strokeWidth = 1.0f
                         )
 
-                        // 400m ASL Baseline Datum Highlight Line
                         drawLine(
                             color = Color(0xFF00E5FF).copy(alpha = 0.85f),
                             start = Offset(baseProjX[iA], baseProjY[iA]),
@@ -670,6 +712,9 @@ fun Terrain3DCanvas(
                         )
                     }
                     is RenderFace.BottomSlab -> {
+                        if (face.cSW !in 0 until count || face.cSE !in 0 until count ||
+                            face.cNE !in 0 until count || face.cNW !in 0 until count
+                        ) continue
                         path.reset()
                         path.moveTo(baseProjX[face.cSW], baseProjY[face.cSW])
                         path.lineTo(baseProjX[face.cSE], baseProjY[face.cSE])
@@ -685,7 +730,10 @@ fun Terrain3DCanvas(
                         )
                     }
                     is RenderFace.WaterQuad -> {
-                        if (hasWaterPlane) {
+                        if (hasWaterPlane &&
+                            face.i0 in 0 until count && face.i1 in 0 until count &&
+                            face.i2 in 0 until count && face.i3 in 0 until count
+                        ) {
                             path.reset()
                             path.moveTo(waterProjX[face.i0], waterProjY[face.i0])
                             path.lineTo(waterProjX[face.i1], waterProjY[face.i1])
@@ -693,12 +741,12 @@ fun Terrain3DCanvas(
                             path.lineTo(waterProjX[face.i3], waterProjY[face.i3])
                             path.close()
 
-                            val dt = (face.avgDepthM / 4.2f).coerceIn(0f, 1f)
-                            val wColor = Color(
-                                red = (0.04f * (1f - dt) + 0.01f * dt),
-                                green = (0.78f * (1f - dt) + 0.32f * dt),
-                                blue = (0.94f * (1f - dt) + 0.72f * dt),
-                                alpha = 0.56f + 0.22f * dt
+                            val dt = (face.avgDepthM.finiteOr(0.15f) / 4.2f).coerceIn(0f, 1f)
+                            val wColor = safeColor(
+                                r = 0.04f * (1f - dt) + 0.01f * dt,
+                                g = 0.78f * (1f - dt) + 0.32f * dt,
+                                b = 0.94f * (1f - dt) + 0.72f * dt,
+                                a = 0.56f + 0.22f * dt
                             )
                             drawPath(path, color = wColor)
                             if (face.isShoreEdge) {
@@ -767,33 +815,35 @@ fun Terrain3DCanvas(
 
                 for (w in waypoints.indices) {
                     val wp = waypoints[w]
-                    val wrx = wp.x * cosY - wp.z * sinY
-                    val wry = wp.y - midH
-                    val wrz = wp.x * sinY + wp.z * cosY
+                    val wx = wp.x.finiteOr(0f)
+                    val wy = wp.y.finiteOr(0f) - midH
+                    val wz = wp.z.finiteOr(0f)
+                    val wrx = wx * cosY - wz * sinY
+                    val wrz = wx * sinY + wz * cosY
 
-                    val wcy = wry * cosP + wrz * sinP
-                    val wcz = -wry * sinP + wrz * cosP
-                    val wez = (cameraDist + wcz).coerceAtLeast(8f)
+                    val wcy = wy * cosP + wrz * sinP
+                    val wcz = -wy * sinP + wrz * cosP
+                    val wez = (cameraDist + wcz).finiteOr(cameraDist).coerceAtLeast(8f)
 
-                    wpProjX[w] = centerX + (wrx / wez) * effectiveFocal
-                    wpProjY[w] = centerY - (wcy / wez) * effectiveFocal
+                    wpProjX[w] = (centerX + (wrx / wez) * effectiveFocal).finiteOr(centerX)
+                    wpProjY[w] = (centerY - (wcy / wez) * effectiveFocal).finiteOr(centerY)
                     wpEyeZ[w] = wez
                 }
 
                 // Draw asphalt highway ribbon and transverse topographic contour crossings
-                val cStep = contourInterval.coerceAtLeast(5f)
                 for (w in 0 until waypoints.size - 1) {
                     val p1x = wpProjX[w]
                     val p1y = wpProjY[w]
                     val p2x = wpProjX[w + 1]
                     val p2y = wpProjY[w + 1]
-                    val avgZ = (wpEyeZ[w] + wpEyeZ[w + 1]) * 0.5f
-                    val strokeW = (effectiveFocal / avgZ * 0.082f).coerceIn(1.5f, 400.0f)
+                    if (!p1x.isFinite() || !p1y.isFinite() || !p2x.isFinite() || !p2y.isFinite()) continue
+                    val avgZ = ((wpEyeZ[w] + wpEyeZ[w + 1]) * 0.5f).finiteOr(cameraDist).coerceAtLeast(8f)
+                    val strokeW = (effectiveFocal / avgZ * 0.082f).finiteOr(2f).coerceIn(1.5f, 400.0f)
 
                     // Road tangent & perpendicular normal for edge lines and contour crossings
                     val rdx = p2x - p1x
                     val rdy = p2y - p1y
-                    val rLen = sqrt(rdx * rdx + rdy * rdy).coerceAtLeast(0.001f)
+                    val rLen = sqrt(rdx * rdx + rdy * rdy).finiteOr(1f).coerceAtLeast(0.001f)
                     val pnx = -rdy / rLen
                     val pny = rdx / rLen
 
@@ -852,30 +902,33 @@ fun Terrain3DCanvas(
                     // 6. Transverse Topographic Contour Isolines Crossing Road Deck
                     val eA = waypoints[w].rawElevation
                     val eB = waypoints[w + 1].rawElevation
-                    val minE = minOf(eA, eB)
-                    val maxE = maxOf(eA, eB)
-                    var hc = ceil(minE / cStep) * cStep
-                    while (hc <= maxE) {
-                        if (abs(eB - eA) > 0.001f) {
-                            val tCrossing = ((hc - eA) / (eB - eA)).coerceIn(0f, 1f)
-                            val crossX = p1x + tCrossing * (p2x - p1x)
-                            val crossY = p1y + tCrossing * (p2y - p1y)
-                            val tickHalfW = strokeW * 0.90f
+                    if (eA.isFinite() && eB.isFinite()) {
+                        val minE = minOf(eA, eB)
+                        val maxE = maxOf(eA, eB)
+                        var hc = ceil(minE / safeContourInterval) * safeContourInterval
+                        var iter = 0
+                        while (hc <= maxE && iter++ < 96) {
+                            if (abs(eB - eA) > 0.001f) {
+                                val tCrossing = ((hc - eA) / (eB - eA)).coerceIn(0f, 1f)
+                                val crossX = p1x + tCrossing * (p2x - p1x)
+                                val crossY = p1y + tCrossing * (p2y - p1y)
+                                val tickHalfW = strokeW * 0.90f
 
-                            val isIndexContour = (abs(round(hc / 100f) * 100f - hc) < 1.0f)
-                            val contourColor = if (isIndexContour) Color(0xFFFFD700) else Color(0xFF00E5FF)
-                            val tickStroke = if (isIndexContour) 2.6f else 1.6f
+                                val isIndexContour = (abs(round(hc / 100f) * 100f - hc) < 1.0f)
+                                val contourColor = if (isIndexContour) Color(0xFFFFD700) else Color(0xFF00E5FF)
+                                val tickStroke = if (isIndexContour) 2.6f else 1.6f
 
-                            // Transverse contour line crossing road deck
-                            drawLine(
-                                color = contourColor,
-                                start = Offset(crossX - pnx * tickHalfW, crossY - pny * tickHalfW),
-                                end = Offset(crossX + pnx * tickHalfW, crossY + pny * tickHalfW),
-                                strokeWidth = tickStroke,
-                                cap = androidx.compose.ui.graphics.StrokeCap.Round
-                            )
+                                // Transverse contour line crossing road deck
+                                drawLine(
+                                    color = contourColor,
+                                    start = Offset(crossX - pnx * tickHalfW, crossY - pny * tickHalfW),
+                                    end = Offset(crossX + pnx * tickHalfW, crossY + pny * tickHalfW),
+                                    strokeWidth = tickStroke,
+                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                )
+                            }
+                            hc += safeContourInterval
                         }
-                        hc += cStep
                     }
                 }
 
@@ -891,17 +944,17 @@ fun Terrain3DCanvas(
                 }
 
                 // 5. Draw 3D Illuminated Road Position Beacon at selectedRoadDistanceM
-                val clampedDist = selectedRoadDistanceM.coerceIn(0f, 10100f)
+                val clampedDist = safeSelectedRoadDistM.coerceIn(0f, 10100f)
                 val tNorm = clampedDist / 10100f
                 val idxFloat = tNorm * (waypoints.size - 1)
                 val idxLow = idxFloat.toInt().coerceIn(0, waypoints.size - 1)
                 val idxHigh = (idxLow + 1).coerceIn(0, waypoints.size - 1)
-                val frac = idxFloat - idxLow
+                val frac = (idxFloat - idxLow).finiteOr(0f)
 
                 val bx = wpProjX[idxLow] + (wpProjX[idxHigh] - wpProjX[idxLow]) * frac
                 val by = wpProjY[idxLow] + (wpProjY[idxHigh] - wpProjY[idxLow]) * frac
 
-                if (bx in 20f..(canvasW - 20f) && by in 20f..(canvasH - 20f)) {
+                if (bx.isFinite() && by.isFinite() && bx in 20f..(canvasW - 20f) && by in 20f..(canvasH - 20f)) {
                     // Pulsating glowing aura
                     drawCircle(Color(0xFF00E5FF).copy(alpha = 0.28f), radius = 18f, center = Offset(bx, by))
                     drawCircle(Color(0xFFFF9100).copy(alpha = 0.40f), radius = 11f, center = Offset(bx, by))
@@ -927,12 +980,15 @@ fun Terrain3DCanvas(
             // 6. Render Extracted 3D Vector Road Overlays (e.g., OSM Roads in Magadi Town)
             if (overlayRoadSegments3D.isNotEmpty()) {
                 for (seg in overlayRoadSegments3D) {
+                    if (!seg.x0.isFinite() || !seg.y0.isFinite() || !seg.z0.isFinite() ||
+                        !seg.x1.isFinite() || !seg.y1.isFinite() || !seg.z1.isFinite()
+                    ) continue
                     val r0x = seg.x0 * cosY - seg.z0 * sinY
                     val r0y = seg.y0 - midH
                     val r0z = seg.x0 * sinY + seg.z0 * cosY
                     val c0y = r0y * cosP + r0z * sinP
                     val c0z = -r0y * sinP + r0z * cosP
-                    val e0z = (cameraDist + c0z).coerceAtLeast(8f)
+                    val e0z = (cameraDist + c0z).finiteOr(cameraDist).coerceAtLeast(8f)
                     val s0x = centerX + (r0x / e0z) * effectiveFocal
                     val s0y = centerY - (c0y / e0z) * effectiveFocal
 
@@ -941,12 +997,14 @@ fun Terrain3DCanvas(
                     val r1z = seg.x1 * sinY + seg.z1 * cosY
                     val c1y = r1y * cosP + r1z * sinP
                     val c1z = -r1y * sinP + r1z * cosP
-                    val e1z = (cameraDist + c1z).coerceAtLeast(8f)
+                    val e1z = (cameraDist + c1z).finiteOr(cameraDist).coerceAtLeast(8f)
                     val s1x = centerX + (r1x / e1z) * effectiveFocal
                     val s1y = centerY - (c1y / e1z) * effectiveFocal
 
+                    if (!s0x.isFinite() || !s0y.isFinite() || !s1x.isFinite() || !s1y.isFinite()) continue
                     val avgEz = (e0z + e1z) * 0.5f
                     val baseW = (effectiveFocal / avgEz * (if (is1mResolution) 0.35f else 0.09f))
+                        .finiteOr(2f)
                         .coerceIn(1.5f, if (is1mResolution) 18f else 5.5f)
                     val roadColor = when {
                         seg.isSelected -> Color(0xFF00E5FF)
@@ -981,15 +1039,18 @@ fun Terrain3DCanvas(
                 )
 
                 fun project3D(wx: Float, wy: Float, wz: Float): Triple<Float, Float, Float> {
-                    val rx = wx * cosY - wz * sinY
-                    val ry = wy - midH
-                    val rz = wx * sinY + wz * cosY
+                    val sx = wx.finiteOr(0f)
+                    val sy = wy.finiteOr(0f)
+                    val sz = wz.finiteOr(0f)
+                    val rx = sx * cosY - sz * sinY
+                    val ry = sy - midH
+                    val rz = sx * sinY + sz * cosY
                     val cy = ry * cosP + rz * sinP
                     val cz = -ry * sinP + rz * cosP
-                    val ez = (cameraDist + cz).coerceAtLeast(8f)
+                    val ez = (cameraDist + cz).finiteOr(cameraDist).coerceAtLeast(8f)
                     return Triple(
-                        centerX + (rx / ez) * effectiveFocal,
-                        centerY - (cy / ez) * effectiveFocal,
+                        (centerX + (rx / ez) * effectiveFocal).finiteOr(centerX),
+                        (centerY - (cy / ez) * effectiveFocal).finiteOr(centerY),
                         ez
                     )
                 }
@@ -998,18 +1059,26 @@ fun Terrain3DCanvas(
                 for (bldg in overlayBuildings3D) {
                     val corners = bldg.baseCornersXZ
                     if (corners.size < 3) continue
+                    val safeBaseY = bldg.baseY.finiteOr(0f)
+                    val safeRoofY = bldg.roofY.finiteOr(safeBaseY + 3f)
                     val n = corners.size
                     val baseProj = ArrayList<Triple<Float, Float, Float>>(n)
                     val roofProj = ArrayList<Triple<Float, Float, Float>>(n)
+                    var invalidCorner = false
                     for ((bx, bz) in corners) {
-                        baseProj.add(project3D(bx, bldg.baseY, bz))
-                        roofProj.add(project3D(bx, bldg.roofY, bz))
+                        if (!bx.isFinite() || !bz.isFinite()) {
+                            invalidCorner = true
+                            break
+                        }
+                        baseProj.add(project3D(bx, safeBaseY, bz))
+                        roofProj.add(project3D(bx, safeRoofY, bz))
                     }
+                    if (invalidCorner || baseProj.size < 3 || roofProj.size < 3) continue
 
                     val wallColor = if (bldg.isSelected) {
-                        Color(0xFF00E5FF).copy(alpha = 0.88f)
+                        Color(0xFF00E5FF).copy(alpha = 0.90f)
                     } else {
-                        Color(0xFFD97736).copy(alpha = 0.86f)
+                        Color(0xFFD97736).copy(alpha = 0.88f)
                     }
                     val roofColor = if (bldg.isSelected) {
                         Color(0xFF80F3FF)
@@ -1019,13 +1088,59 @@ fun Terrain3DCanvas(
                     val edgeColor = if (bldg.isSelected) Color.White else Color(0xFF2B1B12)
                     val edgeWidth = if (bldg.isSelected) 2.0f else 1.0f
 
+                    val minRoofX = roofProj.minOf { it.first }
+                    val maxRoofX = roofProj.maxOf { it.first }
+                    val minRoofY = roofProj.minOf { it.second }
+                    val maxRoofY = roofProj.maxOf { it.second }
+                    val avgBaseDist = baseProj.map { it.third }.average().toFloat().finiteOr(1000f)
+
+                    // Prevent 3D buildings from shrinking below 1px on overview 3x5km / 101km views
+                    if ((maxRoofX - minRoofX) < 4.5f && (maxRoofY - minRoofY) < 4.5f) {
+                        val cx = roofProj.map { it.first }.average().toFloat().finiteOr(centerX)
+                        val cy = roofProj.map { it.second }.average().toFloat().finiteOr(centerY)
+                        val by = baseProj.map { it.second }.average().toFloat().finiteOr(cy + 4f)
+                        val halfW = if (bldg.isSelected) 4.2f else 2.8f
+                        val hH = max(3.6f, by - cy).finiteOr(3.6f)
+                        // Visible extruded front wall
+                        bldgFaces.add(
+                            BuildingDrawFace(
+                                pts = listOf(
+                                    Offset(cx - halfW, cy + hH),
+                                    Offset(cx + halfW, cy + hH),
+                                    Offset(cx + halfW, cy),
+                                    Offset(cx - halfW, cy)
+                                ),
+                                fillColor = wallColor,
+                                strokeColor = edgeColor,
+                                strokeWidth = 0.9f,
+                                dist = avgBaseDist
+                            )
+                        )
+                        // Visible roof cap
+                        bldgFaces.add(
+                            BuildingDrawFace(
+                                pts = listOf(
+                                    Offset(cx - halfW, cy),
+                                    Offset(cx + halfW, cy),
+                                    Offset(cx + halfW * 0.7f, cy - 2.2f),
+                                    Offset(cx - halfW * 1.1f, cy - 2.2f)
+                                ),
+                                fillColor = roofColor,
+                                strokeColor = edgeColor,
+                                strokeWidth = 0.9f,
+                                dist = (avgBaseDist - 0.05f).finiteOr(1000f)
+                            )
+                        )
+                        continue
+                    }
+
                     for (k in 0 until n) {
                         val next = (k + 1) % n
                         val p0 = baseProj[k]
                         val p1 = baseProj[next]
                         val p2 = roofProj[next]
                         val p3 = roofProj[k]
-                        val dist = (p0.third + p1.third + p2.third + p3.third) * 0.25f
+                        val dist = ((p0.third + p1.third + p2.third + p3.third) * 0.25f).finiteOr(1000f)
                         bldgFaces.add(
                             BuildingDrawFace(
                                 pts = listOf(
@@ -1054,7 +1169,7 @@ fun Terrain3DCanvas(
                             fillColor = roofColor,
                             strokeColor = edgeColor,
                             strokeWidth = edgeWidth,
-                            dist = (roofDistSum / n) - 0.05f
+                            dist = ((roofDistSum / n) - 0.05f).finiteOr(1000f)
                         )
                     )
                 }
@@ -1062,7 +1177,7 @@ fun Terrain3DCanvas(
                 bldgFaces.sortByDescending { it.dist }
                 val bPath = Path()
                 for (bf in bldgFaces) {
-                    if (bf.pts.size < 3) continue
+                    if (bf.pts.size < 3 || bf.pts.any { !it.x.isFinite() || !it.y.isFinite() }) continue
                     bPath.reset()
                     bPath.moveTo(bf.pts[0].x, bf.pts[0].y)
                     for (pi in 1 until bf.pts.size) {
@@ -1071,6 +1186,84 @@ fun Terrain3DCanvas(
                     bPath.close()
                     drawPath(bPath, color = bf.fillColor)
                     drawPath(bPath, color = bf.strokeColor, style = Stroke(width = bf.strokeWidth))
+                }
+            }
+
+            // 8. Render 3D Road Symbols (Route Shields, Bridges, Roundabouts, One-Way Arrows, Barriers, Crossings)
+            if (overlayRoadSymbols3D.isNotEmpty()) {
+                val placedShields = ArrayList<RectF>()
+                fun projectSym(wx: Float, wy: Float, wz: Float): Pair<Float, Float> {
+                    val x = wx.finiteOr(0f)
+                    val y = wy.finiteOr(0f)
+                    val z = wz.finiteOr(0f)
+                    val rx = x * cosY - z * sinY
+                    val ry = y - midH
+                    val rz = x * sinY + z * cosY
+                    val cy = ry * cosP + rz * sinP
+                    val cz = -ry * sinP + rz * cosP
+                    val ez = (cameraDist + cz).finiteOr(cameraDist).coerceAtLeast(8f)
+                    return (centerX + (rx / ez) * effectiveFocal).finiteOr(Float.NaN) to
+                        (centerY - (cy / ez) * effectiveFocal).finiteOr(Float.NaN)
+                }
+
+                for (sym in overlayRoadSymbols3D) {
+                    if (!sym.x.isFinite() || !sym.y.isFinite() || !sym.z.isFinite()) continue
+                    val (sx, sy) = projectSym(sym.x, sym.y, sym.z)
+                    if (!sx.isFinite() || !sy.isFinite()) continue
+                    if (sx !in 24f..(canvasW - 24f) || sy !in 24f..(canvasH - 24f)) continue
+                    val dirX = sym.dirX.finiteOr(1f)
+                    val dirZ = sym.dirZ.finiteOr(0f)
+                    when (sym.type) {
+                        RoadSymbolType3D.ROUTE_SHIELD -> {
+                            val txt = sym.label.take(6).ifBlank { "C58" }
+                            val bw = (txt.length * 10.5f + 14f).coerceIn(34f, 78f)
+                            val bh = 20f
+                            val box = RectF(sx - bw * 0.5f, sy - bh * 0.5f, sx + bw * 0.5f, sy + bh * 0.5f)
+                            if (placedShields.none { RectF.intersects(it, box) }) {
+                                placedShields.add(RectF(box.left - 8f, box.top - 8f, box.right + 8f, box.bottom + 8f))
+                                drawRoundRect(Color(0xFF0B1320), Offset(box.left, box.top), Size(bw, bh), CornerRadius(5f, 5f))
+                                drawRoundRect(Color(0xFFFFD54F), Offset(box.left, box.top), Size(bw, bh), CornerRadius(5f, 5f), style = Stroke(1.6f))
+                                drawContext.canvas.nativeCanvas.drawText(txt, sx, sy + 6f, shieldTextPaint3d)
+                            }
+                        }
+                        RoadSymbolType3D.DIRECTION_ARROW -> {
+                            val (ax, ay) = projectSym(sym.x + dirX * 1.4f, sym.y, sym.z + dirZ * 1.4f)
+                            if (!ax.isFinite() || !ay.isFinite()) continue
+                            val dx = ax - sx
+                            val dy = ay - sy
+                            val dLen = hypot(dx, dy).finiteOr(1f).coerceAtLeast(0.5f)
+                            val ux = dx / dLen; val uy = dy / dLen
+                            val nx = -uy; val ny = ux
+                            val aPath = Path().apply {
+                                moveTo(sx + ux * 6.5f, sy + uy * 6.5f)
+                                lineTo(sx - ux * 3.5f + nx * 4.2f, sy - uy * 3.5f + ny * 4.2f)
+                                lineTo(sx - ux * 3.5f - nx * 4.2f, sy - uy * 3.5f - ny * 4.2f)
+                                close()
+                            }
+                            drawPath(aPath, Color.White)
+                        }
+                        RoadSymbolType3D.BRIDGE_ABUTMENT -> {
+                            val (ax, ay) = projectSym(sym.x + dirX * 1.2f, sym.y, sym.z + dirZ * 1.2f)
+                            if (!ax.isFinite() || !ay.isFinite()) continue
+                            val dx = ax - sx; val dy = ay - sy
+                            val dLen = hypot(dx, dy).finiteOr(1f).coerceAtLeast(0.5f)
+                            val nx = -dy / dLen; val ny = dx / dLen
+                            drawLine(Color(0xFF00E5FF), Offset(sx + nx * 6.5f, sy + ny * 6.5f), Offset(sx - nx * 6.5f, sy - ny * 6.5f), strokeWidth = 3.0f)
+                        }
+                        RoadSymbolType3D.ROUNDABOUT_RING -> {
+                            drawCircle(Color(0xFFFFD54F), radius = 6.5f, center = Offset(sx, sy), style = Stroke(2.2f))
+                            drawCircle(Color(0xFF00E5FF), radius = 2.6f, center = Offset(sx, sy))
+                        }
+                        RoadSymbolType3D.BARRIER_GATE -> {
+                            drawCircle(Color(0xFF111827), radius = 5.5f, center = Offset(sx, sy))
+                            drawLine(Color(0xFFFF5252), Offset(sx - 5f, sy), Offset(sx + 5f, sy), strokeWidth = 2.6f)
+                            drawCircle(Color(0xFFFFD54F), radius = 1.8f, center = Offset(sx, sy))
+                        }
+                        RoadSymbolType3D.CROSSING_SIGNAL -> {
+                            drawCircle(Color(0xFF0288D1), radius = 4.5f, center = Offset(sx, sy))
+                            drawCircle(Color.White, radius = 4.5f, center = Offset(sx, sy), style = Stroke(1.3f))
+                        }
+                    }
                 }
             }
 
@@ -1090,7 +1283,7 @@ fun Terrain3DCanvas(
             }
 
             // Draw coordinate axis gizmo in bottom-left (Equal 1:1:1 lengths)
-            drawCoordinateGizmo(centerX - canvasW * 0.38f, centerY + canvasH * 0.35f, yaw, pitch)
+            drawCoordinateGizmo(centerX - canvasW * 0.38f, centerY + canvasH * 0.35f, safeYaw, safePitch)
         }
 
         // 1m Resolution Floating Scale Badge
@@ -1135,17 +1328,17 @@ fun Terrain3DCanvas(
                 Text(
                     text = when {
                         is1mResolution -> {
-                            val lakeStr = lakeLevelAslM?.let { " • LAKE %.1fm".format(it) } ?: ""
-                            "1.0m DEM • ${mesh.resolutionX}×${mesh.resolutionZ}$lakeStr • ZOOM: ${(zoom * 100).toInt()}%"
+                            val lakeStr = safeLakeLevel?.let { " • LAKE %.1fm".format(it) } ?: ""
+                            "1.0m DEM • ${mesh.resolutionX}×${mesh.resolutionZ}$lakeStr • ZOOM: ${(safeZoom * 100).roundToInt()}%"
                         }
                         isHumanView -> {
-                            val currentElev = 598.0f + (walkDistanceM / 1000f) * 18.5f
-                            "EYE LEVEL 1.7m • ROAD: %.1fm • ESCARPMENT +1382m • ZOOM: ${(zoom * 100).toInt()}%".format(currentElev)
+                            val currentElev = 598.0f + (safeWalkDistM / 1000f) * 18.5f
+                            "EYE LEVEL 1.7m • ROAD: %.1fm • ESCARPMENT +1382m • ZOOM: ${(safeZoom * 100).roundToInt()}%".format(currentElev)
                         }
-                        mesh.resolutionZ >= 100 && lakeLevelAslM != null ->
-                            "MAGADI 3×5KM • ${mesh.resolutionX}×${mesh.resolutionZ} • LAKE %.1fm ASL • ZOOM: ${(zoom * 100).toInt()}%".format(lakeLevelAslM)
-                        mesh.resolutionZ >= 100 -> "COMBINED 101KM • ${mesh.resolutionX}×${mesh.resolutionZ} • 598m-1980m ASL • ZOOM: ${(zoom * 100).toInt()}%"
-                        else -> "VK 1.3 • ${mesh.resolutionX}×${mesh.resolutionZ} • ${mesh.indices.size / 3}Δ • 400m DATUM • ZOOM: ${(zoom * 100).toInt()}%"
+                        mesh.resolutionZ >= 100 && safeLakeLevel != null ->
+                            "MAGADI 3×5KM • ${mesh.resolutionX}×${mesh.resolutionZ} • LAKE %.1fm ASL • ZOOM: ${(safeZoom * 100).roundToInt()}%".format(safeLakeLevel)
+                        mesh.resolutionZ >= 100 -> "COMBINED 101KM • ${mesh.resolutionX}×${mesh.resolutionZ} • 598m-1980m ASL • ZOOM: ${(safeZoom * 100).roundToInt()}%"
+                        else -> "VK 1.3 • ${mesh.resolutionX}×${mesh.resolutionZ} • ${mesh.indices.size / 3}Δ • 400m DATUM • ZOOM: ${(safeZoom * 100).roundToInt()}%"
                     },
                     fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
@@ -1220,19 +1413,19 @@ fun Terrain3DCanvas(
                     color = DarkBackground.copy(alpha = 0.85f),
                     border = androidx.compose.foundation.BorderStroke(0.8.dp, CyberCyan.copy(alpha = 0.35f)),
                     modifier = Modifier
-                        .clickable { onZoomChange(1.0f / zoom) }
+                        .clickable { onZoomChange((1.0f / safeZoom).finiteOr(1f)) }
                         .testTag("terrain_zoom_badge")
                 ) {
-                    val zoomPct = (zoom * 100).roundToInt()
-                    val zoomLabel = if (zoom >= 10f) "${zoom.roundToInt()}x"
-                                    else if (zoom < 0.2f) "%.2fx".format(zoom)
+                    val zoomPct = (safeZoom * 100).roundToInt()
+                    val zoomLabel = if (safeZoom >= 10f) "${safeZoom.roundToInt()}x"
+                                    else if (safeZoom < 0.2f) "%.2fx".format(safeZoom)
                                     else "$zoomPct%"
                     Text(
                         text = zoomLabel,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
-                        color = if (zoom > 3f) LaserOrange else if (zoom < 0.8f) NeonLime else CyberCyan,
+                        color = if (safeZoom > 3f) LaserOrange else if (safeZoom < 0.8f) NeonLime else CyberCyan,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                     )
                 }
@@ -1254,7 +1447,7 @@ fun Terrain3DCanvas(
 
                 // Reset Zoom to 1.0x (Center Focus)
                 IconButton(
-                    onClick = { onZoomChange(1.0f / zoom) },
+                    onClick = { onZoomChange((1.0f / safeZoom).finiteOr(1f)) },
                     modifier = Modifier
                         .size(34.dp)
                         .testTag("terrain_zoom_reset_btn")
@@ -1272,10 +1465,11 @@ fun Terrain3DCanvas(
 }
 
 private fun DrawScope.drawCoordinateGizmo(cx: Float, cy: Float, yaw: Float, pitch: Float) {
-    val cosY = cos(yaw)
-    val sinY = sin(yaw)
-    val cosP = cos(pitch)
-    val sinP = sin(pitch)
+    if (!cx.isFinite() || !cy.isFinite()) return
+    val cosY = cos(yaw.finiteOr(0.75f))
+    val sinY = sin(yaw.finiteOr(0.75f))
+    val cosP = cos(pitch.finiteOr(0.6f))
+    val sinP = sin(pitch.finiteOr(0.6f))
     val len = 28f
 
     // X Axis (East - Red)

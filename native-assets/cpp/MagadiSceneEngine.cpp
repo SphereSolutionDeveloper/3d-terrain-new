@@ -421,10 +421,11 @@ MagadiSceneMesh MagadiSceneEngine::generateRoadSegmentScene(
             const std::string& surf = surfaces[iz * gridSize + ix];
             uint8_t flag = flags[iz * gridSize + ix];
 
-            float cFrac = std::fmod(rawElev, contourInterval) / contourInterval;
+            float safeContour = (std::isfinite(contourInterval) && contourInterval >= 0.5f) ? contourInterval : 25.0f;
+            float cFrac = std::fmod(rawElev, safeContour) / safeContour;
             float isolineFactor = std::abs(cFrac - 0.5f) * 2.0f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = xScaled;
             vert.y = yScaled;
             vert.z = zScaled;
@@ -575,10 +576,11 @@ MagadiSceneMesh MagadiSceneEngine::generateRoadSubSegmentScene(
             const std::string& surf = surfaces[iz * gridSize + ix];
             uint8_t flag = flags[iz * gridSize + ix];
 
-            float cFrac = std::fmod(rawElev, contourInterval) / contourInterval;
+            float safeContour = (std::isfinite(contourInterval) && contourInterval >= 0.5f) ? contourInterval : 25.0f;
+            float cFrac = std::fmod(rawElev, safeContour) / safeContour;
             float isolineFactor = std::abs(cFrac - 0.5f) * 2.0f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = xScaled;
             vert.y = yScaled;
             vert.z = zScaled;
@@ -730,10 +732,11 @@ MagadiSceneMesh MagadiSceneEngine::generate1mResolutionScene(
             const std::string& surf = surfaces[iz * gridSize + ix];
             uint8_t flag = flags[iz * gridSize + ix];
 
-            float cFrac = std::fmod(rawElev, contourInterval) / contourInterval;
+            float safeContour = (std::isfinite(contourInterval) && contourInterval >= 0.5f) ? contourInterval : 25.0f;
+            float cFrac = std::fmod(rawElev, safeContour) / safeContour;
             float isolineFactor = std::abs(cFrac - 0.5f) * 2.0f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = xScaled;
             vert.y = yScaled;
             vert.z = zScaled;
@@ -914,6 +917,7 @@ MagadiSceneMesh MagadiSceneEngine::generateHumanStartScene(float walkDistanceM,
 MagadiSceneMesh MagadiSceneEngine::generateOverviewScene(int gridSize,
                                                        float contourInterval,
                                                        float stepTerracing) const {
+    gridSize = std::clamp(gridSize, 17, 65);
     const float worldSpan = 50000.0f;
     const float step = worldSpan / (gridSize - 1);
     const float meshScale = 0.0022f;
@@ -945,7 +949,7 @@ MagadiSceneMesh MagadiSceneEngine::generateOverviewScene(int gridSize,
             float rawElev = heights[iz * gridSize + ix];
             float y = (rawElev - 590.0f) * meshScale * 0.55f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = x;
             vert.y = y;
             vert.z = z;
@@ -986,6 +990,7 @@ MagadiSceneMesh MagadiSceneEngine::generateChunkScene(int col, int row,
         return generateFirst10kmSegmentScene(gridSize, contourInterval, stepTerracing);
     }
 
+    gridSize = std::clamp(gridSize, 17, 65);
     const float chunkSizeM = 10000.0f;
     const float originX = col * chunkSizeM;
     const float originY = row * chunkSizeM;
@@ -1019,7 +1024,7 @@ MagadiSceneMesh MagadiSceneEngine::generateChunkScene(int col, int row,
             float rawElev = heights[iz * gridSize + ix];
             float y = (rawElev - 590.0f) * meshScale * 0.45f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = x;
             vert.y = y;
             vert.z = z;
@@ -1152,10 +1157,11 @@ MagadiSceneMesh MagadiSceneEngine::generateWholeCombinedTerrainScene(
             const std::string& surf = surfaces[iz * gridResX + ix];
             uint8_t flag = flags[iz * gridResX + ix];
 
-            float cFrac = std::fmod(rawElev, contourInterval) / contourInterval;
+            float safeContour = (std::isfinite(contourInterval) && contourInterval >= 0.5f) ? contourInterval : 25.0f;
+            float cFrac = std::fmod(rawElev, safeContour) / safeContour;
             float isolineFactor = std::abs(cFrac - 0.5f) * 2.0f;
 
-            MagadiVertex vert;
+            MagadiVertex vert{};
             vert.x = xScaled;
             vert.y = yScaled;
             vert.z = zScaled;

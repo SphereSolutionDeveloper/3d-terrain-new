@@ -123,6 +123,17 @@ fun ApexDrawerContent(
             )
 
             DrawerItemCard(
+                title = "Route C58 ±1.5km Map",
+                subtitle = "Non-Box 3km Ribbon • Houses & Roads",
+                emoji = "🛣️",
+                badge = "±1.5km Swath",
+                badgeColor = CyberCyan,
+                isSelected = currentView == MainAppView.C58_CORRIDOR_3KM,
+                testTag = "drawer_item_c58_corridor_3km",
+                onClick = { onSelectView(MainAppView.C58_CORRIDOR_3KM) }
+            )
+
+            DrawerItemCard(
                 title = "Kenya Road Corridors & Grid",
                 subtitle = "10km Road Ribbon & 416 Sqtiles",
                 emoji = "🛣️",

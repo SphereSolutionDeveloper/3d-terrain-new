@@ -27,6 +27,46 @@ object NativeEngineBridge {
 
     fun isLoaded(): Boolean = isNativeLoaded
 
+    private fun Float.finiteOr(fallback: Float = 0f): Float = if (isFinite()) this else fallback
+
+    private inline fun <T> safeNativeCall(fallback: T, block: () -> T): T {
+        if (!isLoaded()) return fallback
+        return try {
+            block()
+        } catch (_: Throwable) {
+            fallback
+        }
+    }
+
+    private fun emptyNativeVulkanMesh(
+        assetType: CppAssetType,
+        title: String,
+        civilStandard: String = "AASHTO / FHWA Native Procedural Engine"
+    ): NativeVulkanMesh = NativeVulkanMesh(
+        assetType = assetType,
+        vertices = FloatArray(0),
+        indices = IntArray(0),
+        boundingBoxMin = listOf(0f, 0f, 0f),
+        boundingBoxMax = listOf(0f, 0f, 0f),
+        totalVolumeM3 = 0f,
+        structuralSteelTons = 0f,
+        deadLoadKn = 0f,
+        civilStandard = civilStandard,
+        title = title
+    )
+
+    private fun emptyTerrainMesh(resX: Int = 2, resZ: Int = 2): TerrainMesh3D = TerrainMesh3D(
+        resolutionX = resX.coerceAtLeast(2),
+        resolutionZ = resZ.coerceAtLeast(2),
+        vertices = emptyList(),
+        indices = emptyList(),
+        minHeight = 0f,
+        maxHeight = 1f,
+        avgSlope = 0f,
+        assetPlacements = emptyList(),
+        roadCenterline = emptyList()
+    )
+
     // ─── C++ NATIVE JNI DECLARATIONS (libapex_vulkan.so) ─────────────────────────
 
     external fun nativeGetElevation(wx: Float, wy: Float, interval: Float, terracing: Float): Float
@@ -201,6 +241,40 @@ object NativeEngineBridge {
         centerXM: Float, centerYM: Float, windowCells: Int, contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
     ): IntArray
 
+    // ─── ROUTE C58 NON-BOX 3 KM CORRIDOR (+/- 1.5 KM LEFT/RIGHT) JNI ─────────────
+    external fun nativeGetC58DefaultCenterlineLatLon(): DoubleArray
+    external fun nativeSetC58Centerline(latLonPairs: DoubleArray)
+    external fun nativeGetC58Summary(): DoubleArray
+    external fun nativeGetC58CorridorRibbonUtm(): DoubleArray
+    external fun nativeProjectLatLonToC58(lat: Double, lon: Double): DoubleArray
+    external fun nativeC58UtmToLatLon(utmEast: Double, utmNorth: Double): DoubleArray
+    external fun nativeSetC58DemGrid(uCols: Int, vRows: Int, elevationsM: FloatArray)
+    external fun nativeSetC58Footprints(roadSegsUtm5: DoubleArray, buildingRectsUtm4: DoubleArray)
+    external fun nativeSetC58LakeAndWater(lakeLevelAslM: Float, polyMetaPacked: IntArray, coordsEN: DoubleArray)
+    external fun nativeSampleC58UtmRaster(
+        minUtmE: Double, maxUtmE: Double, minUtmN: Double, maxUtmN: Double, cols: Int, rows: Int
+    ): FloatArray
+    external fun nativeGetC58TelemetryAtUtm(utmE: Double, utmN: Double): DoubleArray
+    external fun nativeGetC58Sector3dTransform(
+        sectorStartM: Double, sectorEndM: Double, resU: Int, resV: Int, verticalExaggeration: Float
+    ): DoubleArray
+    external fun nativeGenerateC58SectorVertices(
+        sectorStartM: Double, sectorEndM: Double, resU: Int, resV: Int,
+        contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
+    ): FloatArray
+    external fun nativeGenerateC58SectorIndices(
+        sectorStartM: Double, sectorEndM: Double, resU: Int, resV: Int,
+        contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
+    ): IntArray
+    external fun nativeGenerateC581mWindowVertices(
+        centerUtmE: Double, centerUtmN: Double, windowCells: Int,
+        contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
+    ): FloatArray
+    external fun nativeGenerateC581mWindowIndices(
+        centerUtmE: Double, centerUtmN: Double, windowCells: Int,
+        contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
+    ): IntArray
+
     // ─── HIGH-SPEED NATIVE VULKAN MESH BUILDERS (C++ DRIVEN) ─────────────────────
 
     fun getBridgeTypeName(type: Int): String = when (type) {
@@ -248,11 +322,11 @@ object NativeEngineBridge {
     private fun computeVertexAABB(verts: FloatArray): Pair<List<Float>, List<Float>> {
         val count = verts.size / 12
         if (count <= 0) return listOf(0f, 0f, 0f) to listOf(0f, 0f, 0f)
-        var minX = verts[0]; var minY = verts[1]; var minZ = verts[2]
-        var maxX = verts[0]; var maxY = verts[1]; var maxZ = verts[2]
+        var minX = verts[0].finiteOr(0f); var minY = verts[1].finiteOr(0f); var minZ = verts[2].finiteOr(0f)
+        var maxX = minX; var maxY = minY; var maxZ = minZ
         for (i in 1 until count) {
             val b = i * 12
-            val x = verts[b]; val y = verts[b + 1]; val z = verts[b + 2]
+            val x = verts[b].finiteOr(0f); val y = verts[b + 1].finiteOr(0f); val z = verts[b + 2].finiteOr(0f)
             if (x < minX) minX = x; if (x > maxX) maxX = x
             if (y < minY) minY = y; if (y > maxY) maxY = y
             if (z < minZ) minZ = z; if (z > maxZ) maxZ = z
@@ -269,7 +343,7 @@ object NativeEngineBridge {
         superelevationDeg: Float = 0f,
         cablePairsCount: Int = 12,
         hasBarriers: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_BRIDGE, "Modular Bridge")) {
         val typeInt = mapBridgeTypeKeyToIndex(bridgeType)
         val effCurve = if (typeInt == 9 && abs(curveBendAngleDeg) < 0.01f) 26.0f else curveBendAngleDeg
 
@@ -281,7 +355,7 @@ object NativeEngineBridge {
         )
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_BRIDGE,
             vertices = verts,
             indices = indices,
@@ -302,7 +376,7 @@ object NativeEngineBridge {
         plazaLengthM: Float = 64f,
         canopyClearanceM: Float = 5.5f,
         hasDynamicVMS: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_TOLL_PLAZA, "Modular Toll Plaza")) {
         val typeInt = when (tollType) {
             "CANOPY_PLAZA", "BARRIER_TERMINAL" -> 0
             "ETC_GANTRY", "ALL_ELECTRONIC_GANTRIES" -> 1
@@ -320,7 +394,7 @@ object NativeEngineBridge {
         )
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_TOLL_PLAZA,
             vertices = verts,
             indices = indices,
@@ -349,7 +423,7 @@ object NativeEngineBridge {
         jetFanSpacingM: Float = 28f,
         hasFlaredPortal: Boolean = true,
         hasJetFans: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_TUNNEL, "Modular Tunnel")) {
         val typeInt = when (tunnelType) {
             "MOUNTAIN_HORSESHOE", "NATM_HORSESHOE" -> 0
             "CIRCULAR_BORED", "CIRCULAR_TBM" -> 1
@@ -367,7 +441,7 @@ object NativeEngineBridge {
         )
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_TUNNEL,
             vertices = verts,
             indices = indices,
@@ -395,7 +469,7 @@ object NativeEngineBridge {
         rampWidthM: Float = 7.5f,
         elevationDeltaM: Float = 7.8f,
         superelevationBankingDeg: Float = 5.5f
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_INTERCHANGE, "Modular Interchange")) {
         val typeInt = when (interchangeType) {
             "CLOVERLEAF_LOOP", "CLOVERLEAF_270" -> 0
             "DIRECTIONAL_FLYOVER" -> 1
@@ -413,7 +487,7 @@ object NativeEngineBridge {
         )
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_INTERCHANGE,
             vertices = verts,
             indices = indices,
@@ -439,7 +513,7 @@ object NativeEngineBridge {
         wallHeightM: Float = 7.5f,
         wallLengthM: Float = 60f,
         wallBatterAngleDeg: Float = 4f
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_RETAINING_WALL, "Modular Retaining Wall")) {
         val typeInt = when (wallType) {
             "MSE_MODULAR", "MSE_PRECAST_PANELS" -> 0
             "STEPPED_GABION", "GABION_STEPPED_BASKETS" -> 1
@@ -453,7 +527,7 @@ object NativeEngineBridge {
         val indices = nativeGenerateRetainingWallIndices(typeInt, wallHeightM, wallLengthM, wallBatterAngleDeg)
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_RETAINING_WALL,
             vertices = verts,
             indices = indices,
@@ -481,7 +555,7 @@ object NativeEngineBridge {
         boardWidthM: Float = 6.5f,
         signCount: Int = 3,
         hasDMS: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_SIGNPOST, "Modular Signpost")) {
         val typeInt = when (signType) {
             "CANTILEVER_HIGHWAY" -> 0
             "FULL_SPAN_GANTRY" -> 1
@@ -494,7 +568,7 @@ object NativeEngineBridge {
         val indices = nativeGenerateSignpostIndices(typeInt, gantrySpanM, clearanceH, boardWidthM, signCount, hasDMS)
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_SIGNPOST,
             vertices = verts,
             indices = indices,
@@ -521,7 +595,7 @@ object NativeEngineBridge {
         curveBendDeg: Float = 14f,
         bankingDeg: Float = 4.5f,
         hasLighting: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_EXPRESSWAY, "Modular Expressway")) {
         val typeInt = when (expresswayType) {
             "SIX_LANE_FREEWAY" -> 0
             "ELEVATED_VIADUCT" -> 1
@@ -534,7 +608,7 @@ object NativeEngineBridge {
         val indices = nativeGenerateExpresswayIndices(typeInt, lanesPerDir, sectionLengthM, curveBendDeg, bankingDeg, hasLighting)
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_EXPRESSWAY,
             vertices = verts,
             indices = indices,
@@ -561,7 +635,7 @@ object NativeEngineBridge {
         curveBendDeg: Float = 12f,
         postSpacingM: Float = 2.0f,
         hasReflectors: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_BARRIER, "Modular Barrier")) {
         val typeInt = when (barrierType) {
             "NEW_JERSEY_FSHAPE" -> 0
             "W_BEAM_GUARDRAIL" -> 1
@@ -574,7 +648,7 @@ object NativeEngineBridge {
         val indices = nativeGenerateBarrierIndices(typeInt, barrierLengthM, barrierHeightM, curveBendDeg, postSpacingM, hasReflectors)
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_BARRIER,
             vertices = verts,
             indices = indices,
@@ -600,7 +674,7 @@ object NativeEngineBridge {
         zoneLengthM: Float = 34f,
         unitCount: Int = 6,
         hasBeacons: Boolean = true
-    ): NativeVulkanMesh {
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_ROAD_BLOCK, "Modular Road Block")) {
         val typeInt = when (roadBlockType) {
             "WATER_JERSEY_LINE" -> 0
             "HYDRAULIC_BOLLARDS" -> 1
@@ -613,7 +687,7 @@ object NativeEngineBridge {
         val indices = nativeGenerateRoadBlockIndices(typeInt, roadWidthM, zoneLengthM, unitCount, hasBeacons)
         val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
+        NativeVulkanMesh(
             assetType = CppAssetType.MODULAR_ROAD_BLOCK,
             vertices = verts,
             indices = indices,
@@ -633,64 +707,65 @@ object NativeEngineBridge {
         )
     }
 
-    fun generateConnectedHighwayScene(scale: Float = 1.0f): NativeVulkanMesh {
-        val verts = nativeGenerateConnectedHighwayVertices(scale)
-        val indices = nativeGenerateConnectedHighwayIndices(scale)
-        val (bbMin, bbMax) = computeVertexAABB(verts)
+    fun generateConnectedHighwayScene(scale: Float = 1.0f): NativeVulkanMesh =
+        safeNativeCall(emptyNativeVulkanMesh(CppAssetType.CONNECTED_HIGHWAY_SCENE, "Connected Highway Real-World Scene")) {
+            val verts = nativeGenerateConnectedHighwayVertices(scale)
+            val indices = nativeGenerateConnectedHighwayIndices(scale)
+            val (bbMin, bbMax) = computeVertexAABB(verts)
 
-        return NativeVulkanMesh(
-            assetType = CppAssetType.CONNECTED_HIGHWAY_SCENE,
-            vertices = verts,
-            indices = indices,
-            boundingBoxMin = bbMin,
-            boundingBoxMax = bbMax,
-            totalVolumeM3 = 8200f,
-            structuralSteelTons = 1200f,
-            deadLoadKn = 201000f,
-            civilStandard = "Vulkan 1.3 Full Highway Corridor (Toll -> Bridge -> Tunnel)",
-            title = "Connected Highway Real-World Scene"
-        )
-    }
+            NativeVulkanMesh(
+                assetType = CppAssetType.CONNECTED_HIGHWAY_SCENE,
+                vertices = verts,
+                indices = indices,
+                boundingBoxMin = bbMin,
+                boundingBoxMax = bbMax,
+                totalVolumeM3 = 8200f,
+                structuralSteelTons = 1200f,
+                deadLoadKn = 201000f,
+                civilStandard = "Vulkan 1.3 Full Highway Corridor (Toll -> Bridge -> Tunnel)",
+                title = "Connected Highway Real-World Scene"
+            )
+        }
 
     fun generatePowerGridMesh(
         numPosts: Int = 4,
         spanDistance: Float = 16f,
         cornerAngleDeg: Float = 85f
-    ): NativeVulkanMesh {
-        val verts10 = nativeBuildPowerGridVertices(numPosts, spanDistance, cornerAngleDeg)
-        val indices = nativeBuildPowerGridIndices(numPosts, spanDistance, cornerAngleDeg)
-        // Convert 10-float to 12-float: pos(3), norm(3), uv(2), color(4)
-        val vCount = verts10.size / 10
-        val verts12 = FloatArray(vCount * 12)
-        for (i in 0 until vCount) {
-            val b10 = i * 10
-            val b12 = i * 12
-            verts12[b12 + 0] = verts10[b10 + 0]
-            verts12[b12 + 1] = verts10[b10 + 1]
-            verts12[b12 + 2] = verts10[b10 + 2]
-            verts12[b12 + 3] = verts10[b10 + 3]
-            verts12[b12 + 4] = verts10[b10 + 4]
-            verts12[b12 + 5] = verts10[b10 + 5]
-            verts12[b12 + 6] = verts10[b10 + 6]
-            verts12[b12 + 7] = verts10[b10 + 7]
-            verts12[b12 + 8] = 0.85f
-            verts12[b12 + 9] = 0.88f
-            verts12[b12 + 10] = 0.92f
-            verts12[b12 + 11] = 1.0f
+    ): NativeVulkanMesh =
+        safeNativeCall(emptyNativeVulkanMesh(CppAssetType.POWER_GRID_NETWORK, "Power Grid Corner Route ($numPosts Units)")) {
+            val verts10 = nativeBuildPowerGridVertices(numPosts, spanDistance, cornerAngleDeg)
+            val indices = nativeBuildPowerGridIndices(numPosts, spanDistance, cornerAngleDeg)
+            val vCount = verts10.size / 10
+            val verts12 = FloatArray(vCount * 12)
+            for (i in 0 until vCount) {
+                val b10 = i * 10
+                val b12 = i * 12
+                verts12[b12 + 0] = verts10[b10 + 0].finiteOr(0f)
+                verts12[b12 + 1] = verts10[b10 + 1].finiteOr(0f)
+                verts12[b12 + 2] = verts10[b10 + 2].finiteOr(0f)
+                verts12[b12 + 3] = verts10[b10 + 3].finiteOr(0f)
+                verts12[b12 + 4] = verts10[b10 + 4].finiteOr(1f)
+                verts12[b12 + 5] = verts10[b10 + 5].finiteOr(0f)
+                verts12[b12 + 6] = verts10[b10 + 6].finiteOr(0f)
+                verts12[b12 + 7] = verts10[b10 + 7].finiteOr(0f)
+                verts12[b12 + 8] = 0.85f
+                verts12[b12 + 9] = 0.88f
+                verts12[b12 + 10] = 0.92f
+                verts12[b12 + 11] = 1.0f
+            }
+            NativeVulkanMesh(
+                assetType = CppAssetType.POWER_GRID_NETWORK,
+                vertices = verts12,
+                indices = indices,
+                boundingBoxMin = listOf(-spanDistance * 1.2f, 0f, -spanDistance * 1.2f),
+                boundingBoxMax = listOf(spanDistance * 1.2f, 15f, spanDistance * 1.2f),
+                totalVolumeM3 = 45f,
+                structuralSteelTons = 18f,
+                deadLoadKn = 450f,
+                civilStandard = "IEEE 738 High-Voltage Transmission Line Clearance",
+                title = "Power Grid Corner Route ($numPosts Units)"
+            )
         }
-        return NativeVulkanMesh(
-            assetType = CppAssetType.POWER_GRID_NETWORK,
-            vertices = verts12,
-            indices = indices,
-            boundingBoxMin = listOf(-spanDistance * 1.2f, 0f, -spanDistance * 1.2f),
-            boundingBoxMax = listOf(spanDistance * 1.2f, 15f, spanDistance * 1.2f),
-            totalVolumeM3 = 45f,
-            structuralSteelTons = 18f,
-            deadLoadKn = 450f,
-            civilStandard = "IEEE 738 High-Voltage Transmission Line Clearance",
-            title = "Power Grid Corner Route ($numPosts Units)"
-        )
-    }
 
     fun NativeVulkanMesh.toProceduralModelMesh(): ProceduralModelMesh {
         val representativeBoxes = listOf(
@@ -719,17 +794,19 @@ object NativeEngineBridge {
         worldYMeters: Float,
         contourInterval: Float = 25f,
         stepTerracing: Float = 0f
-    ): Float = nativeGetElevation(worldXMeters, worldYMeters, contourInterval, stepTerracing)
+    ): Float = safeNativeCall(600f) {
+        nativeGetElevation(worldXMeters, worldYMeters, contourInterval, stepTerracing).finiteOr(600f)
+    }
 
     fun generateMagadiHumanStartMesh(
         walkDistanceM: Float = 0f,
         gridSize: Int = 45,
         contourInterval: Float = 25f,
         stepTerracing: Float = 0f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(gridSize, gridSize)) {
         val packedVerts = nativeGenerateHumanStartVertices(walkDistanceM, gridSize, contourInterval, stepTerracing)
         val nativeIndices = nativeGenerateHumanStartIndices(walkDistanceM, gridSize, contourInterval, stepTerracing)
-        return unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, 1, 48)
+        unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, 1, 48)
     }
 
     fun generateRoadSegmentMesh(
@@ -737,11 +814,11 @@ object NativeEngineBridge {
         gridSize: Int = 49,
         contourInterval: Float = 25f,
         stepTerracing: Float = 0f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(gridSize, gridSize)) {
         val clampedSegment = segmentIndex.coerceIn(1, 10)
         val packedVerts = nativeGenerateRoadSegmentVertices(clampedSegment, gridSize, contourInterval, stepTerracing)
         val nativeIndices = nativeGenerateRoadSegmentIndices(clampedSegment, gridSize, contourInterval, stepTerracing)
-        return unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, clampedSegment, 64)
+        unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, clampedSegment, 64)
     }
 
     fun generateRoadSubSegmentMesh(
@@ -750,12 +827,12 @@ object NativeEngineBridge {
         gridSize: Int = 49,
         contourInterval: Float = 25f,
         stepTerracing: Float = 0f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(gridSize, gridSize)) {
         val clampedSegment = segmentIndex.coerceIn(1, 10)
         val clampedSub = subSegmentIndex.coerceIn(1, 10)
         val packedVerts = nativeGenerateRoadSubSegmentVertices(clampedSegment, clampedSub, gridSize, contourInterval, stepTerracing)
         val nativeIndices = nativeGenerateRoadSubSegmentIndices(clampedSegment, clampedSub, gridSize, contourInterval, stepTerracing)
-        return unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, clampedSegment, 48)
+        unpackTerrainMesh(packedVerts, nativeIndices, gridSize, gridSize, clampedSegment, 48)
     }
 
     fun generate1mResolutionMesh(
@@ -763,11 +840,11 @@ object NativeEngineBridge {
         centerForwardM: Float,
         contourInterval: Float = 5f,
         stepTerracing: Float = 0f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(65, 65)) {
         val clampedSegment = segmentIndex.coerceIn(1, 10)
         val packedVerts = nativeGenerate1mResolutionVertices(clampedSegment, centerForwardM, contourInterval, stepTerracing)
         val nativeIndices = nativeGenerate1mResolutionIndices(clampedSegment, centerForwardM, contourInterval, stepTerracing)
-        return unpackTerrainMesh(packedVerts, nativeIndices, 33, 33, clampedSegment, 32)
+        unpackTerrainMesh(packedVerts, nativeIndices, 65, 65, clampedSegment, 32)
     }
 
     fun generateWholeCombinedTerrainMesh(
@@ -775,83 +852,10 @@ object NativeEngineBridge {
         gridResZ: Int = 129,
         contourInterval: Float = 50f,
         stepTerracing: Float = 0f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(gridResX, gridResZ)) {
         val packedVerts = nativeGenerateWholeCombinedTerrainVertices(gridResX, gridResZ, contourInterval, stepTerracing)
         val nativeIndices = nativeGenerateWholeCombinedTerrainIndices(gridResX, gridResZ, contourInterval, stepTerracing)
-
-        val vertCount = packedVerts.size / 11
-        val vertices = ArrayList<TerrainVertex>(vertCount)
-        var minH = Float.MAX_VALUE
-        var maxH = -Float.MAX_VALUE
-        var totalSlope = 0f
-
-        for (i in 0 until vertCount) {
-            val b = i * 11
-            val x = packedVerts[b + 0]
-            val y = packedVerts[b + 1]
-            val z = packedVerts[b + 2]
-            val nx = packedVerts[b + 3]
-            val ny = packedVerts[b + 4]
-            val nz = packedVerts[b + 5]
-            val slopeDeg = packedVerts[b + 6]
-            val rawElev = packedVerts[b + 7]
-            val contourBand = packedVerts[b + 8]
-            val isolineFactor = packedVerts[b + 9]
-            val flag = packedVerts[b + 10]
-
-            if (y < minH) minH = y
-            if (y > maxH) maxH = y
-            totalSlope += slopeDeg
-
-            val surfType = when (flag.toInt()) {
-                1 -> "asphalt"
-                2 -> "water"
-                3 -> "trona_soda_crust"
-                4 -> "gravel"
-                5 -> "escarpment_rock"
-                6 -> "highland_grass"
-                else -> "savannah_scrub"
-            }
-
-            vertices.add(
-                TerrainVertex(
-                    x = x, y = y, z = z, nx = nx, ny = ny, nz = nz,
-                    slopeDeg = slopeDeg,
-                    grassWeight = if (surfType == "savannah_scrub" || surfType == "highland_grass") 1f else 0f,
-                    dirtWeight = if (surfType == "gravel" || flag == 4f) 1f else 0f,
-                    rockWeight = if (surfType == "escarpment_rock" || slopeDeg > 20f) 0.90f else 0f,
-                    snowWeight = if (surfType == "trona_soda_crust") 1f else 0f,
-                    isRoadSurface = flag == 1.0f,
-                    surfaceType = surfType,
-                    isWaterSurface = flag == 2.0f,
-                    isMudSurface = flag == 3.0f,
-                    isGravelSurface = flag == 4.0f,
-                    rawElevation = rawElev,
-                    contourBand = contourBand,
-                    isolineFactor = isolineFactor
-                )
-            )
-        }
-
-        val indices = ArrayList<Int>(nativeIndices.size)
-        for (idx in nativeIndices) indices.add(idx)
-
-        val rawWps = nativeGetCombinedRoadCenterline(128)
-        val numWps = rawWps.size / 13
-        val centerline = ArrayList<RoadWaypoint3D>(numWps)
-        for (w in 0 until numWps) {
-            val b = w * 13
-            centerline.add(
-                RoadWaypoint3D(
-                    x = rawWps[b + 0], y = rawWps[b + 1], z = rawWps[b + 2],
-                    rawElevation = rawWps[b + 3], forwardM = rawWps[b + 4], globalKmM = rawWps[b + 5],
-                    lateralM = rawWps[b + 6], gradePercent = rawWps[b + 7], headingDeg = rawWps[b + 8],
-                    naturalElevM = rawWps[b + 9], cutFillDepthM = rawWps[b + 10],
-                    nextContourElevM = rawWps[b + 11], distToNextContourM = rawWps[b + 12]
-                )
-            )
-        }
-
+        val rawWps = safeNativeCall(FloatArray(0)) { nativeGetCombinedRoadCenterline(128) }
         val landmarks = listOf(
             GameTerrainAssetPlacement("marker_lake_magadi", "spawn", "", 0.0f, -50.0f, -110.0f, 0f, 1.2f),
             GameTerrainAssetPlacement("marker_olorgesailie", "garage", "", 2.2f, -15.0f, -44.0f, 0f, 1.0f),
@@ -859,17 +863,14 @@ object NativeEngineBridge {
             GameTerrainAssetPlacement("marker_corner_baridi", "spawn", "", 1.8f, 75.0f, 56.0f, 0f, 1.2f),
             GameTerrainAssetPlacement("marker_nairobi_bomas", "garage", "", 0.0f, 48.0f, 110.0f, 0f, 1.0f)
         )
-
-        return TerrainMesh3D(
-            resolutionX = gridResX,
-            resolutionZ = gridResZ,
-            vertices = vertices,
-            indices = indices,
-            minHeight = minH,
-            maxHeight = maxH,
-            avgSlope = if (vertCount > 0) totalSlope / vertCount else 5f,
-            assetPlacements = landmarks,
-            roadCenterline = centerline
+        buildTerrainMeshFromPacked(
+            packedVerts = packedVerts,
+            nativeIndices = nativeIndices,
+            resX = gridResX,
+            resZ = gridResZ,
+            packedWps = rawWps,
+            landmarks = landmarks,
+            rockSlopeThreshold = 20f
         )
     }
 
@@ -881,7 +882,31 @@ object NativeEngineBridge {
         segmentIndex: Int,
         centerlinePoints: Int
     ): TerrainMesh3D {
+        val packedWps = safeNativeCall(FloatArray(0)) {
+            nativeGetRoadCenterline(segmentIndex, centerlinePoints)
+        }
+        return buildTerrainMeshFromPacked(
+            packedVerts = packedVerts,
+            nativeIndices = nativeIndices,
+            resX = resX,
+            resZ = resZ,
+            packedWps = packedWps,
+            landmarks = emptyList(),
+            rockSlopeThreshold = 22f
+        )
+    }
+
+    private fun buildTerrainMeshFromPacked(
+        packedVerts: FloatArray,
+        nativeIndices: IntArray,
+        resX: Int,
+        resZ: Int,
+        packedWps: FloatArray,
+        landmarks: List<GameTerrainAssetPlacement>,
+        rockSlopeThreshold: Float
+    ): TerrainMesh3D {
         val vertCount = packedVerts.size / 11
+        if (vertCount <= 0) return emptyTerrainMesh(resX, resZ)
         val vertices = ArrayList<TerrainVertex>(vertCount)
         var minH = Float.MAX_VALUE
         var maxH = -Float.MAX_VALUE
@@ -889,17 +914,17 @@ object NativeEngineBridge {
 
         for (i in 0 until vertCount) {
             val b = i * 11
-            val x = packedVerts[b + 0]
-            val y = packedVerts[b + 1]
-            val z = packedVerts[b + 2]
-            val nx = packedVerts[b + 3]
-            val ny = packedVerts[b + 4]
-            val nz = packedVerts[b + 5]
-            val slopeDeg = packedVerts[b + 6]
-            val rawElev = packedVerts[b + 7]
-            val contourBand = packedVerts[b + 8]
-            val isolineFactor = packedVerts[b + 9]
-            val flag = packedVerts[b + 10]
+            val x = packedVerts[b + 0].finiteOr(0f)
+            val y = packedVerts[b + 1].finiteOr(0f)
+            val z = packedVerts[b + 2].finiteOr(0f)
+            val nx = packedVerts[b + 3].finiteOr(0f)
+            val ny = packedVerts[b + 4].finiteOr(1f)
+            val nz = packedVerts[b + 5].finiteOr(0f)
+            val slopeDeg = packedVerts[b + 6].finiteOr(0f).coerceIn(0f, 90f)
+            val rawElev = packedVerts[b + 7].finiteOr(600f)
+            val contourBand = packedVerts[b + 8].finiteOr(0f)
+            val isolineFactor = packedVerts[b + 9].finiteOr(0f)
+            val flag = packedVerts[b + 10].finiteOr(0f)
 
             if (y < minH) minH = y
             if (y > maxH) maxH = y
@@ -921,7 +946,7 @@ object NativeEngineBridge {
                     slopeDeg = slopeDeg,
                     grassWeight = if (surfType == "savannah_scrub" || surfType == "highland_grass") 1f else 0f,
                     dirtWeight = if (surfType == "gravel" || flag == 4f) 1f else 0f,
-                    rockWeight = if (surfType == "escarpment_rock" || slopeDeg > 22f) 0.90f else 0f,
+                    rockWeight = if (surfType == "escarpment_rock" || slopeDeg > rockSlopeThreshold) 0.90f else 0f,
                     snowWeight = if (surfType == "trona_soda_crust") 1f else 0f,
                     isRoadSurface = flag == 1.0f,
                     surfaceType = surfType,
@@ -934,66 +959,93 @@ object NativeEngineBridge {
                 )
             )
         }
+        if (minH > maxH) {
+            minH = 0f
+            maxH = 1f
+        }
 
         val indices = ArrayList<Int>(nativeIndices.size)
-        for (idx in nativeIndices) indices.add(idx)
+        for (idx in nativeIndices) {
+            if (idx in 0 until vertCount) indices.add(idx)
+        }
 
-        val packedWps = nativeGetRoadCenterline(segmentIndex, centerlinePoints)
         val wpCount = packedWps.size / 13
         val centerline = ArrayList<RoadWaypoint3D>(wpCount)
         for (w in 0 until wpCount) {
             val base = w * 13
             centerline.add(
                 RoadWaypoint3D(
-                    x = packedWps[base + 0], y = packedWps[base + 1], z = packedWps[base + 2],
-                    rawElevation = packedWps[base + 3], forwardM = packedWps[base + 4], globalKmM = packedWps[base + 5],
-                    lateralM = packedWps[base + 6], gradePercent = packedWps[base + 7], headingDeg = packedWps[base + 8],
-                    naturalElevM = packedWps[base + 9], cutFillDepthM = packedWps[base + 10],
-                    nextContourElevM = packedWps[base + 11], distToNextContourM = packedWps[base + 12]
+                    x = packedWps[base + 0].finiteOr(0f), y = packedWps[base + 1].finiteOr(0f), z = packedWps[base + 2].finiteOr(0f),
+                    rawElevation = packedWps[base + 3].finiteOr(600f), forwardM = packedWps[base + 4].finiteOr(0f), globalKmM = packedWps[base + 5].finiteOr(0f),
+                    lateralM = packedWps[base + 6].finiteOr(0f), gradePercent = packedWps[base + 7].finiteOr(0f), headingDeg = packedWps[base + 8].finiteOr(0f),
+                    naturalElevM = packedWps[base + 9].finiteOr(600f), cutFillDepthM = packedWps[base + 10].finiteOr(0f),
+                    nextContourElevM = packedWps[base + 11].finiteOr(600f), distToNextContourM = packedWps[base + 12].finiteOr(0f)
                 )
             )
         }
 
         return TerrainMesh3D(
-            resolutionX = resX,
-            resolutionZ = resZ,
+            resolutionX = resX.coerceAtLeast(2),
+            resolutionZ = resZ.coerceAtLeast(2),
             vertices = vertices,
             indices = indices,
             minHeight = minH,
             maxHeight = maxH,
             avgSlope = if (vertCount > 0) totalSlope / vertCount else 5f,
-            assetPlacements = emptyList(),
+            assetPlacements = landmarks,
             roadCenterline = centerline
         )
     }
 
     fun getRoadPointAt(segmentIndex: Int, forwardM: Float): RoadWaypoint3D {
-        val raw = nativeGetRoadPointAt(segmentIndex.coerceIn(1, 10), forwardM)
-        if (raw.size >= 13) {
-            return RoadWaypoint3D(
-                x = raw[0], y = raw[1], z = raw[2],
-                rawElevation = raw[3], forwardM = raw[4], globalKmM = raw[5],
-                lateralM = raw[6], gradePercent = raw[7], headingDeg = raw[8],
-                naturalElevM = raw[9], cutFillDepthM = raw[10],
-                nextContourElevM = raw[11], distToNextContourM = raw[12]
-            )
-        }
-        return RoadWaypoint3D(
-            x = raw[0], y = raw[1], z = raw[2],
-            rawElevation = raw[3], forwardM = raw[4], globalKmM = raw[5],
-            lateralM = raw[6], gradePercent = raw[7], headingDeg = raw[8]
+        val defaultWp = RoadWaypoint3D(
+            x = 0f, y = 0f, z = 0f,
+            rawElevation = 600f, forwardM = forwardM.finiteOr(0f), globalKmM = 0f,
+            lateralM = 0f, gradePercent = 0f, headingDeg = 0f
         )
+        return safeNativeCall(defaultWp) {
+            val raw = nativeGetRoadPointAt(segmentIndex.coerceIn(1, 10), forwardM)
+            if (raw.size >= 13) {
+                RoadWaypoint3D(
+                    x = raw[0].finiteOr(0f), y = raw[1].finiteOr(0f), z = raw[2].finiteOr(0f),
+                    rawElevation = raw[3].finiteOr(600f), forwardM = raw[4].finiteOr(0f), globalKmM = raw[5].finiteOr(0f),
+                    lateralM = raw[6].finiteOr(0f), gradePercent = raw[7].finiteOr(0f), headingDeg = raw[8].finiteOr(0f),
+                    naturalElevM = raw[9].finiteOr(600f), cutFillDepthM = raw[10].finiteOr(0f),
+                    nextContourElevM = raw[11].finiteOr(600f), distToNextContourM = raw[12].finiteOr(0f)
+                )
+            } else if (raw.size >= 9) {
+                RoadWaypoint3D(
+                    x = raw[0].finiteOr(0f), y = raw[1].finiteOr(0f), z = raw[2].finiteOr(0f),
+                    rawElevation = raw[3].finiteOr(600f), forwardM = raw[4].finiteOr(0f), globalKmM = raw[5].finiteOr(0f),
+                    lateralM = raw[6].finiteOr(0f), gradePercent = raw[7].finiteOr(0f), headingDeg = raw[8].finiteOr(0f)
+                )
+            } else {
+                defaultWp
+            }
+        }
     }
 
     fun getRoadSegmentInfo(segmentIndex: Int): FloatArray =
-        nativeGetRoadSegmentInfo(segmentIndex.coerceIn(1, 10))
+        safeNativeCall(FloatArray(8)) {
+            val raw = nativeGetRoadSegmentInfo(segmentIndex.coerceIn(1, 10))
+            if (raw.size >= 8) raw else FloatArray(8)
+        }
 
     fun getGroundPieceMetrics(segmentIndex: Int, groundDatumM: Float = 400.0f): GroundPieceMetrics {
-        val raw = nativeGetGroundPieceMetrics(segmentIndex.coerceIn(1, 10), groundDatumM)
-        return GroundPieceMetrics(
-            datumASLM = raw[0], depthMinM = raw[1], depthMaxM = raw[2],
-            depthRoadStartM = raw[3], depthRoadEndM = raw[4], verticalReliefM = raw[5]
-        )
+        val fallback = GroundPieceMetrics(groundDatumM.finiteOr(400f), 200f, 300f, 200f, 250f, 100f)
+        return safeNativeCall(fallback) {
+            val raw = nativeGetGroundPieceMetrics(segmentIndex.coerceIn(1, 10), groundDatumM)
+            if (raw.size >= 6) {
+                GroundPieceMetrics(
+                    datumASLM = raw[0].finiteOr(groundDatumM),
+                    depthMinM = raw[1].finiteOr(200f),
+                    depthMaxM = raw[2].finiteOr(300f),
+                    depthRoadStartM = raw[3].finiteOr(200f),
+                    depthRoadEndM = raw[4].finiteOr(250f),
+                    verticalReliefM = raw[5].finiteOr(100f)
+                )
+            } else fallback
+        }
     }
 
     fun generateFirst10kmSegmentMesh(gridSize: Int = 49, contourInterval: Float = 25f, stepTerracing: Float = 0f): TerrainMesh3D =
@@ -1022,14 +1074,14 @@ object NativeEngineBridge {
         contourInterval: Float = 10f,
         stepTerracing: Float = 0f,
         verticalExaggeration: Float = 2.4f
-    ): TerrainMesh3D {
+    ): TerrainMesh3D = safeNativeCall(emptyTerrainMesh(resX, resZ)) {
         val verts = nativeGenerateMagadiTownOverviewVertices(
             resX, resZ, contourInterval, stepTerracing, verticalExaggeration
         )
         val indices = nativeGenerateMagadiTownOverviewIndices(
             resX, resZ, contourInterval, stepTerracing, verticalExaggeration
         )
-        return unpackPlainTerrainMesh(verts, indices, resX, resZ)
+        unpackPlainTerrainMesh(verts, indices, resX, resZ)
     }
 
     fun generateMagadiTown1mWindowMesh(
@@ -1041,13 +1093,59 @@ object NativeEngineBridge {
         verticalExaggeration: Float = 1.6f
     ): TerrainMesh3D {
         val gridSize = windowCells.coerceIn(24, 80) + 1
-        val verts = nativeGenerateMagadiTown1mWindowVertices(
-            centerXM, centerYM, windowCells, contourInterval, stepTerracing, verticalExaggeration
-        )
-        val indices = nativeGenerateMagadiTown1mWindowIndices(
-            centerXM, centerYM, windowCells, contourInterval, stepTerracing, verticalExaggeration
-        )
-        return unpackPlainTerrainMesh(verts, indices, gridSize, gridSize)
+        return safeNativeCall(emptyTerrainMesh(gridSize, gridSize)) {
+            val verts = nativeGenerateMagadiTown1mWindowVertices(
+                centerXM, centerYM, windowCells, contourInterval, stepTerracing, verticalExaggeration
+            )
+            val indices = nativeGenerateMagadiTown1mWindowIndices(
+                centerXM, centerYM, windowCells, contourInterval, stepTerracing, verticalExaggeration
+            )
+            unpackPlainTerrainMesh(verts, indices, gridSize, gridSize)
+        }
+    }
+
+    // ─── ROUTE C58 NON-BOX 3 KM CORRIDOR C++ WRAPPERS ────────────────────────────
+
+    fun generateC58Sector3dMesh(
+        sectorStartM: Double,
+        sectorEndM: Double,
+        resU: Int = 45,
+        resV: Int = 85,
+        contourInterval: Float = 15f,
+        stepTerracing: Float = 0f,
+        verticalExaggeration: Float = 2.2f
+    ): TerrainMesh3D {
+        val ru = resU.coerceIn(9, 81)
+        val rv = resV.coerceIn(15, 141)
+        return safeNativeCall(emptyTerrainMesh(ru, rv)) {
+            val verts = nativeGenerateC58SectorVertices(
+                sectorStartM, sectorEndM, ru, rv, contourInterval, stepTerracing, verticalExaggeration
+            )
+            val indices = nativeGenerateC58SectorIndices(
+                sectorStartM, sectorEndM, ru, rv, contourInterval, stepTerracing, verticalExaggeration
+            )
+            unpackPlainTerrainMesh(verts, indices, ru, rv)
+        }
+    }
+
+    fun generateC581mWindowMesh(
+        centerUtmE: Double,
+        centerUtmN: Double,
+        windowCells: Int = 64,
+        contourInterval: Float = 2f,
+        stepTerracing: Float = 0f,
+        verticalExaggeration: Float = 1.6f
+    ): TerrainMesh3D {
+        val gridSize = windowCells.coerceIn(24, 96) + 1
+        return safeNativeCall(emptyTerrainMesh(gridSize, gridSize)) {
+            val verts = nativeGenerateC581mWindowVertices(
+                centerUtmE, centerUtmN, windowCells, contourInterval, stepTerracing, verticalExaggeration
+            )
+            val indices = nativeGenerateC581mWindowIndices(
+                centerUtmE, centerUtmN, windowCells, contourInterval, stepTerracing, verticalExaggeration
+            )
+            unpackPlainTerrainMesh(verts, indices, gridSize, gridSize)
+        }
     }
 
     private fun unpackPlainTerrainMesh(
@@ -1055,74 +1153,13 @@ object NativeEngineBridge {
         nativeIndices: IntArray,
         resX: Int,
         resZ: Int
-    ): TerrainMesh3D {
-        val vertCount = packedVerts.size / 11
-        val vertices = ArrayList<TerrainVertex>(vertCount)
-        var minH = Float.MAX_VALUE
-        var maxH = -Float.MAX_VALUE
-        var totalSlope = 0f
-
-        for (i in 0 until vertCount) {
-            val b = i * 11
-            val x = packedVerts[b + 0]
-            val y = packedVerts[b + 1]
-            val z = packedVerts[b + 2]
-            val nx = packedVerts[b + 3]
-            val ny = packedVerts[b + 4]
-            val nz = packedVerts[b + 5]
-            val slopeDeg = packedVerts[b + 6]
-            val rawElev = packedVerts[b + 7]
-            val contourBand = packedVerts[b + 8]
-            val isolineFactor = packedVerts[b + 9]
-            val flag = packedVerts[b + 10]
-
-            if (y < minH) minH = y
-            if (y > maxH) maxH = y
-            totalSlope += slopeDeg
-
-            val surfType = when (flag.toInt()) {
-                1 -> "asphalt"
-                2 -> "water"
-                3 -> "trona_soda_crust"
-                4 -> "gravel"
-                5 -> "escarpment_rock"
-                6 -> "highland_grass"
-                else -> "savannah_scrub"
-            }
-
-            vertices.add(
-                TerrainVertex(
-                    x = x, y = y, z = z, nx = nx, ny = ny, nz = nz,
-                    slopeDeg = slopeDeg,
-                    grassWeight = if (surfType == "savannah_scrub" || surfType == "highland_grass") 1f else 0f,
-                    dirtWeight = if (surfType == "gravel" || flag == 4f) 1f else 0f,
-                    rockWeight = if (surfType == "escarpment_rock" || slopeDeg > 22f) 0.90f else 0f,
-                    snowWeight = if (surfType == "trona_soda_crust") 1f else 0f,
-                    isRoadSurface = flag == 1.0f,
-                    surfaceType = surfType,
-                    isWaterSurface = flag == 2.0f,
-                    isMudSurface = flag == 3.0f,
-                    isGravelSurface = flag == 4.0f,
-                    rawElevation = rawElev,
-                    contourBand = contourBand,
-                    isolineFactor = isolineFactor
-                )
-            )
-        }
-
-        val indices = ArrayList<Int>(nativeIndices.size)
-        for (idx in nativeIndices) indices.add(idx)
-
-        return TerrainMesh3D(
-            resolutionX = resX,
-            resolutionZ = resZ,
-            vertices = vertices,
-            indices = indices,
-            minHeight = minH,
-            maxHeight = maxH,
-            avgSlope = if (vertCount > 0) totalSlope / vertCount else 2f,
-            assetPlacements = emptyList(),
-            roadCenterline = emptyList()
-        )
-    }
+    ): TerrainMesh3D = buildTerrainMeshFromPacked(
+        packedVerts = packedVerts,
+        nativeIndices = nativeIndices,
+        resX = resX,
+        resZ = resZ,
+        packedWps = FloatArray(0),
+        landmarks = emptyList(),
+        rockSlopeThreshold = 22f
+    )
 }

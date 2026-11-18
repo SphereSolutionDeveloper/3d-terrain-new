@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -14,6 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterCenterFocus
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -57,6 +61,7 @@ fun MagadiTownMap2D(
     showWater: Boolean,
     showContours: Boolean,
     showRoads: Boolean,
+    showRoadSymbols: Boolean = true,
     showBuildings: Boolean,
     showPois: Boolean,
     lakeLevelAslM: Float = 602.5f,
@@ -66,7 +71,9 @@ fun MagadiTownMap2D(
     onTapInspect: (tapX: Float, tapY: Float, canvasW: Float, canvasH: Float) -> Unit,
     onResetView: () -> Unit,
     onSizeChanged: (Float, Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hideAllText: Boolean = false,
+    onToggleHideAllText: (() -> Unit)? = null
 ) {
     var canvasWidthPx by remember { mutableFloatStateOf(1f) }
     var canvasHeightPx by remember { mutableFloatStateOf(1f) }
@@ -85,6 +92,11 @@ fun MagadiTownMap2D(
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
         }
     }
+    val symbologyPaints = remember { GisSymbologyPaints() }
+
+    val currentOnPan by rememberUpdatedState(onPan)
+    val currentOnZoom by rememberUpdatedState(onZoom)
+    val currentOnTapInspect by rememberUpdatedState(onTapInspect)
 
     Box(
         modifier = modifier
@@ -96,7 +108,7 @@ fun MagadiTownMap2D(
                 canvasHeightPx = sz.height.toFloat().coerceAtLeast(1f)
                 onSizeChanged(canvasWidthPx, canvasHeightPx)
             }
-            .pointerInput(viewWidthM) {
+            .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val downPos = down.position
@@ -107,7 +119,7 @@ fun MagadiTownMap2D(
                         val event = awaitPointerEvent()
                         val scrollY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
                         if (scrollY != 0f) {
-                            onZoom(if (scrollY < 0f) 1.25f else 0.80f)
+                            currentOnZoom(if (scrollY < 0f) 1.25f else 0.80f)
                             event.changes.forEach { it.consume() }
                             multiTouch = true
                         } else {
@@ -117,7 +129,7 @@ fun MagadiTownMap2D(
                                 val delta = c.position - c.previousPosition
                                 movedTotal += delta.getDistance()
                                 if (movedTotal > 6f && delta != Offset.Zero) {
-                                    onPan(delta.x, delta.y, size.width.toFloat())
+                                    currentOnPan(delta.x, delta.y, size.width.toFloat())
                                     c.consume()
                                 }
                             } else if (active.size >= 2) {
@@ -129,14 +141,14 @@ fun MagadiTownMap2D(
                                 if (prevDist > 2f && curDist > 2f) {
                                     val factor = curDist / prevDist
                                     if (abs(factor - 1f) > 0.001f) {
-                                        onZoom(factor)
+                                        currentOnZoom(factor)
                                     }
                                 }
                                 val curMid = (p0.position + p1.position) * 0.5f
                                 val prevMid = (p0.previousPosition + p1.previousPosition) * 0.5f
                                 val panDelta = curMid - prevMid
                                 if (panDelta != Offset.Zero) {
-                                    onPan(panDelta.x, panDelta.y, size.width.toFloat())
+                                    currentOnPan(panDelta.x, panDelta.y, size.width.toFloat())
                                 }
                                 active.forEach { it.consume() }
                             }
@@ -144,7 +156,7 @@ fun MagadiTownMap2D(
                     } while (event.changes.any { it.pressed })
 
                     if (!multiTouch && movedTotal <= 8f) {
-                        onTapInspect(downPos.x, downPos.y, size.width.toFloat(), size.height.toFloat())
+                        currentOnTapInspect(downPos.x, downPos.y, size.width.toFloat(), size.height.toFloat())
                     }
                 }
             }
@@ -292,6 +304,7 @@ fun MagadiTownMap2D(
                 val endGY = ceil(min(5000f, maxY) / gridStepM) * gridStepM
 
                 var gx = startGX
+                var lastXLabelPx = -999f
                 while (gx <= endGX + 0.001f) {
                     val sx = toScreenX(gx)
                     val isMajor = gridStepM == 1f && (gx.roundToInt() % 10 == 0)
@@ -306,18 +319,20 @@ fun MagadiTownMap2D(
                         end = Offset(sx, min(ch, domB)),
                         strokeWidth = if (isMajor) 1.5f else 0.9f
                     )
-                    if (isMajor || gridStepM >= 100f) {
+                    if (!hideAllText && (isMajor || gridStepM >= 100f) && sx > 250f && sx in 12f..(cw - 80f) && sx - lastXLabelPx >= 110f) {
                         drawContext.canvas.nativeCanvas.drawText(
                             "${gx.roundToInt()}m",
                             sx + 4f,
-                            24f,
+                            22f,
                             subLabelPaint
                         )
+                        lastXLabelPx = sx
                     }
                     gx += gridStepM
                 }
 
                 var gy = startGY
+                var lastYLabelPx = -999f
                 while (gy <= endGY + 0.001f) {
                     val sy = toScreenY(gy)
                     val isMajor = gridStepM == 1f && (gy.roundToInt() % 10 == 0)
@@ -332,19 +347,20 @@ fun MagadiTownMap2D(
                         end = Offset(min(cw, domR), sy),
                         strokeWidth = if (isMajor) 1.5f else 0.9f
                     )
-                    if (isMajor || gridStepM >= 100f) {
+                    if (!hideAllText && (isMajor || gridStepM >= 100f) && sy in 90f..(ch - 56f) && abs(sy - lastYLabelPx) >= 62f) {
                         drawContext.canvas.nativeCanvas.drawText(
                             "${gy.roundToInt()}m",
                             8f,
                             sy - 4f,
                             subLabelPaint
                         )
+                        lastYLabelPx = sy
                     }
                     gy += gridStepM
                 }
             }
 
-            // 5. Extracted OSM Buildings
+            // 5. Extracted OSM Buildings (Scale-adaptive visibility + shadows + roof ridge)
             if (showBuildings && bundle != null) {
                 val bPath = Path()
                 for (b in bundle.buildings) {
@@ -356,87 +372,116 @@ fun MagadiTownMap2D(
                     if (maxBx < minX || minBx > maxX || maxBy < minY || minBy > maxY) continue
 
                     val isSel = selectedBuilding?.osmId == b.osmId
-                    bPath.reset()
-                    val first = b.polygon[0]
-                    bPath.moveTo(toScreenX(first.xM), toScreenY(first.yM))
-                    for (k in 1 until b.polygon.size) {
-                        val pt = b.polygon[k]
-                        bPath.lineTo(toScreenX(pt.xM), toScreenY(pt.yM))
+                    val screenPoly = ArrayList<Offset>(b.polygon.size)
+                    for (pt in b.polygon) {
+                        screenPoly.add(Offset(toScreenX(pt.xM), toScreenY(pt.yM)))
                     }
-                    bPath.close()
-
-                    drawPath(
-                        path = bPath,
-                        color = if (isSel) CyberCyan.copy(alpha = 0.65f) else LaserOrange.copy(alpha = 0.50f)
+                    val centerScreen = Offset(toScreenX(b.centroid.xM), toScreenY(b.centroid.yM))
+                    drawScaleAdaptiveBuilding(
+                        screenPoly = screenPoly,
+                        centerScreen = centerScreen,
+                        fillColor = if (isSel) CyberCyan.copy(alpha = 0.72f) else LaserOrange.copy(alpha = 0.62f),
+                        strokeColor = if (isSel) Color.White else Color(0xFFFFD180),
+                        isSelected = isSel,
+                        viewWidthM = viewWidthM,
+                        pathBuffer = bPath
                     )
-                    drawPath(
-                        path = bPath,
-                        color = if (isSel) Color.White else Color(0xFFFFD180),
-                        style = Stroke(width = if (isSel) 3.0f else 1.3f)
-                    )
 
-                    if (viewWidthM <= 260f) {
-                        val cx = toScreenX(b.centroid.xM)
-                        val cy = toScreenY(b.centroid.yM)
+                    if (!hideAllText && viewWidthM <= 260f) {
+                        val bLabel = b.name.take(18)
+                        symbologyPaints.labelTextPaint.textSize = if (viewWidthM <= 90f) 23f else 18f
+                        symbologyPaints.labelHaloPaint.textSize = symbologyPaints.labelTextPaint.textSize
                         drawContext.canvas.nativeCanvas.drawText(
-                            b.name.take(18),
-                            cx - 30f,
-                            cy,
-                            labelPaint.apply { textSize = if (viewWidthM <= 90f) 24f else 19f }
+                            bLabel,
+                            centerScreen.x - 28f,
+                            centerScreen.y,
+                            symbologyPaints.labelHaloPaint
+                        )
+                        drawContext.canvas.nativeCanvas.drawText(
+                            bLabel,
+                            centerScreen.x - 28f,
+                            centerScreen.y,
+                            symbologyPaints.labelTextPaint
                         )
                     }
                 }
             }
 
-            // 6. Extracted OSM Roads
+            // 6. Extracted OSM Roads + Cartographic Symbols (Shields, Labels, Centerlines, Bridges, Roundabouts, Arrows)
+            val placedLabelBoxes = ArrayList<RectF>()
             if (showRoads && bundle != null) {
+                val rPath = Path()
                 for (road in bundle.roads) {
                     if (road.nodes.size < 2) continue
+                    val minRx = road.nodes.minOf { it.xM }
+                    val maxRx = road.nodes.maxOf { it.xM }
+                    val minRy = road.nodes.minOf { it.yM }
+                    val maxRy = road.nodes.maxOf { it.yM }
+                    if (maxRx < minX || minRx > maxX || maxRy < minY || minRy > maxY) continue
+
                     val isSel = selectedRoad?.osmId == road.osmId
                     val strokePx = max(1.8f, road.widthM * pxPerMeter * 0.72f).coerceAtMost(46f)
-                    val color = when {
-                        isSel -> CyberCyan
-                        road.highwayType in setOf("trunk", "primary") -> LaserOrange
-                        road.highwayType in setOf("secondary", "tertiary") -> Color(0xFFFFD54F)
-                        else -> Color(0xFFE5E7EB).copy(alpha = 0.85f)
+                    val screenPts = ArrayList<Offset>(road.nodes.size)
+                    for (node in road.nodes) {
+                        screenPts.add(Offset(toScreenX(node.xM), toScreenY(node.yM)))
                     }
-
-                    val rPath = Path()
-                    rPath.moveTo(toScreenX(road.nodes[0].xM), toScreenY(road.nodes[0].yM))
-                    for (k in 1 until road.nodes.size) {
-                        rPath.lineTo(toScreenX(road.nodes[k].xM), toScreenY(road.nodes[k].yM))
-                    }
-                    drawPath(
-                        path = rPath,
-                        color = DarkBackground.copy(alpha = 0.75f),
-                        style = Stroke(width = strokePx + 2.4f, cap = StrokeCap.Round)
-                    )
-                    drawPath(
-                        path = rPath,
-                        color = color,
-                        style = Stroke(width = strokePx, cap = StrokeCap.Round)
+                    drawCartographicRoadWithSymbols(
+                        pts = screenPts,
+                        name = road.name,
+                        ref = road.ref,
+                        highwayType = road.highwayType,
+                        lanes = road.lanes,
+                        oneWay = road.oneWay,
+                        isBridge = road.isBridge,
+                        isRoundabout = road.isRoundabout,
+                        isSelected = isSel,
+                        strokePx = strokePx,
+                        viewWidthM = viewWidthM,
+                        showSymbols = showRoadSymbols,
+                        paints = symbologyPaints,
+                        placedBoxes = placedLabelBoxes,
+                        pathBuffer = rPath,
+                        showTextLabels = !hideAllText
                     )
                 }
             }
 
-            // 7. Extracted POI Labels
-            if (showPois && bundle != null) {
-                val maxLabels = if (viewWidthM > 1400f) 14 else 40
+            // 7. Extracted POI Labels & Road Infrastructure Nodes (Crossings, Bus Stops, Gates, Signals)
+            if ((showPois || showRoadSymbols) && bundle != null) {
+                val maxLabels = if (viewWidthM > 1400f) 24 else 55
                 var drawn = 0
+                var infraDrawn = 0
                 for (poi in bundle.pois) {
-                    if (drawn >= maxLabels) break
                     val px = toScreenX(poi.coord.xM)
                     val py = toScreenY(poi.coord.yM)
                     if (px < 10f || px > cw - 10f || py < 20f || py > ch - 10f) continue
-                    drawCircle(NeonLime, radius = 5f, center = Offset(px, py))
-                    drawCircle(DarkBackground, radius = 2.2f, center = Offset(px, py))
-                    drawContext.canvas.nativeCanvas.drawText(
-                        poi.name.take(22),
-                        px + 8f,
-                        py + 6f,
-                        labelPaint.apply { textSize = 22f }
-                    )
-                    drawn++
+
+                    val drewInfra = if (showRoadSymbols && infraDrawn < 120) {
+                        drawRoadInfraNodeSymbol(Offset(px, py), poi.category, symbologyPaints)
+                    } else false
+
+                    if (drewInfra) {
+                        infraDrawn++
+                        if (!hideAllText && showPois && viewWidthM <= 700f && drawn < maxLabels && poi.name.isNotBlank()) {
+                            symbologyPaints.labelTextPaint.textSize = 19f
+                            symbologyPaints.labelHaloPaint.textSize = 19f
+                            drawContext.canvas.nativeCanvas.drawText(poi.name.take(20), px + 9f, py + 5f, symbologyPaints.labelHaloPaint)
+                            drawContext.canvas.nativeCanvas.drawText(poi.name.take(20), px + 9f, py + 5f, symbologyPaints.labelTextPaint)
+                            drawn++
+                        }
+                    } else if (showPois) {
+                        drawCircle(NeonLime, radius = if (hideAllText) 3.6f else 5f, center = Offset(px, py))
+                        drawCircle(DarkBackground, radius = if (hideAllText) 1.5f else 2.2f, center = Offset(px, py))
+                        if (!hideAllText && drawn < maxLabels) {
+                            drawContext.canvas.nativeCanvas.drawText(
+                                poi.name.take(22),
+                                px + 8f,
+                                py + 6f,
+                                labelPaint.apply { textSize = 22f }
+                            )
+                            drawn++
+                        }
+                    }
                 }
             }
 
@@ -478,80 +523,83 @@ fun MagadiTownMap2D(
         }
         val barPx = (barMeters * pxPerM).coerceIn(30f, 180f)
 
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = DarkSurface.copy(alpha = 0.88f),
-            border = BorderStroke(1.dp, if (isTrue1mMode) NeonLime else GlowingCyanBorder),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(8.dp)
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                Text(
-                    text = if (isTrue1mMode) {
-                        "1m × 1m GRID ACTIVE (${viewWidthM.roundToInt()}m span)"
-                    } else {
-                        "MAGADI 3×5 KM • VIEW ${viewWidthM.roundToInt()}m WIDE"
-                    },
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    color = if (isTrue1mMode) NeonLime else CyberCyan
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .width((barPx / 3f).coerceIn(28f, 96f).dp)
-                            .height(3.dp)
-                            .background(if (isTrue1mMode) NeonLime else CyberCyan)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
+        if (!hideAllText) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface.copy(alpha = 0.88f),
+                border = BorderStroke(1.dp, if (isTrue1mMode) NeonLime else GlowingCyanBorder),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)) {
                     Text(
-                        text = "${barMeters.roundToInt()} m (${"%.1f".format(pxPerM)} px/m)",
-                        fontSize = 9.sp,
+                        text = if (isTrue1mMode) {
+                            "1m × 1m GRID (${viewWidthM.roundToInt()}m)"
+                        } else {
+                            "SPAN ${viewWidthM.roundToInt()}m"
+                        },
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
-                        color = TextPrimary
+                        color = if (isTrue1mMode) NeonLime else CyberCyan
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .width((barPx / 3f).coerceIn(28f, 90f).dp)
+                                .height(3.dp)
+                                .background(if (isTrue1mMode) NeonLime else CyberCyan)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${barMeters.roundToInt()} m (${"%.1f".format(pxPerM)} px/m)",
+                            fontSize = 9.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = TextPrimary
+                        )
+                    }
+                }
+            }
+
+            // Bottom-Left Bathymetric Lake Level & Elevation Scale Pill
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = DarkSurface.copy(alpha = 0.88f),
+                border = BorderStroke(1.dp, GlowingCyanBorder.copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Box(modifier = Modifier.size(9.dp, 7.dp).background(Color(0xFF053D8F)))
+                    Box(modifier = Modifier.size(9.dp, 7.dp).background(Color(0xFF00B4D8)))
+                    Box(modifier = Modifier.size(9.dp, 7.dp).background(Color(0xFFE5EAE6)))
+                    Box(modifier = Modifier.size(9.dp, 7.dp).background(Color(0xFF9E6B47)))
+                    Text(
+                        text = "LAKE ${"%.1f".format(lakeLevelAslM)}m • $demSourceLabel",
+                        fontSize = 8.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan
                     )
                 }
             }
         }
 
-        // Bottom-Left Bathymetric Lake Level & Elevation Scale Pill
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = DarkSurface.copy(alpha = 0.88f),
-            border = BorderStroke(1.dp, GlowingCyanBorder.copy(alpha = 0.5f)),
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-            ) {
-                Box(modifier = Modifier.size(10.dp, 8.dp).background(Color(0xFF053D8F)))
-                Box(modifier = Modifier.size(10.dp, 8.dp).background(Color(0xFF00B4D8)))
-                Box(modifier = Modifier.size(10.dp, 8.dp).background(Color(0xFFE5EAE6)))
-                Box(modifier = Modifier.size(10.dp, 8.dp).background(Color(0xFF9E6B47)))
-                Text(
-                    text = "LAKE ${"%.1f".format(lakeLevelAslM)}m • $demSourceLabel",
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    color = CyberCyan
-                )
-            }
-        }
-
-        // Right-Side 48dp Accessible Zoom Control Strip
+        // Right-Side 48dp Accessible Zoom + Hide-Text / Fullscreen Strip
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = DarkSurface.copy(alpha = 0.90f),
-            border = BorderStroke(1.dp, GlowingCyanBorder),
+            color = DarkSurface.copy(alpha = 0.88f),
+            border = BorderStroke(1.dp, if (hideAllText) NeonLime else GlowingCyanBorder),
             modifier = Modifier
                 .align(Alignment.CenterEnd)
+                .windowInsetsPadding(if (hideAllText) WindowInsets.safeDrawing else WindowInsets(0))
                 .padding(end = 8.dp)
         ) {
             Column(
@@ -581,6 +629,24 @@ fun MagadiTownMap2D(
                         .testTag("magadi_map_reset_btn")
                 ) {
                     Icon(Icons.Default.FilterCenterFocus, contentDescription = "Fit Full 3x5 km Town", tint = TextPrimary)
+                }
+                if (onToggleHideAllText != null) {
+                    HorizontalDivider(
+                        color = DarkSurfaceHighlight,
+                        modifier = Modifier.width(32.dp)
+                    )
+                    IconButton(
+                        onClick = onToggleHideAllText,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("magadi_map_hide_text_btn")
+                    ) {
+                        Icon(
+                            imageVector = if (hideAllText) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (hideAllText) "Show Map Text & Controls" else "Hide All Text for Fullscreen Map",
+                            tint = if (hideAllText) NeonLime else TextPrimary
+                        )
+                    }
                 }
             }
         }

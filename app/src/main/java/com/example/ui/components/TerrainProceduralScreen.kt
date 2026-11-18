@@ -38,7 +38,9 @@ import kotlin.random.Random
 
 @Composable
 fun TerrainProceduralScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFullScreenMap: Boolean = false,
+    onToggleFullScreenMap: ((Boolean) -> Unit)? = null
 ) {
     var terrainState by remember { mutableStateOf(TerrainState()) }
     var renderMode by remember { mutableStateOf(TerrainRenderMode.SHADED_TRIPLANAR) }
@@ -174,93 +176,119 @@ fun TerrainProceduralScreen(
             .fillMaxSize()
             .background(DarkBackground)
     ) {
-        // Quick Top Terrain Dataset Switcher (Always visible)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val isTownActive = activeTerrainMap == "MAGADI_TOWN_3X5"
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (isTownActive) NeonLime.copy(alpha = 0.24f) else DarkSurface,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    if (isTownActive) NeonLime else GlowingCyanBorder
-                ),
+        // Quick Top Terrain Dataset Switcher (hidden during fullscreen map inspection)
+        AnimatedVisibility(visible = !isFullScreenMap) {
+            Row(
                 modifier = Modifier
-                    .defaultMinSize(minHeight = 40.dp)
-                    .clickable { activeTerrainMap = "MAGADI_TOWN_3X5" }
-                    .testTag("terrain_switch_magadi_town_3x5")
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                val isTownActive = activeTerrainMap == "MAGADI_TOWN_3X5"
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isTownActive) NeonLime.copy(alpha = 0.24f) else DarkSurface,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isTownActive) NeonLime else GlowingCyanBorder
+                    ),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable { activeTerrainMap = "MAGADI_TOWN_3X5" }
+                        .testTag("terrain_switch_magadi_town_3x5")
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = if (isTownActive) NeonLime else TextMuted,
-                        modifier = Modifier.size(6.dp)
-                    ) {}
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "MAGADI TOWN 3×5KM (1M)",
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = if (isTownActive) FontWeight.Bold else FontWeight.SemiBold,
-                        color = if (isTownActive) NeonLime else CyberCyan
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (isTownActive) NeonLime else TextMuted,
+                            modifier = Modifier.size(6.dp)
+                        ) {}
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "MAGADI TOWN 3×5KM (1M)",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = if (isTownActive) FontWeight.Bold else FontWeight.SemiBold,
+                            color = if (isTownActive) NeonLime else CyberCyan
+                        )
+                    }
                 }
-            }
 
-            val isCorridorActive = activeTerrainMap == "MAGADI_50KM"
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (isCorridorActive) LaserOrange.copy(alpha = 0.22f) else DarkSurface,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    if (isCorridorActive) LaserOrange else DarkSurfaceHighlight
-                ),
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 40.dp)
-                    .clickable { activeTerrainMap = "MAGADI_50KM" }
-                    .testTag("terrain_switch_magadi_corridor")
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(
-                        text = "C58 101KM CORRIDOR",
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = if (isCorridorActive) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isCorridorActive) LaserOrange else TextSecondary
-                    )
+                val isC58MapActive = activeTerrainMap == "C58_CORRIDOR_3KM"
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isC58MapActive) CyberCyan.copy(alpha = 0.24f) else DarkSurface,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isC58MapActive) CyberCyan else GlowingCyanBorder
+                    ),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable { activeTerrainMap = "C58_CORRIDOR_3KM" }
+                        .testTag("terrain_switch_c58_corridor_3km")
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "ROUTE C58 ±1.5KM MAP",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = if (isC58MapActive) FontWeight.Bold else FontWeight.SemiBold,
+                            color = CyberCyan
+                        )
+                    }
                 }
-            }
 
-            val isProceduralActive = activeTerrainMap == "PROCEDURAL_FBM" || activeTerrainMap == "TEST_GROUND_001"
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (isProceduralActive) CyberCyan.copy(alpha = 0.22f) else DarkSurface,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    if (isProceduralActive) CyberCyan else DarkSurfaceHighlight
-                ),
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 40.dp)
-                    .clickable { activeTerrainMap = "PROCEDURAL_FBM" }
-                    .testTag("terrain_switch_procedural_fbm")
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(
-                        text = "PROCEDURAL / TEST",
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = if (isProceduralActive) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isProceduralActive) CyberCyan else TextSecondary
-                    )
+                val isCorridorActive = activeTerrainMap == "MAGADI_50KM"
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isCorridorActive) LaserOrange.copy(alpha = 0.22f) else DarkSurface,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isCorridorActive) LaserOrange else DarkSurfaceHighlight
+                    ),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable { activeTerrainMap = "MAGADI_50KM" }
+                        .testTag("terrain_switch_magadi_corridor")
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "C58 101KM CORRIDOR",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = if (isCorridorActive) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isCorridorActive) LaserOrange else TextSecondary
+                        )
+                    }
+                }
+
+                val isProceduralActive = activeTerrainMap == "PROCEDURAL_FBM" || activeTerrainMap == "TEST_GROUND_001"
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isProceduralActive) CyberCyan.copy(alpha = 0.22f) else DarkSurface,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isProceduralActive) CyberCyan else DarkSurfaceHighlight
+                    ),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable { activeTerrainMap = "PROCEDURAL_FBM" }
+                        .testTag("terrain_switch_procedural_fbm")
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "PROCEDURAL / TEST",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = if (isProceduralActive) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isProceduralActive) CyberCyan else TextSecondary
+                        )
+                    }
                 }
             }
         }
@@ -269,15 +297,25 @@ fun TerrainProceduralScreen(
             MagadiTownScreen(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                isFullScreenMap = isFullScreenMap,
+                onToggleFullScreenMap = onToggleFullScreenMap
+            )
+        } else if (activeTerrainMap == "C58_CORRIDOR_3KM") {
+            C58CorridorScreen(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                isFullScreenMap = isFullScreenMap,
+                onToggleFullScreenMap = onToggleFullScreenMap
             )
         } else {
         // 1. 3D Terrain Viewport (Dominant screen space: weight 2.4f or fillMaxSize when collapsed)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(if (isControlsCollapsed) 1f else 2.3f)
-                .padding(4.dp)
+                .weight(if (isControlsCollapsed || isFullScreenMap) 1f else 2.3f)
+                .padding(if (isFullScreenMap) 0.dp else 4.dp)
         ) {
             Terrain3DCanvas(
                 mesh = mesh,
@@ -312,6 +350,7 @@ fun TerrainProceduralScreen(
             )
 
             // Floating Viewport Controls (Top-Right)
+            if (!isFullScreenMap) {
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -472,8 +511,33 @@ fun TerrainProceduralScreen(
                     )
                 }
             }
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = DarkSurface.copy(alpha = 0.88f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, NeonLime),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .padding(10.dp)
+                ) {
+                    IconButton(
+                        onClick = { onToggleFullScreenMap?.invoke(false) },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("terrain_restore_text_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = "Show Text & Controls",
+                            tint = NeonLime
+                        )
+                    }
+                }
+            }
 
             // Floating Bottom HUD: Active Map Mode Switcher, Camera Viewpoint Presets and Render Modes
+            if (!isFullScreenMap) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -819,9 +883,11 @@ fun TerrainProceduralScreen(
                     }
                 }
             }
+            }
         }
 
         // 2. Control Panel Header / Pull Dock (Pushes controls down or expands them)
+        AnimatedVisibility(visible = !isFullScreenMap) {
         Surface(
             color = DarkSurfaceElevated,
             border = androidx.compose.foundation.BorderStroke(1.dp, DarkSurfaceHighlight),
@@ -877,9 +943,10 @@ fun TerrainProceduralScreen(
                 }
             }
         }
+        }
 
         // 3. Subsystem Tabs Row (Only visible when controls are open)
-        AnimatedVisibility(visible = !isControlsCollapsed) {
+        AnimatedVisibility(visible = !isControlsCollapsed && !isFullScreenMap) {
             ScrollableTabRow(
                 selectedTabIndex = activeSubsystemTab.ordinal,
                 containerColor = DarkSurface,
@@ -909,7 +976,7 @@ fun TerrainProceduralScreen(
 
         // 4. Subsystem Controls & Inspectors (Pushed down into lower area)
         AnimatedVisibility(
-            visible = !isControlsCollapsed,
+            visible = !isControlsCollapsed && !isFullScreenMap,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1.0f)
@@ -1780,6 +1847,8 @@ private fun ControlSlider(
     steps: Int = 0,
     onValueChange: (Float) -> Unit
 ) {
+    val safeVal = (if (value.isFinite()) value else valueRange.start)
+        .coerceIn(valueRange.start, valueRange.endInclusive)
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1787,7 +1856,7 @@ private fun ControlSlider(
         ) {
             Text(label, fontSize = 11.sp, color = TextPrimary)
             Text(
-                text = "${(value * 10).toInt() / 10f}$unit",
+                text = "${(safeVal * 10).toInt() / 10f}$unit",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
@@ -1795,7 +1864,7 @@ private fun ControlSlider(
             )
         }
         Slider(
-            value = value,
+            value = safeVal,
             onValueChange = onValueChange,
             valueRange = valueRange,
             steps = steps,
@@ -2945,8 +3014,9 @@ private fun KenyaMagadiControls(
                     )
                 }
 
+                val safeRoadPos = (if (roadPositionM.isFinite()) roadPositionM else 0f).coerceIn(0f, 10100f)
                 Slider(
-                    value = roadPositionM,
+                    value = safeRoadPos,
                     onValueChange = { onRoadPositionChange(it) },
                     valueRange = 0f..10100f,
                     colors = SliderDefaults.colors(
@@ -3520,8 +3590,9 @@ private fun KenyaMagadiControls(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    val safeWalkDist = (if (walkDistanceM.isFinite()) walkDistanceM else 0f).coerceIn(0f, 3000f)
                     Slider(
-                        value = walkDistanceM,
+                        value = safeWalkDist,
                         onValueChange = { onWalkDistanceChange(it) },
                         valueRange = 0f..3000f,
                         colors = SliderDefaults.colors(

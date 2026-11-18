@@ -130,4 +130,26 @@ class MagadiTownTest {
         assertEquals(p1.cellCol, bldgFeature.getJSONObject("properties").getInt("grid_1m_col"))
         assertEquals(p1.cellRow, bldgFeature.getJSONObject("properties").getInt("grid_1m_row"))
     }
+
+    @Test
+    fun `magadi town binary pack MAGT serves real roads, buildings, symbols and Terrarium DEM without live network`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val repo = MagadiTownRepository(context)
+        val candidates = listOf(
+            java.io.File("native-assets/assets/terrain_grid/magadi_town_3x5km.bin"),
+            java.io.File("../native-assets/assets/terrain_grid/magadi_town_3x5km.bin")
+        )
+        val binFile = candidates.firstOrNull { it.exists() && it.length() > 100_000 }
+        assertTrue("Expected magadi_town_3x5km.bin to exist", binFile != null)
+
+        val bundle = binFile!!.inputStream().use { repo.parseBinaryStream(it) }
+        assertTrue("Bundle must report binary-served", bundle.metadata.isBinaryServed)
+        assertTrue("Bundle must contain real OSM roads", bundle.roads.isNotEmpty())
+        assertTrue("Bundle must contain real OSM buildings", bundle.buildings.isNotEmpty())
+        assertTrue("Roads must include route/highway metadata", bundle.roads.any { it.name.isNotBlank() && it.nodes.size >= 2 })
+        assertTrue("Buildings must fall inside 3x5 km bounds", bundle.buildings.all { it.centroid.xM in 0f..3000f && it.centroid.yM in 0f..5000f })
+        val dem = bundle.demGrid
+        assertTrue("Terrarium DEM grid must be bundled", dem != null && dem.cols == 120 && dem.rows == 200 && dem.elevationsM.size == 24_000)
+        assertTrue("DEM resolution must be ~9.5m Terrarium", dem!!.nativeResolutionM <= 12.0f)
+    }
 }

@@ -42,7 +42,10 @@ data class ExtractedRoadWay(
     val widthM: Float,
     val lengthM: Float,
     val nodes: List<MagadiGeoCoord>,
-    val tags: Map<String, String> = emptyMap()
+    val tags: Map<String, String> = emptyMap(),
+    val ref: String = "",
+    val isBridge: Boolean = false,
+    val isRoundabout: Boolean = false
 )
 
 data class ExtractedBuilding(
@@ -106,7 +109,8 @@ data class MagadiTownMetadata(
     val poiCount: Int = 0,
     val elevMinM: Float = 595f,
     val elevMaxM: Float = 720f,
-    val elevMeanM: Float = 625f
+    val elevMeanM: Float = 625f,
+    val isBinaryServed: Boolean = false
 )
 
 data class MagadiTownBundle(

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.engine.NativeEngineBridge
 import com.example.model.*
 import com.example.repository.MagadiTownRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +71,7 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
     val showWater = MutableStateFlow(true)
     val showContours = MutableStateFlow(true)
     val showRoads = MutableStateFlow(true)
+    val showRoadSymbols = MutableStateFlow(true)
     val showBuildings = MutableStateFlow(true)
     val showPois = MutableStateFlow(true)
 
@@ -125,6 +127,9 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
     private val _overlayRoads3D = MutableStateFlow<List<TerrainRoadSeg3D>>(emptyList())
     val overlayRoads3D: StateFlow<List<TerrainRoadSeg3D>> = _overlayRoads3D.asStateFlow()
 
+    private val _overlayRoadSymbols3D = MutableStateFlow<List<TerrainRoadSymbol3D>>(emptyList())
+    val overlayRoadSymbols3D: StateFlow<List<TerrainRoadSymbol3D>> = _overlayRoadSymbols3D.asStateFlow()
+
     // Data Explorer filter state
     val dataTabIndex = MutableStateFlow(0) // 0=Metadata, 1=Roads, 2=Buildings, 3=POIs
     val searchQuery = MutableStateFlow("")
@@ -133,58 +138,39 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
     private var mesh3dJob: Job? = null
 
     init {
-        refreshRasterOverlay()
-        rebuild3dScene()
         initializeData()
     }
 
     private fun initializeData() {
         viewModelScope.launch {
-            val cached = repo.loadCachedBundle()
-            if (cached != null) {
-                _bounds.value = cached.bounds
-                _lakeLevelAslM.value = cached.metadata.lakeLevelAslM
-                _extractionState.value = MagadiExtractionUiState.Ready(cached, isFromCache = true)
-                _inspectedCell.value = repo.inspect1mCell(_viewCenterXM.value, _viewCenterYM.value)
-                refreshRasterOverlay()
-                rebuild3dScene()
-            } else {
-                extractLiveData()
+            _extractionState.value = MagadiExtractionUiState.Extracting(
+                stage = "Loading binary GIS & Terrarium DEM pack (magadi_town_3x5km.bin)...",
+                progress = 0.25f
+            )
+            val binaryBundle = try {
+                repo.loadBinaryAssetBundle()
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (_: Throwable) {
+                null
             }
+            if (binaryBundle != null) {
+                _bounds.value = binaryBundle.bounds
+                _lakeLevelAslM.value = binaryBundle.metadata.lakeLevelAslM
+                _extractionState.value = MagadiExtractionUiState.Ready(binaryBundle, isFromCache = true)
+                _inspectedCell.value = repo.inspect1mCell(_viewCenterXM.value, _viewCenterYM.value)
+            } else {
+                _extractionState.value = MagadiExtractionUiState.Error(
+                    message = "Binary GIS pack missing (assets/terrain_grid/magadi_town_3x5km.bin)"
+                )
+            }
+            refreshRasterOverlay()
+            rebuild3dScene()
         }
     }
 
-    fun extractLiveData() {
-        viewModelScope.launch {
-            val priorBundle = when (val st = _extractionState.value) {
-                is MagadiExtractionUiState.Ready -> st.bundle
-                is MagadiExtractionUiState.Error -> st.cachedBundle
-                else -> null
-            } ?: repo.loadCachedBundle()
-
-            _extractionState.value = MagadiExtractionUiState.Extracting(
-                stage = "Connecting to OpenStreetMap & Terrarium ~9.5m DEM...",
-                progress = 0.08f
-            )
-
-            val result = repo.extractLiveMagadiTownData { stage, progress ->
-                _extractionState.value = MagadiExtractionUiState.Extracting(stage, progress)
-            }
-
-            result.onSuccess { bundle ->
-                _bounds.value = bundle.bounds
-                _lakeLevelAslM.value = bundle.metadata.lakeLevelAslM
-                _extractionState.value = MagadiExtractionUiState.Ready(bundle, isFromCache = false)
-                _inspectedCell.value = repo.inspect1mCell(_viewCenterXM.value, _viewCenterYM.value)
-                refreshRasterOverlay()
-                rebuild3dScene()
-            }.onFailure { err ->
-                _extractionState.value = MagadiExtractionUiState.Error(
-                    message = err.message ?: "Network error extracting OSM/DEM data",
-                    cachedBundle = priorBundle
-                )
-            }
-        }
+    fun reloadBinaryPack() {
+        initializeData()
     }
 
     fun setLakeLevel(newLevelM: Float) {
@@ -391,35 +377,46 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         rasterJob?.cancel()
         rasterJob = viewModelScope.launch(Dispatchers.Default) {
             if (!NativeEngineBridge.isLoaded()) return@launch
-            val wM = _viewWidthM.value
-            val hM = wM * _canvasAspect.value
-            val minX = (_viewCenterXM.value - wM * 0.5f).coerceIn(0f, 2999f)
-            val maxX = (_viewCenterXM.value + wM * 0.5f).coerceIn(minX + 1f, 3000f)
-            val minY = (_viewCenterYM.value - hM * 0.5f).coerceIn(0f, 4999f)
-            val maxY = (_viewCenterYM.value + hM * 0.5f).coerceIn(minY + 1f, 5000f)
+            try {
+                val wM = _viewWidthM.value
+                val hM = wM * _canvasAspect.value
+                val minX = (_viewCenterXM.value - wM * 0.5f).coerceIn(0f, 2999f)
+                val maxX = (_viewCenterXM.value + wM * 0.5f).coerceIn(minX + 1f, 3000f)
+                val minY = (_viewCenterYM.value - hM * 0.5f).coerceIn(0f, 4999f)
+                val maxY = (_viewCenterYM.value + hM * 0.5f).coerceIn(minY + 1f, 5000f)
 
-            val cols = 64
-            val rows = (cols * ((maxY - minY) / (maxX - minX))).roundToInt().coerceIn(32, 88)
-            val data = NativeEngineBridge.nativeSampleMagadiTownRaster(minX, maxX, minY, maxY, cols, rows)
-            if (data.size >= cols * rows * 3) {
-                var minE = Float.MAX_VALUE
-                var maxE = -Float.MAX_VALUE
-                for (i in 0 until cols * rows) {
-                    val e = data[i * 3]
-                    if (e < minE) minE = e
-                    if (e > maxE) maxE = e
+                val cols = 64
+                val rows = (cols * ((maxY - minY) / (maxX - minX))).roundToInt().coerceIn(32, 88)
+                val data = NativeEngineBridge.nativeSampleMagadiTownRaster(minX, maxX, minY, maxY, cols, rows)
+                if (data.size >= cols * rows * 3) {
+                    var minE = Float.MAX_VALUE
+                    var maxE = -Float.MAX_VALUE
+                    for (i in 0 until cols * rows) {
+                        val e = data[i * 3]
+                        if (e.isFinite()) {
+                            if (e < minE) minE = e
+                            if (e > maxE) maxE = e
+                        }
+                    }
+                    if (minE > maxE) {
+                        minE = 595f
+                        maxE = 750f
+                    }
+                    _rasterOverlay.value = MagadiRasterOverlay(
+                        minXM = minX,
+                        maxXM = maxX,
+                        minYM = minY,
+                        maxYM = maxY,
+                        cols = cols,
+                        rows = rows,
+                        data = data,
+                        minElevM = minE,
+                        maxElevM = maxE
+                    )
                 }
-                _rasterOverlay.value = MagadiRasterOverlay(
-                    minXM = minX,
-                    maxXM = maxX,
-                    minYM = minY,
-                    maxYM = maxY,
-                    cols = cols,
-                    rows = rows,
-                    data = data,
-                    minElevM = minE,
-                    maxElevM = maxE
-                )
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (_: Throwable) {
             }
         }
     }
@@ -431,64 +428,71 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         mesh3dJob?.cancel()
         mesh3dJob = viewModelScope.launch(Dispatchers.Default) {
             if (!NativeEngineBridge.isLoaded()) return@launch
-            val mode = _terrain3dMode.value
-            val cell = _inspectedCell.value
-            val cX = (overrideCenterX ?: cell.xM).coerceIn(32f, 2968f)
-            val cY = (overrideCenterY ?: cell.yM).coerceIn(32f, 4968f)
-            val vExag = _verticalExaggeration.value
-            val windowExag = (vExag * 0.70f).coerceIn(0.6f, 4.2f)
-            val overviewExag = vExag.coerceIn(0.8f, 5.5f)
+            try {
+                val mode = _terrain3dMode.value
+                val cell = _inspectedCell.value
+                val cX = (overrideCenterX ?: cell.xM).coerceIn(32f, 2968f)
+                val cY = (overrideCenterY ?: cell.yM).coerceIn(32f, 4968f)
+                val vExag = _verticalExaggeration.value
+                val windowExag = (vExag * 0.70f).coerceIn(0.6f, 4.2f)
+                val overviewExag = vExag.coerceIn(0.8f, 5.5f)
 
-            val mesh = if (mode == "WINDOW_1M") {
-                NativeEngineBridge.generateMagadiTown1mWindowMesh(
-                    centerXM = cX,
-                    centerYM = cY,
-                    windowCells = 64,
-                    contourInterval = 2.0f,
-                    stepTerracing = 0f,
-                    verticalExaggeration = windowExag
-                )
-            } else {
-                NativeEngineBridge.generateMagadiTownOverviewMesh(
-                    resX = 61,
-                    resZ = 101,
-                    contourInterval = 10.0f,
-                    stepTerracing = 0f,
-                    verticalExaggeration = overviewExag
-                )
+                val mesh = if (mode == "WINDOW_1M") {
+                    NativeEngineBridge.generateMagadiTown1mWindowMesh(
+                        centerXM = cX,
+                        centerYM = cY,
+                        windowCells = 64,
+                        contourInterval = 2.0f,
+                        stepTerracing = 0f,
+                        verticalExaggeration = windowExag
+                    )
+                } else {
+                    NativeEngineBridge.generateMagadiTownOverviewMesh(
+                        resX = 61,
+                        resZ = 101,
+                        contourInterval = 10.0f,
+                        stepTerracing = 0f,
+                        verticalExaggeration = overviewExag
+                    )
+                }
+
+                val unitsPerM = (if (mode == "WINDOW_1M") (56.0f / 64.0f) * windowExag else 0.12f * overviewExag)
+                    .coerceAtLeast(0.001f)
+                val minRawElev = mesh.vertices.minOfOrNull { it.rawElevation }?.takeIf { it.isFinite() } ?: 595f
+                val datumAsl = if (mode == "WINDOW_1M") {
+                    floor(minRawElev - 10f)
+                } else {
+                    min(420f, floor((minRawElev - 30f) / 10f) * 10f)
+                }
+
+                val v0 = mesh.vertices.firstOrNull()
+                val (buildings3d, roads3d, symbols3d) = if (v0 != null) {
+                    build3dFeatureOverlays(
+                        mode = mode,
+                        centerXM = cX,
+                        centerYM = cY,
+                        anchorRawElev = v0.rawElevation,
+                        anchorSceneY = v0.y,
+                        scaleYPerM = unitsPerM,
+                        overviewExag = overviewExag,
+                        bundle = activeBundleOrNull(),
+                        selectedBldgId = _selectedBuilding.value?.osmId,
+                        selectedRoadId = _selectedRoad.value?.osmId
+                    )
+                } else {
+                    Triple(emptyList<TerrainBuilding3D>(), emptyList<TerrainRoadSeg3D>(), emptyList())
+                }
+
+                _sceneUnitsPerMeter3D.value = unitsPerM
+                _groundDatumAslM.value = datumAsl
+                _terrainMesh3D.value = mesh
+                _overlayBuildings3D.value = buildings3d
+                _overlayRoads3D.value = roads3d
+                _overlayRoadSymbols3D.value = symbols3d
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (_: Throwable) {
             }
-
-            val unitsPerM = if (mode == "WINDOW_1M") (56.0f / 64.0f) * windowExag else 0.12f * overviewExag
-            val minRawElev = mesh.vertices.minOfOrNull { it.rawElevation } ?: 595f
-            val datumAsl = if (mode == "WINDOW_1M") {
-                floor(minRawElev - 10f)
-            } else {
-                min(420f, floor((minRawElev - 30f) / 10f) * 10f)
-            }
-
-            val v0 = mesh.vertices.firstOrNull()
-            val (buildings3d, roads3d) = if (v0 != null) {
-                build3dFeatureOverlays(
-                    mode = mode,
-                    centerXM = cX,
-                    centerYM = cY,
-                    anchorRawElev = v0.rawElevation,
-                    anchorSceneY = v0.y,
-                    scaleYPerM = unitsPerM,
-                    overviewExag = overviewExag,
-                    bundle = activeBundleOrNull(),
-                    selectedBldgId = _selectedBuilding.value?.osmId,
-                    selectedRoadId = _selectedRoad.value?.osmId
-                )
-            } else {
-                emptyList<TerrainBuilding3D>() to emptyList()
-            }
-
-            _sceneUnitsPerMeter3D.value = unitsPerM
-            _groundDatumAslM.value = datumAsl
-            _terrainMesh3D.value = mesh
-            _overlayBuildings3D.value = buildings3d
-            _overlayRoads3D.value = roads3d
         }
     }
 
@@ -503,11 +507,12 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         bundle: MagadiTownBundle?,
         selectedBldgId: Long?,
         selectedRoadId: Long?
-    ): Pair<List<TerrainBuilding3D>, List<TerrainRoadSeg3D>> {
-        if (bundle == null) return emptyList<TerrainBuilding3D>() to emptyList()
+    ): Triple<List<TerrainBuilding3D>, List<TerrainRoadSeg3D>, List<TerrainRoadSymbol3D>> {
+        if (bundle == null) return Triple(emptyList(), emptyList(), emptyList())
 
         val isWindow = mode == "WINDOW_1M"
-        val baseDatumElev = anchorRawElev - (anchorSceneY / scaleYPerM)
+        val safeScaleY = scaleYPerM.coerceAtLeast(0.001f)
+        val baseDatumElev = anchorRawElev - (anchorSceneY / safeScaleY)
 
         fun toSceneXZ(xM: Float, yM: Float): Pair<Float, Float> {
             return if (isWindow) {
@@ -520,10 +525,12 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         fun elevToSceneY(rawElevM: Float): Float = (rawElevM - baseDatumElev) * scaleYPerM
 
         val roadsOut = ArrayList<TerrainRoadSeg3D>()
+        val symbolsOut = ArrayList<TerrainRoadSymbol3D>()
         val halfWin = 33.5f
         for (road in bundle.roads) {
             val isPrimary = road.highwayType in setOf("trunk", "primary", "secondary", "tertiary")
             val isSel = road.osmId == selectedRoadId
+            var midAdded = false
             for (k in 0 until road.nodes.size - 1) {
                 val n0 = road.nodes[k]
                 val n1 = road.nodes[k + 1]
@@ -546,16 +553,58 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                 val e1 = repo.inspect1mCell(p1x, p1y).elevM
                 val (sx0, sz0) = toSceneXZ(p0x, p0y)
                 val (sx1, sz1) = toSceneXZ(p1x, p1y)
-                val syLift = if (isWindow) 0.14f else 0.18f
+                val sy0 = elevToSceneY(e0) + if (isWindow) 0.14f else 0.18f
+                val sy1 = elevToSceneY(e1) + if (isWindow) 0.14f else 0.18f
                 roadsOut.add(
                     TerrainRoadSeg3D(
-                        x0 = sx0, y0 = elevToSceneY(e0) + syLift, z0 = sz0,
-                        x1 = sx1, y1 = elevToSceneY(e1) + syLift, z1 = sz1,
+                        x0 = sx0, y0 = sy0, z0 = sz0,
+                        x1 = sx1, y1 = sy1, z1 = sz1,
                         isPrimary = isPrimary,
                         isSelected = isSel
                     )
                 )
+                if (!midAdded && k == (road.nodes.size - 1) / 2) {
+                    midAdded = true
+                    val mx = (sx0 + sx1) * 0.5f
+                    val my = (sy0 + sy1) * 0.5f
+                    val mz = (sz0 + sz1) * 0.5f
+                    val dx = sx1 - sx0
+                    val dz = sz1 - sz0
+                    val dLen = hypot(dx, dz).coerceAtLeast(0.001f)
+                    when {
+                        road.isBridge -> symbolsOut.add(
+                            TerrainRoadSymbol3D(mx, my + 0.12f, mz, dx / dLen, dz / dLen, "BRG", RoadSymbolType3D.BRIDGE_ABUTMENT)
+                        )
+                        road.isRoundabout -> symbolsOut.add(
+                            TerrainRoadSymbol3D(mx, my + 0.12f, mz, dx / dLen, dz / dLen, "RND", RoadSymbolType3D.ROUNDABOUT_RING)
+                        )
+                        road.ref.isNotBlank() || isPrimary -> symbolsOut.add(
+                            TerrainRoadSymbol3D(
+                                mx, my + 0.15f, mz, dx / dLen, dz / dLen,
+                                road.ref.ifBlank { road.name.take(10) },
+                                RoadSymbolType3D.ROUTE_SHIELD
+                            )
+                        )
+                    }
+                    if (road.oneWay) {
+                        symbolsOut.add(
+                            TerrainRoadSymbol3D(mx, my + 0.10f, mz, dx / dLen, dz / dLen, "1W", RoadSymbolType3D.DIRECTION_ARROW)
+                        )
+                    }
+                }
             }
+        }
+        for (poi in bundle.pois) {
+            if (isWindow) {
+                if (abs(poi.coord.xM - centerXM) > 35f || abs(poi.coord.yM - centerYM) > 35f) continue
+            }
+            val symType = when {
+                poi.category in setOf("gate", "bollard", "lift_gate", "toll_booth") -> RoadSymbolType3D.BARRIER_GATE
+                poi.category in setOf("crossing", "bus_stop", "traffic_signals", "turning_circle", "mini_roundabout") -> RoadSymbolType3D.CROSSING_SIGNAL
+                else -> null
+            } ?: continue
+            val (sx, sz) = toSceneXZ(poi.coord.xM.coerceIn(0f, 3000f), poi.coord.yM.coerceIn(0f, 5000f))
+            symbolsOut.add(TerrainRoadSymbol3D(sx, elevToSceneY(poi.elevM) + 0.25f, sz, label = poi.category.take(6).uppercase(), type = symType))
         }
 
         val bldgOut = ArrayList<TerrainBuilding3D>()
@@ -568,7 +617,7 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                 .filter { it.centroid.xM in 0f..3000f && it.centroid.yM in 0f..5000f }
                 .sortedWith(compareByDescending<ExtractedBuilding> { it.osmId == selectedBldgId }
                     .thenByDescending { it.footprintAreaM2 })
-                .take(240)
+                .take(400)
         }
 
         for (b in candidateBldgs) {
@@ -583,7 +632,7 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
             val heightUnits = if (isWindow) {
                 b.heightM.coerceIn(2.6f, 25f) * scaleYPerM
             } else {
-                max(0.85f, b.heightM * 0.18f * min(2.0f, overviewExag * 0.65f))
+                max(1.05f, b.heightM * 0.20f * min(2.0f, overviewExag * 0.65f))
             }
             bldgOut.add(
                 TerrainBuilding3D(
@@ -597,7 +646,7 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
             )
         }
 
-        return bldgOut to roadsOut
+        return Triple(bldgOut, roadsOut, symbolsOut)
     }
 
     fun exportAndShareGeoJson(context: Context) {

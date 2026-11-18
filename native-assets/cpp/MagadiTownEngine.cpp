@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <mutex>
 
 namespace custom_vulkan {
 
@@ -120,23 +121,41 @@ float MagadiTownEngine::fbmNoise(float x, float y, int octaves, float lacunarity
 
 void MagadiTownEngine::setDemControlGrid(int cols, int rows, const std::vector<float>& elevationsM) {
     if (cols >= 2 && rows >= 2 && static_cast<int>(elevationsM.size()) >= cols * rows) {
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
         m_demCols = cols;
         m_demRows = rows;
-        m_demElevations.assign(elevationsM.begin(), elevationsM.begin() + (cols * rows));
+        const int count = cols * rows;
+        m_demElevations.resize(static_cast<size_t>(count));
+        for (int i = 0; i < count; ++i) {
+            float e = elevationsM[static_cast<size_t>(i)];
+            m_demElevations[static_cast<size_t>(i)] = std::isfinite(e) ? e : 620.0f;
+        }
         m_hasLiveDem = true;
     }
+}
+
+bool MagadiTownEngine::hasLiveDemData() const {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    return m_hasLiveDem;
 }
 
 void MagadiTownEngine::setLakeAndWaterPolygons(
     float lakeLevelAslM,
     const std::vector<MagadiTownWaterPolygon2D>& waterPolys) {
-    m_lakeLevelAslM = lakeLevelAslM;
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    m_lakeLevelAslM = std::isfinite(lakeLevelAslM) ? lakeLevelAslM : 602.5f;
     m_waterPolygons = waterPolys;
+}
+
+float MagadiTownEngine::getLakeLevelAslM() const {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    return m_lakeLevelAslM;
 }
 
 void MagadiTownEngine::setFeatureFootprints(
     const std::vector<MagadiTownRoadSegment2D>& roads,
     const std::vector<MagadiTownBuildingRect2D>& buildings) {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
     m_roadSegments = roads;
     m_buildingRects = buildings;
 }
@@ -214,8 +233,10 @@ bool MagadiTownEngine::isPointInWaterPolygon(
             float xj = poly.coordsXY[j * 2];
             float yj = poly.coordsXY[j * 2 + 1];
 
+            float denom = yj - yi;
             bool intersect = ((yi > yM) != (yj > yM)) &&
-                (xM < (xj - xi) * (yM - yi) / ((yj - yi) + 1e-6f) + xi);
+                (std::abs(denom) > 1e-6f) &&
+                (xM < (xj - xi) * (yM - yi) / denom + xi);
             if (intersect) inside = !inside;
 
             float dx = xj - xi;
@@ -251,13 +272,14 @@ float MagadiTownEngine::sampleLandElevationRaw(float xM, float yM) const {
     return macroElev + meso + micro;
 }
 
-float MagadiTownEngine::sampleElevationAt1m(float xM, float yM,
-                                            float contourInterval,
-                                            float stepTerracing) const {
+float MagadiTownEngine::sampleElevationAt1mUnlocked(float xM, float yM,
+                                                     float contourInterval,
+                                                     float stepTerracing) const {
     float cx = std::clamp(xM, 0.0f, static_cast<float>(DOMAIN_WIDTH_M));
     float cy = std::clamp(yM, 0.0f, static_cast<float>(DOMAIN_HEIGHT_M));
 
     float rawElev = sampleLandElevationRaw(cx, cy);
+    if (!std::isfinite(rawElev)) rawElev = 620.0f;
 
     bool isSaltPan = false;
     float edgeFactor = 0.0f;
@@ -268,11 +290,18 @@ float MagadiTownEngine::sampleElevationAt1m(float xM, float yM,
         rawElev = std::min(rawElev, targetBed);
     }
 
-    if (stepTerracing > 0.001f && contourInterval > 0.25f) {
+    if (stepTerracing > 0.001f && std::isfinite(contourInterval) && contourInterval > 0.25f) {
         float stepped = std::round(rawElev / contourInterval) * contourInterval;
         rawElev = rawElev * (1.0f - stepTerracing) + stepped * stepTerracing;
     }
-    return rawElev;
+    return std::isfinite(rawElev) ? rawElev : 620.0f;
+}
+
+float MagadiTownEngine::sampleElevationAt1m(float xM, float yM,
+                                            float contourInterval,
+                                            float stepTerracing) const {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    return sampleElevationAt1mUnlocked(xM, yM, contourInterval, stepTerracing);
 }
 
 bool MagadiTownEngine::isPointOnRoad(float xM, float yM) const {
@@ -305,6 +334,7 @@ bool MagadiTownEngine::isPointOnBuilding(float xM, float yM) const {
 }
 
 MagadiTownPointTelemetry MagadiTownEngine::getTelemetryAt(float xM, float yM) const {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     MagadiTownPointTelemetry t;
     t.xM = std::clamp(xM, 0.0f, static_cast<float>(DOMAIN_WIDTH_M));
     t.yM = std::clamp(yM, 0.0f, static_cast<float>(DOMAIN_HEIGHT_M));
@@ -314,11 +344,11 @@ MagadiTownPointTelemetry MagadiTownEngine::getTelemetryAt(float xM, float yM) co
     localMetricToLatLon(t.xM, t.yM, t.lat, t.lon);
     latLonToUtm37S(t.lat, t.lon, t.utmEast, t.utmNorth);
 
-    float eC = sampleElevationAt1m(t.xM, t.yM);
-    float eL = sampleElevationAt1m(t.xM - 1.0f, t.yM);
-    float eR = sampleElevationAt1m(t.xM + 1.0f, t.yM);
-    float eD = sampleElevationAt1m(t.xM, t.yM - 1.0f);
-    float eU = sampleElevationAt1m(t.xM, t.yM + 1.0f);
+    float eC = sampleElevationAt1mUnlocked(t.xM, t.yM);
+    float eL = sampleElevationAt1mUnlocked(t.xM - 1.0f, t.yM);
+    float eR = sampleElevationAt1mUnlocked(t.xM + 1.0f, t.yM);
+    float eD = sampleElevationAt1mUnlocked(t.xM, t.yM - 1.0f);
+    float eU = sampleElevationAt1mUnlocked(t.xM, t.yM + 1.0f);
 
     float ddx = (eR - eL) * 0.5f;
     float ddy = (eU - eD) * 0.5f;
@@ -337,6 +367,7 @@ MagadiTownPointTelemetry MagadiTownEngine::getTelemetryAt(float xM, float yM) co
 std::vector<float> MagadiTownEngine::sampleElevationRaster(
     float minXM, float maxXM, float minYM, float maxYM, int cols, int rows) const {
 
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     cols = std::clamp(cols, 2, 160);
     rows = std::clamp(rows, 2, 160);
     float spanX = std::max(1.0f, maxXM - minXM);
@@ -351,11 +382,11 @@ std::vector<float> MagadiTownEngine::sampleElevationRaster(
         float yM = minYM + r * dyStep;
         for (int c = 0; c < cols; ++c) {
             float xM = minXM + c * dxStep;
-            float e = sampleElevationAt1m(xM, yM);
-            float eL = sampleElevationAt1m(xM - gradSpan, yM);
-            float eR = sampleElevationAt1m(xM + gradSpan, yM);
-            float eD = sampleElevationAt1m(xM, yM - gradSpan);
-            float eU = sampleElevationAt1m(xM, yM + gradSpan);
+            float e = sampleElevationAt1mUnlocked(xM, yM);
+            float eL = sampleElevationAt1mUnlocked(xM - gradSpan, yM);
+            float eR = sampleElevationAt1mUnlocked(xM + gradSpan, yM);
+            float eD = sampleElevationAt1mUnlocked(xM, yM - gradSpan);
+            float eU = sampleElevationAt1mUnlocked(xM, yM + gradSpan);
 
             // Enhanced NNW directional hillshade (exaggerated relief for crisp valleys & ridges)
             float gx = ((eR - eL) / (2.0f * gradSpan)) * 3.0f;
@@ -385,6 +416,7 @@ std::vector<float> MagadiTownEngine::sampleElevationRaster(
 MagadiSceneMesh MagadiTownEngine::generateOverview3x5Mesh(
     int resX, int resZ, float contourInterval, float stepTerracing, float verticalExaggeration) const {
 
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     resX = std::clamp(resX, 17, 73);
     resZ = std::clamp(resZ, 17, 121);
     float vExag = std::clamp(verticalExaggeration, 0.5f, 6.0f);
@@ -406,7 +438,7 @@ MagadiSceneMesh MagadiTownEngine::generateOverview3x5Mesh(
         float yM = iz * stepZ;
         for (int ix = 0; ix < resX; ++ix) {
             float xM = ix * stepX;
-            float e = sampleElevationAt1m(xM, yM, contourInterval, stepTerracing);
+            float e = sampleElevationAt1mUnlocked(xM, yM, contourInterval, stepTerracing);
             heights[iz * resX + ix] = e;
             if (e < minH) minH = e;
             if (e > maxH) maxH = e;
@@ -461,7 +493,7 @@ MagadiSceneMesh MagadiTownEngine::generateOverview3x5Mesh(
             bool isLake = (rawElev <= m_lakeLevelAslM + 0.05f || inWaterPoly);
             bool isTrona = (!isLake && rawElev <= m_lakeLevelAslM + 3.5f);
 
-            MagadiVertex v;
+            MagadiVertex v{};
             v.x = xScaled;
             v.y = yScaled;
             v.z = zScaled;
@@ -511,6 +543,7 @@ MagadiSceneMesh MagadiTownEngine::generateLocal1mWindowMesh(
     float centerXM, float centerYM, int windowCells,
     float contourInterval, float stepTerracing, float verticalExaggeration) const {
 
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     windowCells = std::clamp(windowCells, 24, 80);
     int gridSize = windowCells + 1;
     float halfSpan = static_cast<float>(windowCells) * 0.5f;
@@ -530,7 +563,7 @@ MagadiSceneMesh MagadiTownEngine::generateLocal1mWindowMesh(
         float yM = (cY - halfSpan) + iz * stepM;
         for (int ix = 0; ix < gridSize; ++ix) {
             float xM = (cX - halfSpan) + ix * stepM;
-            float e = sampleElevationAt1m(xM, yM, contourInterval, stepTerracing);
+            float e = sampleElevationAt1mUnlocked(xM, yM, contourInterval, stepTerracing);
             heights[iz * gridSize + ix] = e;
             if (e < minH) minH = e;
             if (e > maxH) maxH = e;
@@ -586,7 +619,7 @@ MagadiSceneMesh MagadiTownEngine::generateLocal1mWindowMesh(
             bool isLake = (rawElev <= m_lakeLevelAslM + 0.05f || inWaterPoly);
             bool isTrona = (!isLake && rawElev <= m_lakeLevelAslM + 3.0f);
 
-            MagadiVertex v;
+            MagadiVertex v{};
             v.x = xScaled;
             v.y = yScaled;
             v.z = zScaled;

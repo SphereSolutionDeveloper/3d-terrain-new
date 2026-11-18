@@ -22,6 +22,7 @@ add_library(apex_vulkan SHARED
     cpp/Math3D.cpp
     cpp/MagadiSceneEngine.cpp
     cpp/MagadiTownEngine.cpp
+    cpp/C58CorridorEngine.cpp
     cpp/ProceduralSceneEngine.cpp
     cpp/GlbParserEngine.cpp
     cpp/NativeEngine_JNI.cpp
