@@ -1,0 +1,57 @@
+// ==============================================================================
+// NATM Shotcrete & Circular TBM Precast Concrete Segment Lining Kernel (.comp)
+// Path: src/road/tunnels/shaders/tunnel_lining_tex.comp
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "../../shaders/include/road_common.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outLiningAlbedo;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D outLiningNormalRough;
+
+layout(push_constant) uniform TunnelLiningPC {
+    uint texSize;
+    uint isTbmPrecast;     // 0 = NATM rough shotcrete, 1 = TBM ring segments
+    float tileWallRatio;   // Reflective fireproof ceramic wainscot height
+    float sootAccumulation;
+} pc;
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.texSize) || px.y >= int(pc.texSize)) {
+        return;
+    }
+
+    vec2 uv = vec2(px) / float(max(pc.texSize - 1u, 1u));
+    float macroGrain = roadFbm(uv * (pc.isTbmPrecast != 0u ? 14.0 : 28.0));
+
+    // Wainscot reflective white fireproof panels on lower tunnel walls
+    float tileMask = 1.0 - smoothstep(clamp(pc.tileWallRatio, 0.20, 0.45) - 0.01, clamp(pc.tileWallRatio, 0.20, 0.45) + 0.01, uv.y);
+    vec2 tileGrid = abs(fract(uv * vec2(24.0, 48.0)) - 0.5);
+    float tileGrout = max(1.0 - smoothstep(0.44, 0.49, tileGrid.x), 1.0 - smoothstep(0.44, 0.49, tileGrid.y));
+
+    vec3 archColor = mix(vec3(0.48, 0.49, 0.51), vec3(0.62, 0.63, 0.64), macroGrain);
+    if (pc.isTbmPrecast != 0u) {
+        float segJoint = max(
+            1.0 - smoothstep(0.0, 0.015, abs(fract(uv.x * 6.0) - 0.5)),
+            1.0 - smoothstep(0.0, 0.012, abs(fract(uv.y * 4.0) - 0.5))
+        );
+        archColor *= (1.0 - segJoint * 0.35);
+    }
+
+    vec3 wainscotColor = mix(vec3(0.86, 0.88, 0.90), vec3(0.62, 0.64, 0.66), tileGrout * 0.7);
+    vec3 albedo = mix(archColor, wainscotColor, tileMask);
+
+    // Exhaust soot darkening near crown and portal transitions
+    float soot = clamp(pc.sootAccumulation, 0.0, 1.0) * smoothstep(0.35, 0.95, uv.y) * (0.6 + 0.4 * roadFbm(uv * 8.0));
+    albedo = mix(albedo, vec3(0.14, 0.14, 0.15), soot * 0.55);
+
+    vec3 normalTS = normalize(vec3((macroGrain - 0.5) * 0.4, tileGrout * tileMask * 0.35, 1.0));
+    float roughness = mix(pc.isTbmPrecast != 0u ? 0.72 : 0.88, 0.24, tileMask);
+
+    imageStore(outLiningAlbedo, px, vec4(albedo, 1.0));
+    imageStore(outLiningNormalRough, px, vec4(normalTS * 0.5 + 0.5, roughness));
+}

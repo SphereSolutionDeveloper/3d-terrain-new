@@ -16,6 +16,19 @@ namespace Road {
 static constexpr float PI = 3.14159265358979323846f;
 static constexpr float DEG2RAD = PI / 180.0f;
 
+static inline void NormalizeHorizNormal(float tx, float tz, float& outNx, float& outNz) {
+    float nx = tz;
+    float nz = -tx;
+    float len = std::sqrt(nx * nx + nz * nz);
+    if (len > 1e-5f) {
+        outNx = nx / len;
+        outNz = nz / len;
+    } else {
+        outNx = 1.0f;
+        outNz = 0.0f;
+    }
+}
+
 void BridgeGenerator::SampleCenterline(
     float t,
     const BridgeParams& params,
@@ -23,23 +36,23 @@ void BridgeGenerator::SampleCenterline(
     float& outTangentX, float& outTangentY, float& outTangentZ,
     float& outBankRad
 ) {
-    float length = params.spanLengthM;
+    float length = std::max(params.spanLengthM, 12.0f);
     
     float bendAngle = params.curveBendAngleDeg;
     if (params.type == BridgeType::CableStayedCurved && std::abs(bendAngle) < 0.01f) {
         bendAngle = 26.0f; // Authentic curve default for curved cable stayed
     }
     
-    // Evaluate horizontal curve with bending manipulation
+    // Evaluate horizontal circular arc with exact arc-length parameterization
     if (std::abs(bendAngle) > 0.01f) {
         float totalBendRad = bendAngle * DEG2RAD;
         float radius = length / totalBendRad;
         float angle = (t - 0.5f) * totalBendRad;
         
         outX = radius * (1.0f - std::cos(angle));
-        outZ = (t - 0.5f) * length;
+        outZ = radius * std::sin(angle);
         
-        // Tangent unit vector
+        // Exact analytical derivative unit horizontal tangent
         outTangentX = std::sin(angle);
         outTangentZ = std::cos(angle);
         outTangentY = params.longitudinalGradePct * 0.01f;
@@ -57,11 +70,12 @@ void BridgeGenerator::SampleCenterline(
         outBankRad = 0.0f;
     }
     
-    // Vertical profile (deck clearance elevation + vertical parabola camber)
-    float camber = 0.85f * std::sin(t * PI);
+    // Vertical profile (deck clearance elevation + AASHTO vertical parabolic camber scaled to span)
+    float camberRise = std::clamp(length * 0.0055f, 0.25f, 1.45f);
+    float camber = camberRise * std::sin(t * PI);
     outY = params.deckClearanceM + (t - 0.5f) * length * (params.longitudinalGradePct * 0.01f) + camber;
     
-    // Normalize tangent
+    // Normalize 3D tangent
     float tLen = std::sqrt(outTangentX * outTangentX + outTangentY * outTangentY + outTangentZ * outTangentZ);
     if (tLen > 1e-6f) {
         outTangentX /= tLen;
@@ -128,49 +142,131 @@ void BridgeGenerator::AddIntermediateSupportPier(
     BridgeMeshBuffer& buffer,
     float t,
     const BridgeParams& params,
-    bool isPedestrian
+    bool isPedestrian,
+    float customDepthM,
+    float customSagM
 ) {
     float px, py, pz, tx, ty, tz, bank;
     SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-    float nx = tz, nz = -tx;
+    if (customSagM > 0.0f) {
+        py -= 4.0f * customSagM * t * (1.0f - t);
+    }
+    float nx, nz;
+    NormalizeHorizNormal(tx, tz, nx, nz);
 
     float halfW = isPedestrian ? std::clamp(params.deckWidthM * 0.5f, 1.6f, 4.2f) : params.deckWidthM * 0.5f;
-    float depth = isPedestrian ? 0.55f : params.deckThicknessM;
-    float footH = isPedestrian ? 1.2f : 2.2f;
-    float seatY = py - depth - 0.35f;
-    if (seatY <= footH + 1.0f) return;
+    float depth = (customDepthM > 0.0f) ? customDepthM : (isPedestrian ? 0.52f : params.deckThicknessM);
+    float footH = isPedestrian ? 1.1f : 2.2f;
+    float bearingH = isPedestrian ? 0.28f : 0.38f;
+    float seatY = py - depth - bearingH;
+    if (seatY <= footH + 0.6f) return;
 
-    // 1. Grounded Foundation Plinth at Y=0
-    AddOrientedBox(buffer, px, footH * 0.5f, pz, halfW * 1.9f, footH, isPedestrian ? 3.8f : 6.2f, nx, nz, tx, tz, 1, 0.48f, 0.51f, 0.55f);
+    // 1. Grounded Reinforced Foundation Plinth at Y=0
+    AddOrientedBox(buffer, px, footH * 0.5f, pz, halfW * 1.9f, footH, isPedestrian ? 3.8f : 6.4f, nx, nz, tx, tz, 1, 0.48f, 0.51f, 0.55f);
 
-    // 2. Pier Shafts (Cylindrical for pedestrian / sculptural bridges)
-    float capH = isPedestrian ? 0.9f : 1.5f;
-    float colH = std::max(0.8f, seatY - capH - footH);
-    float shaftOffset = isPedestrian ? 0.0f : halfW * 0.45f;
+    // 2. Proportional Circular Pier Columns reaching cleanly from footing to pier cap soffit
+    float capH = isPedestrian ? 0.85f : 1.5f;
+    float capBotY = std::max(footH + 0.4f, seatY - capH);
+    float colRadBot = isPedestrian ? 0.65f : std::clamp(params.deckWidthM * 0.055f, 1.05f, 1.65f);
+    float colRadTop = colRadBot * 0.86f;
+
     if (isPedestrian) {
         Primitives::AddCylinder<BridgeMeshBuffer, BridgeVertex>(
-            buffer, px, footH, pz, px, seatY - capH, pz,
-            0.95f, 0.78f, 12, 1, 0.68f, 0.72f, 0.76f, 1.0f, 0.65f, 0.05f, 0.0f
+            buffer, px, footH, pz, px, capBotY, pz,
+            colRadBot, colRadTop, 12, 1, 0.68f, 0.72f, 0.76f, 1.0f, 0.65f, 0.05f, 0.0f
         );
     } else {
-        for (int side : {-1, 1}) {
-            float cx = px + nx * (shaftOffset * side);
-            float cz = pz + nz * (shaftOffset * side);
+        int colCount = (params.deckWidthM >= 22.0f) ? 3 : 2;
+        for (int c = 0; c < colCount; ++c) {
+            float cFrac = (colCount == 1) ? 0.0f : (static_cast<float>(c) / (colCount - 1)) * 2.0f - 1.0f;
+            float cx = px + nx * (halfW * 0.54f * cFrac);
+            float cz = pz + nz * (halfW * 0.54f * cFrac);
             Primitives::AddCylinder<BridgeMeshBuffer, BridgeVertex>(
-                buffer, cx, footH, cz, cx, seatY - capH, cz,
-                1.35f, 1.15f, 12, 1, 0.68f, 0.72f, 0.76f, 1.0f, 0.65f, 0.05f, 0.0f
+                buffer, cx, footH, cz, cx, capBotY, cz,
+                colRadBot, colRadTop, 12, 1, 0.68f, 0.72f, 0.76f, 1.0f, 0.65f, 0.05f, 0.0f
             );
         }
     }
 
-    // 3. Hammerhead Pier Cap Beam
-    AddOrientedBox(buffer, px, seatY - capH * 0.5f, pz, halfW * 1.85f, capH, isPedestrian ? 2.2f : 3.6f, nx, nz, tx, tz, 1, 0.62f, 0.66f, 0.70f);
+    // 3. Hammerhead Pier Cap Crossbeam
+    AddOrientedBox(buffer, px, seatY - capH * 0.5f, pz, halfW * 1.88f, capH, isPedestrian ? 2.2f : 3.8f, nx, nz, tx, tz, 1, 0.62f, 0.66f, 0.70f);
 
-    // 4. Pot Bearings beneath deck soffit
-    for (int side : {-1, 1}) {
-        float bx = px + nx * (halfW * 0.48f * side);
-        float bz = pz + nz * (halfW * 0.48f * side);
-        AddOrientedBox(buffer, bx, seatY + 0.18f, bz, isPedestrian ? 0.8f : 1.6f, 0.36f, isPedestrian ? 0.8f : 1.6f, nx, nz, tx, tz, 2, 0.20f, 0.22f, 0.25f);
+    // 4. Steel Pot Bearings seated cleanly between pier cap and structural soffit
+    int bearingCount = isPedestrian ? 2 : std::max(2, static_cast<int>(std::ceil(params.deckWidthM / 7.5f)));
+    for (int b = 0; b < bearingCount; ++b) {
+        float bFrac = (bearingCount == 1) ? 0.0f : (static_cast<float>(b) / (bearingCount - 1)) * 2.0f - 1.0f;
+        float bx = px + nx * (halfW * 0.56f * bFrac);
+        float bz = pz + nz * (halfW * 0.56f * bFrac);
+        float bSize = isPedestrian ? 0.75f : 1.45f;
+        AddOrientedBox(buffer, bx, seatY + bearingH * 0.5f, bz, bSize, bearingH, bSize, nx, nz, tx, tz, 2, 0.20f, 0.22f, 0.25f);
+    }
+
+    // 5. Flush Metallic Deck Expansion Joint Detent across bridge deck above pier
+    AddOrientedBox(buffer, px, py + 0.012f, pz, halfW * 1.94f, 0.03f, 0.30f, nx, nz, tx, tz, 2, 0.18f, 0.21f, 0.25f);
+}
+
+void BridgeGenerator::BuildEndAbutmentsAndExpansionJoints(
+    BridgeMeshBuffer& buffer,
+    const BridgeParams& params,
+    float structuralDepthM,
+    bool isPedestrian
+) {
+    float halfW = isPedestrian ? std::clamp(params.deckWidthM * 0.5f, 1.6f, 4.2f) : params.deckWidthM * 0.5f;
+    for (float tEnd : {0.0f, 1.0f}) {
+        float ex, ey, ez, etx, ety, etz, ebank;
+        SampleCenterline(tEnd, params, ex, ey, ez, etx, ety, etz, ebank);
+        float nx, nz;
+        NormalizeHorizNormal(etx, etz, nx, nz);
+        float signOut = (tEnd < 0.5f) ? -1.0f : 1.0f;
+
+        // Flush steel comb-plate expansion joint detent across roadway/walkway deck ends
+        AddOrientedBox(buffer, ex, ey + 0.012f, ez, halfW * 1.94f, 0.03f, isPedestrian ? 0.22f : 0.34f, nx, nz, etx, etz, 2, 0.16f, 0.19f, 0.24f);
+
+        if (isPedestrian) continue;
+
+        // Highway End Abutment Seat Wall & Footing strictly below soffit so approach roadways stay level and continuous
+        float bearingH = 0.38f;
+        float seatY = ey - structuralDepthM - bearingH;
+        if (seatY <= 1.2f) continue;
+
+        float footH = 1.8f;
+        float stemH = std::max(0.8f, seatY - footH);
+        float backOffset = signOut * 1.15f;
+        float hLen = std::sqrt(etx * etx + etz * etz);
+        float htx = (hLen > 1e-5f) ? (etx / hLen) : 0.0f;
+        float htz = (hLen > 1e-5f) ? (etz / hLen) : 1.0f;
+
+        float ax = ex + htx * backOffset;
+        float az = ez + htz * backOffset;
+
+        // Grounded Concrete Spread Footing Plinth
+        AddOrientedBox(buffer, ax, footH * 0.5f, az, params.deckWidthM * 1.16f, footH, 5.2f, nx, nz, htx, htz, 1, 0.46f, 0.49f, 0.54f);
+
+        // Reinforced Abutment Stem / Breast Wall
+        AddOrientedBox(buffer, ax, footH + stemH * 0.5f, az, params.deckWidthM * 1.06f, stemH, 2.4f, nx, nz, htx, htz, 1, 0.60f, 0.64f, 0.68f);
+
+        // Pot Bearings seating deck ends onto abutment bridge seat
+        int bearings = std::max(2, static_cast<int>(std::ceil(params.deckWidthM / 7.5f)));
+        for (int b = 0; b < bearings; ++b) {
+            float bFrac = (bearings == 1) ? 0.0f : (static_cast<float>(b) / (bearings - 1)) * 2.0f - 1.0f;
+            float bx = ex + nx * (halfW * 0.72f * bFrac);
+            float bz = ez + nz * (halfW * 0.72f * bFrac);
+            AddOrientedBox(buffer, bx, seatY + bearingH * 0.5f, bz, 1.35f, bearingH, 1.35f, nx, nz, htx, htz, 2, 0.20f, 0.22f, 0.26f);
+        }
+
+        // 35-Degree Splayed Concrete Wing-Walls anchoring abutment into side embankments
+        float wingLen = std::clamp(params.deckWidthM * 0.35f, 4.0f, 8.5f);
+        float wingCos = 0.819f;
+        float wingSin = 0.574f;
+        for (int side : {-1, 1}) {
+            float wStartX = ax + nx * (halfW * 1.04f * side);
+            float wStartZ = az + nz * (halfW * 1.04f * side);
+            float wOutX = htx * signOut * wingCos + nx * (wingSin * side);
+            float wOutZ = htz * signOut * wingCos + nz * (wingSin * side);
+            float wEndX = wStartX + wOutX * wingLen;
+            float wEndZ = wStartZ + wOutZ * wingLen;
+            AddBeam(buffer, wStartX, seatY * 0.52f, wStartZ, wEndX, footH * 0.55f, wEndZ, 0.90f, stemH * 0.55f, 1, 0.56f, 0.60f, 0.64f);
+        }
     }
 }
 
@@ -203,6 +299,8 @@ BridgeMeshBuffer BridgeGenerator::GenerateBridgeMesh(const BridgeParams& inputPa
                     params.type == BridgeType::CantileverTruss ||
                     params.type == BridgeType::SuspensionBridge);
 
+    bool isPlateGirder = (params.type == BridgeType::SteelPlateGirder);
+
     const int segments = 40;
     for (int i = 0; i < segments; ++i) {
         float t0 = static_cast<float>(i) / segments;
@@ -216,6 +314,8 @@ BridgeMeshBuffer BridgeGenerator::GenerateBridgeMesh(const BridgeParams& inputPa
             ExtrudeRomanStoneDeckSegment(buffer, t0, t1, params);
         } else if (isTruss) {
             ExtrudeTrussDeckSegment(buffer, t0, t1, params);
+        } else if (isPlateGirder) {
+            ExtrudeSteelCompositeSlabSegment(buffer, t0, t1, params);
         } else {
             ExtrudeHighwayDeckSegment(buffer, t0, t1, params);
         }
@@ -281,14 +381,28 @@ BridgeMeshBuffer BridgeGenerator::GenerateBridgeMesh(const BridgeParams& inputPa
         BuildPedestrianSurfaceConnections(buffer, params);
     }
 
-    // Cleanly cap highway bridge ends without bulky abutment blocks
+    // Add grounded below-soffit end abutments + flush expansion joint detents matching real structural depth
+    float endStructDepthM = params.deckThicknessM;
+    if (isPedestrian) {
+        endStructDepthM = 0.52f;
+    } else if (isTruss) {
+        endStructDepthM = 1.08f;
+    } else if (isPlateGirder) {
+        float baySpanM = std::max(params.spanLengthM, 24.0f) / 4.0f;
+        float girderDepthM = std::clamp(baySpanM / 18.0f, 1.35f, 3.20f);
+        endStructDepthM = 0.34f + girderDepthM;
+    }
+    BuildEndAbutmentsAndExpansionJoints(buffer, params, endStructDepthM, isPedestrian);
+
     Primitives::ComputeMeshAABB(buffer);
 
     buffer.vertexCount = static_cast<uint32_t>(buffer.vertices.size());
     buffer.triangleCount = static_cast<uint32_t>(buffer.indices.size() / 3);
 
-    buffer.totalConcreteVolumeM3 = params.spanLengthM * params.deckWidthM * params.deckThicknessM * 0.46f;
-    buffer.totalStructuralSteelTons = params.spanLengthM * (params.type == BridgeType::SteelTrussViaduct ? 18.5f : 6.2f);
+    buffer.totalConcreteVolumeM3 = params.spanLengthM * params.deckWidthM * endStructDepthM * 0.46f;
+    buffer.totalStructuralSteelTons = params.spanLengthM * (
+        (params.type == BridgeType::SteelTrussViaduct || params.type == BridgeType::SteelPlateGirder) ? 18.5f : 6.2f
+    );
     buffer.deadLoadKn = buffer.totalConcreteVolumeM3 * 25.0f * 9.81f;
 
     return buffer;
@@ -593,6 +707,101 @@ void BridgeGenerator::ExtrudeTrussDeckSegment(
     }
 }
 
+void BridgeGenerator::ExtrudeSteelCompositeSlabSegment(
+    BridgeMeshBuffer& buffer,
+    float t0, float t1,
+    const BridgeParams& params
+) {
+    float x0, y0, z0, tx0, ty0, tz0, bank0;
+    float x1, y1, z1, tx1, ty1, tz1, bank1;
+    SampleCenterline(t0, params, x0, y0, z0, tx0, ty0, tz0, bank0);
+    SampleCenterline(t1, params, x1, y1, z1, tx1, ty1, tz1, bank1);
+
+    float nx0, nz0, nx1, nz1;
+    NormalizeHorizNormal(tx0, tz0, nx0, nz0);
+    NormalizeHorizNormal(tx1, tz1, nx1, nz1);
+
+    const float halfW = params.deckWidthM * 0.5f;
+    const float slabThick = 0.34f; // True composite RC deck slab thickness (340mm)
+
+    float yL0 = y0 - std::sin(bank0) * halfW;
+    float yR0 = y0 + std::sin(bank0) * halfW;
+    float tl0[3] = { x0 - nx0 * halfW, yL0, z0 - nz0 * halfW };
+    float tr0[3] = { x0 + nx0 * halfW, yR0, z0 + nz0 * halfW };
+    float bl0[3] = { tl0[0], yL0 - slabThick, tl0[2] };
+    float br0[3] = { tr0[0], yR0 - slabThick, tr0[2] };
+
+    float yL1 = y1 - std::sin(bank1) * halfW;
+    float yR1 = y1 + std::sin(bank1) * halfW;
+    float tl1[3] = { x1 - nx1 * halfW, yL1, z1 - nz1 * halfW };
+    float tr1[3] = { x1 + nx1 * halfW, yR1, z1 + nz1 * halfW };
+    float bl1[3] = { tl1[0], yL1 - slabThick, tl1[2] };
+    float br1[3] = { tr1[0], yR1 - slabThick, tr1[2] };
+
+    auto addQuad = [&](
+        const float c0[3], const float c1[3], const float c2[3], const float c3[3],
+        const float norm[3], uint32_t matId, float r, float g, float b
+    ) {
+        float rough, metal, emis;
+        FillMaterialPbr(matId, rough, metal, emis);
+        Primitives::AddQuad<BridgeMeshBuffer, BridgeVertex>(
+            buffer, c0, c1, c2, c3, norm, matId, r, g, b, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, rough, metal, emis
+        );
+    };
+
+    float nUp[3] = { 0.0f, 1.0f, 0.0f };
+    float nDown[3] = { 0.0f, -1.0f, 0.0f };
+    float nLeft[3] = { -nx0, 0.0f, -nz0 };
+    float nRight[3] = { nx0, 0.0f, nz0 };
+
+    // 1. Top Asphalt Wearing Course
+    addQuad(tl0, tr0, tr1, tl1, nUp, 0, 0.22f, 0.24f, 0.27f);
+
+    // 2. Yellow Centerline Stripe
+    float cL0[3] = { x0 - nx0 * 0.14f, y0 + 0.02f, z0 - nz0 * 0.14f };
+    float cR0[3] = { x0 + nx0 * 0.14f, y0 + 0.02f, z0 + nz0 * 0.14f };
+    float cL1[3] = { x1 - nx1 * 0.14f, y1 + 0.02f, z1 - nz1 * 0.14f };
+    float cR1[3] = { x1 + nx1 * 0.14f, y1 + 0.02f, z1 + nz1 * 0.14f };
+    addQuad(cL0, cR0, cR1, cL1, nUp, 3, 0.95f, 0.82f, 0.20f);
+
+    // 3. Exposed Concrete Slab Edge Fascias & Open-Girder Underside Soffit
+    addQuad(tl0, tl1, bl1, bl0, nLeft, 1, 0.70f, 0.72f, 0.75f);
+    addQuad(tr0, br0, br1, tr1, nRight, 1, 0.70f, 0.72f, 0.75f);
+    addQuad(bl0, bl1, br1, br0, nDown, 1, 0.58f, 0.60f, 0.64f);
+
+    // 4. Concrete New Jersey Edge Barriers
+    if (params.hasConcreteNewJerseyBarrier) {
+        float bH = 0.95f, bW = 0.45f, bTW = 0.30f;
+        float lb_ob0[3] = { tl0[0], tl0[1], tl0[2] };
+        float lb_ib0[3] = { tl0[0] + nx0 * bW, tl0[1], tl0[2] + nz0 * bW };
+        float lb_ot0[3] = { tl0[0], tl0[1] + bH, tl0[2] };
+        float lb_it0[3] = { tl0[0] + nx0 * bTW, tl0[1] + bH, tl0[2] + nz0 * bTW };
+
+        float lb_ob1[3] = { tl1[0], tl1[1], tl1[2] };
+        float lb_ib1[3] = { tl1[0] + nx1 * bW, tl1[1], tl1[2] + nz1 * bW };
+        float lb_ot1[3] = { tl1[0], tl1[1] + bH, tl1[2] };
+        float lb_it1[3] = { tl1[0] + nx1 * bTW, tl1[1] + bH, tl1[2] + nz1 * bTW };
+
+        addQuad(lb_ib0, lb_it0, lb_it1, lb_ib1, nRight, 1, 0.72f, 0.74f, 0.76f);
+        addQuad(lb_it0, lb_ot0, lb_ot1, lb_it1, nUp, 1, 0.76f, 0.78f, 0.80f);
+        addQuad(lb_ot0, lb_ob0, lb_ob1, lb_ot1, nLeft, 1, 0.68f, 0.70f, 0.73f);
+
+        float rb_ob0[3] = { tr0[0], tr0[1], tr0[2] };
+        float rb_ib0[3] = { tr0[0] - nx0 * bW, tr0[1], tr0[2] - nz0 * bW };
+        float rb_ot0[3] = { tr0[0], tr0[1] + bH, tr0[2] };
+        float rb_it0[3] = { tr0[0] - nx0 * bTW, tr0[1] + bH, tr0[2] - nz0 * bTW };
+
+        float rb_ob1[3] = { tr1[0], tr1[1], tr1[2] };
+        float rb_ib1[3] = { tr1[0] - nx1 * bW, tr1[1], tr1[2] - nz1 * bW };
+        float rb_ot1[3] = { tr1[0], tr1[1] + bH, tr1[2] };
+        float rb_it1[3] = { tr1[0] - nx1 * bTW, tr1[1] + bH, tr1[2] - nz1 * bTW };
+
+        addQuad(rb_ib0, rb_ib1, rb_it1, rb_it0, nLeft, 1, 0.72f, 0.74f, 0.76f);
+        addQuad(rb_it0, rb_it1, rb_ot1, rb_ot0, nUp, 1, 0.76f, 0.78f, 0.80f);
+        addQuad(rb_ot0, rb_ot1, rb_ob1, rb_ob0, nRight, 1, 0.68f, 0.70f, 0.73f);
+    }
+}
+
 void BridgeGenerator::BuildCableStayedPylonsAndCables(
     BridgeMeshBuffer& buffer,
     const BridgeParams& params
@@ -605,7 +814,8 @@ void BridgeGenerator::BuildCableStayedPylonsAndCables(
     for (float pt : pylonT) {
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float mastH = params.pylonHeightM;
 
@@ -662,7 +872,8 @@ void BridgeGenerator::BuildCableStayedPylonsAndCables(
             float tInward = isFirstPylon ? (pt + frac * maxInwardOffset) : (pt - frac * maxInwardOffset);
             float inX, inY, inZ, inTx, inTy, inTz, inBank;
             SampleCenterline(tInward, params, inX, inY, inZ, inTx, inTy, inTz, inBank);
-            float inNx = inTz, inNz = -inTx;
+            float inNx, inNz;
+            NormalizeHorizNormal(inTx, inTz, inNx, inNz);
 
             float inLeftX = inX - inNx * (halfW - 0.8f);
             float inLeftZ = inZ - inNz * (halfW - 0.8f);
@@ -677,7 +888,8 @@ void BridgeGenerator::BuildCableStayedPylonsAndCables(
             float tOutward = isFirstPylon ? (pt - frac * maxOutwardOffset) : (pt + frac * maxOutwardOffset);
             float outX, outY, outZ, outTx, outTy, outTz, outBank;
             SampleCenterline(tOutward, params, outX, outY, outZ, outTx, outTy, outTz, outBank);
-            float outNx = outTz, outNz = -outTx;
+            float outNx, outNz;
+            NormalizeHorizNormal(outTx, outTz, outNx, outNz);
 
             float outLeftX = outX - outNx * (halfW - 0.8f);
             float outLeftZ = outZ - outNz * (halfW - 0.8f);
@@ -695,7 +907,8 @@ void BridgeGenerator::BuildCableStayedPylonsAndCables(
     for (float sideT : {0.14f, 0.86f}) {
         float sx, sy, sz, stx, sty, stz, sbank;
         SampleCenterline(sideT, params, sx, sy, sz, stx, sty, stz, sbank);
-        float snx = stz, snz = -stx;
+        float snx, snz;
+        NormalizeHorizNormal(stx, stz, snx, snz);
 
         // Ground footing plinth at Y=0
         AddOrientedBox(buffer, sx, 1.2f, sz, halfW * 1.8f, 2.4f, 6.0f, snx, snz, stx, stz, 1, 0.48f, 0.51f, 0.55f);
@@ -732,7 +945,8 @@ void BridgeGenerator::BuildConcreteViaductPiers(
         float pt = static_cast<float>(p) / (piers + 1);
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float pierW = params.pierWidthM;
         float depth = params.deckThicknessM;
@@ -783,7 +997,8 @@ void BridgeGenerator::BuildSteelTrussMembers(
         float t = static_cast<float>(p) / panels;
         float x, y, z, tx, ty, tz, bank;
         SampleCenterline(t, params, x, y, z, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         nodes[p].botL[0] = x - nx * halfW; nodes[p].botL[1] = y; nodes[p].botL[2] = z - nz * halfW;
         nodes[p].botR[0] = x + nx * halfW; nodes[p].botR[1] = y; nodes[p].botR[2] = z + nz * halfW;
@@ -825,9 +1040,9 @@ void BridgeGenerator::BuildSteelTrussMembers(
         AddBeam(buffer, nA.topR[0], nA.topR[1], nA.topR[2], nB.topL[0], nB.topL[1], nB.topL[2], 0.22f, 0.22f, 2, 0.88f, 0.90f, 0.94f);
     }
 
-    // Grounded Intermediate Truss Support Piers (inset from bridge ends)
-    AddIntermediateSupportPier(buffer, 0.18f, params, false);
-    AddIntermediateSupportPier(buffer, 0.82f, params, false);
+    // Grounded Intermediate Truss Support Piers inset from ends with exact floorbeam soffit depth (1.08m)
+    AddIntermediateSupportPier(buffer, 0.18f, params, false, 1.08f, 0.0f);
+    AddIntermediateSupportPier(buffer, 0.82f, params, false, 1.08f, 0.0f);
 }
 
 void BridgeGenerator::BuildParabolicArchRibs(
@@ -835,7 +1050,7 @@ void BridgeGenerator::BuildParabolicArchRibs(
     const BridgeParams& params
 ) {
     const int archSegs = 24;
-    float archApexH = params.pylonHeightM * 0.85f;
+    float archApexH = std::max(params.pylonHeightM * 0.85f, params.spanLengthM * 0.16f);
     float halfW = params.deckWidthM * 0.52f;
 
     struct ArchNode {
@@ -849,7 +1064,8 @@ void BridgeGenerator::BuildParabolicArchRibs(
         float t = static_cast<float>(i) / archSegs;
         float x, y, z, tx, ty, tz, bank;
         SampleCenterline(t, params, x, y, z, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float archY = y + 4.0f * archApexH * t * (1.0f - t) - params.deckThicknessM * 0.5f;
         nodes[i].y = archY;
@@ -865,18 +1081,35 @@ void BridgeGenerator::BuildParabolicArchRibs(
         const auto& nA = nodes[i];
         const auto& nB = nodes[i + 1];
 
-        AddBeam(buffer, nA.left[0], nA.left[1], nA.left[2], nB.left[0], nB.left[1], nB.left[2], 0.95f, 1.4f, 1, 0.85f, 0.88f, 0.92f);
-        AddBeam(buffer, nA.right[0], nA.right[1], nA.right[2], nB.right[0], nB.right[1], nB.right[2], 0.95f, 1.4f, 1, 0.85f, 0.88f, 0.92f);
+        AddBeam(buffer, nA.left[0], nA.left[1], nA.left[2], nB.left[0], nB.left[1], nB.left[2], 1.05f, 1.45f, 1, 0.85f, 0.88f, 0.92f);
+        AddBeam(buffer, nA.right[0], nA.right[1], nA.right[2], nB.right[0], nB.right[1], nB.right[2], 1.05f, 1.45f, 1, 0.85f, 0.88f, 0.92f);
 
         if (nA.y > nA.deckL[1] + 1.2f && i % 2 == 0) {
-            AddBeam(buffer, nA.left[0], nA.left[1], nA.left[2], nA.deckL[0], nA.deckL[1], nA.deckL[2], 0.12f, 0.12f, 2, 0.92f, 0.94f, 0.96f);
-            AddBeam(buffer, nA.right[0], nA.right[1], nA.right[2], nA.deckR[0], nA.deckR[1], nA.deckR[2], 0.12f, 0.12f, 2, 0.92f, 0.94f, 0.96f);
+            AddBeam(buffer, nA.left[0], nA.left[1], nA.left[2], nA.deckL[0], nA.deckL[1], nA.deckL[2], 0.14f, 0.14f, 2, 0.92f, 0.94f, 0.96f);
+            AddBeam(buffer, nA.right[0], nA.right[1], nA.right[2], nA.deckR[0], nA.deckR[1], nA.deckR[2], 0.14f, 0.14f, 2, 0.92f, 0.94f, 0.96f);
             AddBox(buffer, nA.deckL[0], nA.deckL[1], nA.deckL[2], 0.6f, 0.5f, 0.6f, 2, 0.25f, 0.28f, 0.32f);
             AddBox(buffer, nA.deckR[0], nA.deckR[1], nA.deckR[2], 0.6f, 0.5f, 0.6f, 2, 0.25f, 0.28f, 0.32f);
         }
 
         if (nA.y > nA.deckL[1] + 4.0f && i % 3 == 0) {
             AddBeam(buffer, nA.left[0], nA.left[1], nA.left[2], nA.right[0], nA.right[1], nA.right[2], 0.55f, 0.55f, 2, 0.74f, 0.78f, 0.82f);
+        }
+    }
+
+    // Grounded reinforced concrete skewback thrust abutments anchoring arch springings to Y=0
+    for (float tEnd : {0.0f, 1.0f}) {
+        float ex, ey, ez, etx, ety, etz, ebank;
+        SampleCenterline(tEnd, params, ex, ey, ez, etx, ety, etz, ebank);
+        float enx, enz;
+        NormalizeHorizNormal(etx, etz, enx, enz);
+        float springY = ey - params.deckThicknessM * 0.5f;
+        if (springY > 1.0f) {
+            for (int side : {-1, 1}) {
+                float sx = ex + enx * (halfW * side);
+                float sz = ez + enz * (halfW * side);
+                AddOrientedBox(buffer, sx, springY * 0.5f, sz, 2.8f, springY, 4.6f, enx, enz, etx, etz, 1, 0.52f, 0.56f, 0.60f);
+                AddOrientedBox(buffer, sx, 1.1f, sz, 4.4f, 2.2f, 6.2f, enx, enz, etx, etz, 1, 0.46f, 0.49f, 0.54f);
+            }
         }
     }
 
@@ -899,7 +1132,8 @@ void BridgeGenerator::BuildSuspensionTowersAndCatenary(
         float pt = towerPositions[tIdx];
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         // 1. Massive Ground Foundation Plinth (Y = 0 to 3.5m)
         AddOrientedBox(buffer, px, footH * 0.5f, pz, params.deckWidthM * 1.55f, footH, 14.0f, nx, nz, tx, tz, 1, 0.48f, 0.52f, 0.56f);
@@ -940,7 +1174,8 @@ void BridgeGenerator::BuildSuspensionTowersAndCatenary(
             float t = static_cast<float>(i) / catSegs;
             float x, y, z, tx, ty, tz, bank;
             SampleCenterline(t, params, x, y, z, tx, ty, tz, bank);
-            float nx = tz, nz = -tx;
+            float nx, nz;
+            NormalizeHorizNormal(tx, tz, nx, nz);
 
             float sagCurve;
             if (t <= 0.22f) {
@@ -1000,7 +1235,8 @@ void BridgeGenerator::BuildPedestrianFootbridgeStructure(
         float t = static_cast<float>(i) / archDivs;
         float x, y, z, tx, ty, tz, bank;
         SampleCenterline(t, params, x, y, z, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float sinArc = std::sin(t * PI);
         float curY = y + 4.0f * archApexH * t * (1.0f - t);
@@ -1068,7 +1304,8 @@ void BridgeGenerator::BuildExtradosedPylonsAndStays(
         float pt = towerPositions[p];
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float depth = params.deckThicknessM;
         float footH = 2.4f;
@@ -1111,7 +1348,8 @@ void BridgeGenerator::BuildExtradosedPylonsAndStays(
                 if (tFore <= 0.95f) {
                     float fx, fy, fz, ftx, fty, ftz, fbank;
                     SampleCenterline(tFore, params, fx, fy, fz, ftx, fty, ftz, fbank);
-                    float fnx = ftz, fnz = -ftx;
+                    float fnx, fnz;
+                    NormalizeHorizNormal(ftx, ftz, fnx, fnz);
                     float anchorX = fx + fnx * (halfW * 0.6f * side);
                     float anchorZ = fz + fnz * (halfW * 0.6f * side);
                     AddBeam(buffer, px + nx * (1.8f * side), stayAnchorY, pz + nz * (1.8f * side), anchorX, fy + 0.4f, anchorZ, 0.22f, 0.22f, 2, 0.92f, 0.94f, 0.96f);
@@ -1122,7 +1360,8 @@ void BridgeGenerator::BuildExtradosedPylonsAndStays(
                 if (tBack >= 0.05f) {
                     float bx, by, bz, btx, bty, btz, bbank;
                     SampleCenterline(tBack, params, bx, by, bz, btx, bty, btz, bbank);
-                    float bnx = btz, bnz = -btx;
+                    float bnx, bnz;
+                    NormalizeHorizNormal(btx, btz, bnx, bnz);
                     float anchorX = bx + bnx * (halfW * 0.6f * side);
                     float anchorZ = bz + bnz * (halfW * 0.6f * side);
                     AddBeam(buffer, px + nx * (1.8f * side), stayAnchorY, pz + nz * (1.8f * side), anchorX, by + 0.4f, anchorZ, 0.22f, 0.22f, 2, 0.92f, 0.94f, 0.96f);
@@ -1142,13 +1381,14 @@ void BridgeGenerator::BuildBasculeDrawbridgeMachinery(
     for (float pt : { 0.35f, 0.65f }) {
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         // Bascule trunnion pier continuous from Y=0 to deck py
         AddOrientedBox(buffer, px, py * 0.5f, pz, params.deckWidthM * 1.35f, py, 12.0f, nx, nz, tx, tz, 1, 0.50f, 0.53f, 0.58f);
 
-        AddOrientedBox(buffer, px - nx * (halfW + 3.0f), py + 2.5f, pz, 3.6f, 5.0f, 7.0f, nx, nz, tx, tz, 1, 0.70f, 0.74f, 0.78f);
-        AddOrientedBox(buffer, px + nx * (halfW + 3.0f), py + 2.5f, pz, 3.6f, 5.0f, 7.0f, nx, nz, tx, tz, 1, 0.70f, 0.74f, 0.78f);
+        AddOrientedBox(buffer, px - nx * (halfW + 3.0f), py + 2.5f, pz - nz * (halfW + 3.0f), 3.6f, 5.0f, 7.0f, nx, nz, tx, tz, 1, 0.70f, 0.74f, 0.78f);
+        AddOrientedBox(buffer, px + nx * (halfW + 3.0f), py + 2.5f, pz + nz * (halfW + 3.0f), 3.6f, 5.0f, 7.0f, nx, nz, tx, tz, 1, 0.70f, 0.74f, 0.78f);
 
         for (int side : {-1, 1}) {
             float hubX = px + nx * (halfW * 0.85f * side);
@@ -1159,7 +1399,8 @@ void BridgeGenerator::BuildBasculeDrawbridgeMachinery(
         float targetT = (pt < 0.5f) ? 0.495f : 0.505f;
         float mx, my, mz, mtx, mty, mtz, mbank;
         SampleCenterline(targetT, params, mx, my, mz, mtx, mty, mtz, mbank);
-        float mnx = mtz, mnz = -mtx;
+        float mnx, mnz;
+        NormalizeHorizNormal(mtx, mtz, mnx, mnz);
 
         for (int side : {-1, 1}) {
             float startX = px + nx * (halfW * 0.82f * side);
@@ -1173,7 +1414,8 @@ void BridgeGenerator::BuildBasculeDrawbridgeMachinery(
     for (float pt : { 0.18f, 0.82f }) {
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
         AddOrientedBox(buffer, px, py * 0.5f, pz, params.deckWidthM * 1.1f, py, 4.0f, nx, nz, tx, tz, 1, 0.58f, 0.62f, 0.66f);
     }
 }
@@ -1189,7 +1431,8 @@ void BridgeGenerator::BuildCantileverTrussSuperstructure(
         float pt = pierPositions[p];
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         // Cantilever truss pier continuous from ground Y=0 to deck py
         AddOrientedBox(buffer, px, py * 0.5f, pz, params.deckWidthM * 1.35f, py, 14.0f, nx, nz, tx, tz, 1, 0.48f, 0.52f, 0.56f);
@@ -1207,14 +1450,16 @@ void BridgeGenerator::BuildCantileverTrussSuperstructure(
             float tAnchor = (p == 0) ? (pt - 0.16f) : (pt + 0.16f);
             float ax, ay, az, atx, aty, atz, abank;
             SampleCenterline(tAnchor, params, ax, ay, az, atx, aty, atz, abank);
-            float anx = atz, anz = -atx;
+            float anx, anz;
+            NormalizeHorizNormal(atx, atz, anx, anz);
             float armShoreX = ax + anx * halfW * side;
             float armShoreZ = az + anz * halfW * side;
 
             float tCant = (p == 0) ? (pt + 0.12f) : (pt - 0.12f);
             float cx, cy, cz, ctx, cty, ctz, cbank;
             SampleCenterline(tCant, params, cx, cy, cz, ctx, cty, ctz, cbank);
-            float cnx = ctz, cnz = -ctx;
+            float cnx, cnz;
+            NormalizeHorizNormal(ctx, ctz, cnx, cnz);
             float armCentX = cx + cnx * halfW * side;
             float armCentZ = cz + cnz * halfW * side;
 
@@ -1233,8 +1478,9 @@ void BridgeGenerator::BuildCantileverTrussSuperstructure(
         float x2, y2, z2, tx2, ty2, tz2, b2;
         SampleCenterline(0.42f, params, x1, y1, z1, tx1, ty1, tz1, b1);
         SampleCenterline(0.58f, params, x2, y2, z2, tx2, ty2, tz2, b2);
-        float nx1 = tz1, nz1 = -tx1;
-        float nx2 = tz2, nz2 = -tx2;
+        float nx1, nz1, nx2, nz2;
+        NormalizeHorizNormal(tx1, tz1, nx1, nz1);
+        NormalizeHorizNormal(tx2, tz2, nx2, nz2);
 
         float p1X = x1 + nx1 * halfW * side, p1Z = z1 + nz1 * halfW * side;
         float p2X = x2 + nx2 * halfW * side, p2Z = z2 + nz2 * halfW * side;
@@ -1255,7 +1501,8 @@ void BridgeGenerator::BuildCurvedCableStayedPylon(
     float midT = 0.5f;
     float mx, my, mz, mtx, mty, mtz, mbank;
     SampleCenterline(midT, params, mx, my, mz, mtx, mty, mtz, mbank);
-    float nx = mtz, nz = -mtx;
+    float nx, nz;
+    NormalizeHorizNormal(mtx, mtz, nx, nz);
 
     float pylonX = mx - nx * (halfW + 6.0f);
     float pylonZ = mz - nz * (halfW + 6.0f);
@@ -1292,7 +1539,8 @@ void BridgeGenerator::BuildCurvedCableStayedPylon(
         float dx, dy, dz, dtx, dty, dtz, dbank;
         SampleCenterline(tStay, params, dx, dy, dz, dtx, dty, dtz, dbank);
 
-        float lateralNx = dtz, lateralNz = -dtx;
+        float lateralNx, lateralNz;
+        NormalizeHorizNormal(dtx, dtz, lateralNx, lateralNz);
         float deckAnchorX = dx + lateralNx * halfW;
         float deckAnchorY = dy + 0.6f;
         float deckAnchorZ = dz + lateralNz * halfW;
@@ -1309,7 +1557,8 @@ void BridgeGenerator::BuildCurvedCableStayedPylon(
     for (float pt : {0.22f, 0.78f}) {
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float pnx = tz, pnz = -tx;
+        float pnx, pnz;
+        NormalizeHorizNormal(tx, tz, pnx, pnz);
 
         float depth = params.deckThicknessM;
         float footH = 2.4f;
@@ -1352,7 +1601,8 @@ void BridgeGenerator::BuildRomanMasonryArches(
         float pt = static_cast<float>(p) / numArches;
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         AddOrientedBox(buffer, px, (py - 1.5f) * 0.5f, pz, params.deckWidthM * 1.05f, py - 1.5f, 5.2f, nx, nz, tx, tz, 1, 0.58f, 0.54f, 0.48f);
 
@@ -1377,7 +1627,8 @@ void BridgeGenerator::BuildRomanMasonryArches(
                 float t = t0 + frac * (t1 - t0);
                 float x, y, z, tx, ty, tz, bank;
                 SampleCenterline(t, params, x, y, z, tx, ty, tz, bank);
-                float nx = tz, nz = -tx;
+                float nx, nz;
+                NormalizeHorizNormal(tx, tz, nx, nz);
 
                 float archRise = std::sin(frac * PI) * (params.deckClearanceM * 0.68f);
                 float curX = x + nx * (halfW * 0.95f * side);
@@ -1403,7 +1654,8 @@ void BridgeGenerator::BuildPostTensionedOverpassPiers(
     for (float pt : { 0.38f, 0.62f }) {
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float depth = params.deckThicknessM;
         float footH = 2.0f;
@@ -1453,7 +1705,8 @@ void BridgeGenerator::BuildPedestrianStressRibbon(
         float t = static_cast<float>(i) / ribbonSegs;
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         float catenarySag = 4.0f * maxSagM * t * (1.0f - t);
         float rY = py - catenarySag;
@@ -1487,8 +1740,8 @@ void BridgeGenerator::BuildPedestrianStressRibbon(
     }
 
     // Grounded saddle piers aligned directly under the deflected catenary ribbon soffit
-    AddIntermediateSupportPier(buffer, 0.12f, params, true);
-    AddIntermediateSupportPier(buffer, 0.88f, params, true);
+    AddIntermediateSupportPier(buffer, 0.12f, params, true, 0.34f, maxSagM);
+    AddIntermediateSupportPier(buffer, 0.88f, params, true, 0.34f, maxSagM);
 }
 
 void BridgeGenerator::BuildPedestrianCableStayed(
@@ -1501,7 +1754,8 @@ void BridgeGenerator::BuildPedestrianCableStayed(
     float pylonT = 0.30f;
     float px, py, pz, tx, ty, tz, bank;
     SampleCenterline(pylonT, params, px, py, pz, tx, ty, tz, bank);
-    float nx = tz, nz = -tx;
+    float nx, nz;
+    NormalizeHorizNormal(tx, tz, nx, nz);
 
     float mastH = std::clamp(params.pylonHeightM * 0.72f, 12.0f, 28.0f);
     float halfW = std::clamp(params.deckWidthM * 0.5f, 1.6f, 4.2f);
@@ -1529,7 +1783,8 @@ void BridgeGenerator::BuildPedestrianCableStayed(
     for (float tBack : {0.06f, 0.14f}) {
         float bx, by, bz, btx, bty, btz, bbank;
         SampleCenterline(tBack, params, bx, by, bz, btx, bty, btz, bbank);
-        float bnx = btz, bnz = -btx;
+        float bnx, bnz;
+        NormalizeHorizNormal(btx, btz, bnx, bnz);
         float mastY = waistY + (crownY - waistY) * (tBack < 0.10f ? 0.92f : 0.68f);
         for (int side : {-1, 1}) {
             AddBeam(buffer, spireX, mastY, spireZ, bx + bnx * (halfW * side), by + 0.2f, bz + bnz * (halfW * side), 0.10f, 0.10f, 2, 0.92f, 0.94f, 0.96f);
@@ -1544,7 +1799,8 @@ void BridgeGenerator::BuildPedestrianCableStayed(
         if (t > 0.93f) break;
         float dx, dy, dz, dtx, dty, dtz, dbank;
         SampleCenterline(t, params, dx, dy, dz, dtx, dty, dtz, dbank);
-        float dnx = dtz, dnz = -dtx;
+        float dnx, dnz;
+        NormalizeHorizNormal(dtx, dtz, dnx, dnz);
 
         float stayAnchorY = waistY + (crownY - waistY) * (0.20f + frac * 0.78f);
         float mastAnchorX = px - tx * (2.2f * (0.20f + frac * 0.78f));
@@ -1558,7 +1814,8 @@ void BridgeGenerator::BuildPedestrianCableStayed(
     {
         float ox, oy, oz, otx, oty, otz, obank;
         SampleCenterline(0.56f, params, ox, oy, oz, otx, oty, otz, obank);
-        float onx = otz, onz = -otx;
+        float onx, onz;
+        NormalizeHorizNormal(otx, otz, onx, onz);
         float balX = ox + onx * (halfW + 1.4f), balZ = oz + onz * (halfW + 1.4f);
         AddOrientedBox(buffer, balX, oy - 0.05f, balZ, 2.8f, 0.22f, 7.2f, onx, onz, otx, otz, 3, 0.58f, 0.42f, 0.28f);
         AddOrientedBox(buffer, balX, oy - 0.26f, balZ, 2.6f, 0.22f, 6.8f, onx, onz, otx, otz, 2, 0.70f, 0.74f, 0.78f);
@@ -1572,7 +1829,8 @@ void BridgeGenerator::BuildPedestrianCableStayed(
     for (float tl : {0.18f, 0.44f, 0.72f, 0.86f}) {
         float lx, ly, lz, ltx, lty, ltz, lbank;
         SampleCenterline(tl, params, lx, ly, lz, ltx, lty, ltz, lbank);
-        float lnx = ltz, lnz = -ltx;
+        float lnx, lnz;
+        NormalizeHorizNormal(ltx, ltz, lnx, lnz);
         float pxL = lx - lnx * (halfW - 0.1f), pzL = lz - lnz * (halfW - 0.1f);
         AddBeam(buffer, pxL, ly, pzL, pxL, ly + 3.2f, pzL, 0.10f, 0.10f, 2, 0.26f, 0.30f, 0.36f);
         AddBox(buffer, pxL, ly + 3.35f, pzL, 0.32f, 0.28f, 0.32f, 4, 0.98f, 0.86f, 0.40f);
@@ -1599,7 +1857,8 @@ void BridgeGenerator::BuildPedestrianTimberArch(
             float t = static_cast<float>(i) / archDivs;
             float px, py, pz, tx, ty, tz, bank;
             SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-            float nx = tz, nz = -tx;
+            float nx, nz;
+            NormalizeHorizNormal(tx, tz, nx, nz);
 
             float archY = py + 4.0f * archApexH * t * (1.0f - t);
             float curX = px + nx * ribXOffset;
@@ -1621,7 +1880,8 @@ void BridgeGenerator::BuildPedestrianTimberArch(
         float t = static_cast<float>(i) / archDivs;
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
         float archY = py + 4.0f * archApexH * t * (1.0f - t);
 
         if (archY > py + 3.5f) {
@@ -1642,67 +1902,104 @@ void BridgeGenerator::BuildSteelPlateGirders(
     BridgeMeshBuffer& buffer,
     const BridgeParams& params
 ) {
-    const int numGirders = 4;
-    float girderSpacing = params.deckWidthM / (numGirders + 1);
-    float halfW = params.deckWidthM * 0.5f;
-
+    // True AASHTO Multi-Girder Composite Weathering-Steel Plate Girder Design:
+    // Girder count scales with deck width (~3.0m spacing), girder depth scales as baySpanM / 18,
+    // and intermediate pier pot bearings sit directly beneath every bottom girder flange with zero gap.
     const int pierCount = 3;
+    const float baySpanM = std::max(params.spanLengthM, 24.0f) / static_cast<float>(pierCount + 1);
+    const float slabThick = 0.34f;
+    const float girderDepth = std::clamp(baySpanM / 18.0f, 1.35f, 3.20f);
+    const float webH = std::max(0.85f, girderDepth - 0.26f);
+
+    const int numGirders = std::max(4, static_cast<int>(std::ceil(params.deckWidthM / 3.2f)));
+    const float halfW = params.deckWidthM * 0.5f;
+    const float girderEdgeInset = std::min(1.4f, halfW * 0.18f);
+    const float girderSpread = std::max(2.0f, (halfW - girderEdgeInset) * 2.0f);
+    const float girderSpacing = girderSpread / static_cast<float>(numGirders - 1);
+
     for (int p = 1; p <= pierCount; ++p) {
         float pt = static_cast<float>(p) / (pierCount + 1);
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(pt, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
-        float depth = params.deckThicknessM;
         float footH = 2.2f;
-        float seatY = py - depth - 0.45f;
+        float bearingH = 0.40f;
+        float seatY = py - slabThick - girderDepth - bearingH;
 
-        // 1. Grounded Footing / Pile Cap at y=0 (0 to 2.2m)
-        AddOrientedBox(buffer, px, footH * 0.5f, pz, params.deckWidthM * 1.05f, footH, 6.2f, nx, nz, tx, tz, 1, 0.48f, 0.52f, 0.56f);
+        // 1. Grounded Reinforced Pile Cap / Footing at Y=0
+        AddOrientedBox(buffer, px, footH * 0.5f, pz, params.deckWidthM * 1.08f, footH, 6.4f, nx, nz, tx, tz, 1, 0.48f, 0.52f, 0.56f);
 
-        // 2. Twin Columns from footing to pier cap
-        float capH = 1.5f;
-        float capBottomY = seatY - capH;
-        float colH = std::max(1.0f, capBottomY - footH);
-        float colMidY = footH + colH * 0.5f;
-        for (int side : {-1, 1}) {
-            float colX = px + nx * (halfW * 0.48f * side);
-            float colZ = pz + nz * (halfW * 0.48f * side);
-            AddOrientedBox(buffer, colX, colMidY, colZ, 2.4f, colH, 2.8f, nx, nz, tx, tz, 1, 0.65f, 0.68f, 0.72f);
+        // 2. Proportional Circular RC Columns reaching from footing to pier cap soffit
+        float capH = 1.45f;
+        float capBottomY = std::max(footH + 0.5f, seatY - capH);
+        float colRad = std::clamp(params.deckWidthM * 0.052f, 0.95f, 1.55f);
+        int colCount = (params.deckWidthM >= 22.0f) ? 3 : 2;
+        for (int c = 0; c < colCount; ++c) {
+            float cFrac = (colCount == 1) ? 0.0f : (static_cast<float>(c) / (colCount - 1)) * 2.0f - 1.0f;
+            float colX = px + nx * (halfW * 0.56f * cFrac);
+            float colZ = pz + nz * (halfW * 0.56f * cFrac);
+            Primitives::AddCylinder<BridgeMeshBuffer, BridgeVertex>(
+                buffer, colX, footH, colZ, colX, capBottomY, colZ,
+                colRad, colRad * 0.88f, 12, 1, 0.65f, 0.68f, 0.72f, 1.0f, 0.65f, 0.05f, 0.0f
+            );
         }
 
-        // 3. Pier Cap Beam
-        AddOrientedBox(buffer, px, seatY - capH * 0.5f, pz, params.deckWidthM * 0.94f, capH, 3.8f, nx, nz, tx, tz, 1, 0.58f, 0.62f, 0.66f);
+        // 3. Hammerhead Pier Cap Beam
+        AddOrientedBox(buffer, px, seatY - capH * 0.5f, pz, params.deckWidthM * 0.96f, capH, 3.8f, nx, nz, tx, tz, 1, 0.58f, 0.62f, 0.66f);
 
-        // 4. Pot Bearings seating each plate girder
-        for (int g = 1; g <= numGirders; ++g) {
-            float gOff = -halfW + g * girderSpacing;
-            AddOrientedBox(buffer, px + nx * gOff, seatY + 0.18f, pz + nz * gOff, 1.1f, 0.36f, 1.1f, nx, nz, tx, tz, 2, 0.20f, 0.22f, 0.25f);
+        // 4. Pot Bearings seating flush against every Plate Girder Bottom Flange (top == seatY + bearingH == py - slabThick - girderDepth)
+        for (int g = 0; g < numGirders; ++g) {
+            float gOff = -girderSpread * 0.5f + g * girderSpacing;
+            AddOrientedBox(buffer, px + nx * gOff, seatY + bearingH * 0.5f, pz + nz * gOff, 1.15f, bearingH, 1.15f, nx, nz, tx, tz, 2, 0.20f, 0.22f, 0.26f);
         }
+
+        // 5. Flush Steel Modular Expansion Joint across deck above pier
+        AddOrientedBox(buffer, px, py + 0.012f, pz, halfW * 1.94f, 0.03f, 0.30f, nx, nz, tx, tz, 2, 0.18f, 0.21f, 0.25f);
     }
 
-    const int segs = 30;
-    for (int g = 1; g <= numGirders; ++g) {
-        float gOff = -halfW + g * girderSpacing;
-        for (int s = 0; s < segs; ++s) {
-            float t = (s + 0.5f) / segs;
-            float px, py, pz, tx, ty, tz, bank;
-            SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-            float nx = tz, nz = -tx;
-            float segL = params.spanLengthM / segs;
+    const int segs = 32;
+    const float segL = params.spanLengthM / static_cast<float>(segs);
+    const float topFlangeYOff = -slabThick - 0.06f;
+    const float webMidYOff = -slabThick - 0.12f - webH * 0.5f;
+    const float botFlangeYOff = -slabThick - girderDepth + 0.07f;
 
+    for (int s = 0; s < segs; ++s) {
+        float t = (s + 0.5f) / static_cast<float>(segs);
+        float px, py, pz, tx, ty, tz, bank;
+        SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
+
+        for (int g = 0; g < numGirders; ++g) {
+            float gOff = -girderSpread * 0.5f + g * girderSpacing;
             float gx = px + nx * gOff;
             float gz = pz + nz * gOff;
 
-            AddOrientedBox(buffer, gx, py - 0.12f, gz, 0.95f, 0.12f, segL * 1.02f, nx, nz, tx, tz, 2, 0.52f, 0.40f, 0.34f);
-            AddOrientedBox(buffer, gx, py - 0.90f, gz, 0.14f, 1.44f, segL * 1.02f, nx, nz, tx, tz, 2, 0.45f, 0.32f, 0.26f);
-            AddOrientedBox(buffer, gx, py - 1.68f, gz, 1.10f, 0.14f, segL * 1.02f, nx, nz, tx, tz, 2, 0.40f, 0.28f, 0.22f);
+            // Top Steel Flange (bolted via shear studs to 0.34m composite slab)
+            AddOrientedBox(buffer, gx, py + topFlangeYOff, gz, 0.90f, 0.12f, segL * 1.02f, nx, nz, tx, tz, 2, 0.52f, 0.40f, 0.34f);
+            // Weathering-Steel Plate Web
+            AddOrientedBox(buffer, gx, py + webMidYOff, gz, 0.16f, webH, segL * 1.02f, nx, nz, tx, tz, 2, 0.46f, 0.33f, 0.27f);
+            // Bottom Steel Tension Flange
+            AddOrientedBox(buffer, gx, py + botFlangeYOff, gz, 1.05f, 0.14f, segL * 1.02f, nx, nz, tx, tz, 2, 0.40f, 0.28f, 0.22f);
 
-            if (s % 4 == 0 && g < numGirders) {
-                float nextGOff = -halfW + (g + 1) * girderSpacing;
-                float midX = px + nx * (gOff + nextGOff) * 0.5f;
-                float midZ = pz + nz * (gOff + nextGOff) * 0.5f;
-                AddOrientedBox(buffer, midX, py - 0.90f, midZ, girderSpacing - 0.95f, 1.2f, 0.22f, nx, nz, tx, tz, 2, 0.38f, 0.26f, 0.22f);
+            // Vertical Web Stiffeners + Cross-Frame K-Bracing Diaphragms every ~7-10m
+            if (s % 2 == 0) {
+                AddOrientedBox(buffer, gx + nx * 0.22f, py + webMidYOff, gz + nz * 0.22f, 0.34f, webH, 0.18f, nx, nz, tx, tz, 2, 0.38f, 0.27f, 0.22f);
+                if (g + 1 < numGirders) {
+                    float nextOff = gOff + girderSpacing;
+                    float nxX = px + nx * nextOff;
+                    float nxZ = pz + nz * nextOff;
+                    float midX = (gx + nxX) * 0.5f;
+                    float midZ = (gz + nxZ) * 0.5f;
+                    // Bottom & Top Cross-Frame Struts
+                    AddBeam(buffer, gx, py + botFlangeYOff + 0.12f, gz, nxX, py + botFlangeYOff + 0.12f, nxZ, 0.20f, 0.22f, 2, 0.36f, 0.26f, 0.22f);
+                    AddBeam(buffer, gx, py + topFlangeYOff - 0.12f, gz, nxX, py + topFlangeYOff - 0.12f, nxZ, 0.20f, 0.22f, 2, 0.36f, 0.26f, 0.22f);
+                    // K-brace diagonals
+                    AddBeam(buffer, gx, py + topFlangeYOff - 0.12f, gz, midX, py + botFlangeYOff + 0.12f, midZ, 0.18f, 0.18f, 2, 0.42f, 0.30f, 0.25f);
+                    AddBeam(buffer, nxX, py + topFlangeYOff - 0.12f, nxZ, midX, py + botFlangeYOff + 0.12f, midZ, 0.18f, 0.18f, 2, 0.42f, 0.30f, 0.25f);
+                }
             }
         }
     }
@@ -1727,7 +2024,8 @@ void BridgeGenerator::BuildPedestrianCoveredSkywalk(
         float t = static_cast<float>(r) / ringCount;
         float px, py, pz, tx, ty, tz, bank;
         SampleCenterline(t, params, px, py, pz, tx, ty, tz, bank);
-        float nx = tz, nz = -tx;
+        float nx, nz;
+        NormalizeHorizNormal(tx, tz, nx, nz);
 
         // Taper profile gracefully into sleek canopy portal
         float archSteps = 8;

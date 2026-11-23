@@ -93,23 +93,31 @@ fun CppViewport3DCanvas(
             val cx = width / 2f + panX
             val cy = height / 2f + panY
 
-            // Responsive scale based on asset envelope
+            val extentX = (mesh.boundingBoxMax[0] - mesh.boundingBoxMin[0]).coerceAtLeast(1f)
+            val extentY = (mesh.boundingBoxMax[1] - mesh.boundingBoxMin[1]).coerceAtLeast(1f)
+            val extentZ = (mesh.boundingBoxMax[2] - mesh.boundingBoxMin[2]).coerceAtLeast(1f)
+            val bridgeExtentM = maxOf(extentX, extentY * 1.4f, extentZ, 32f)
+            val bridgeGridHalfM = (kotlin.math.ceil((maxOf(extentX, extentZ) * 0.60f) / 10f) * 10f).coerceAtLeast(30f)
+
+            // Responsive scale based on physical asset AABB envelope
             val baseScale = when (mesh.assetType) {
                 CppAssetType.GARAGE_001 -> (min(width, height) / 38f) * zoom
                 CppAssetType.TEST_VEHICLE_LORRY -> (min(width, height) / 8.5f) * zoom
                 CppAssetType.MODULAR_POWER_POST -> (min(width, height) / 14.5f) * zoom
                 CppAssetType.POWER_GRID_NETWORK -> (min(width, height) / 44f) * zoom
-                CppAssetType.MODULAR_BRIDGE -> (min(width, height) / 95f) * zoom
+                CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_FOOTBRIDGE -> (min(width, height) / (bridgeExtentM * 0.92f)) * zoom
                 CppAssetType.MODULAR_TOLL_PLAZA -> (min(width, height) / 46f) * zoom
                 CppAssetType.MODULAR_TUNNEL -> (min(width, height) / 70f) * zoom
                 CppAssetType.MODULAR_INTERCHANGE -> (min(width, height) / 110f) * zoom
                 CppAssetType.MODULAR_RETAINING_WALL -> (min(width, height) / 50f) * zoom
                 CppAssetType.CONNECTED_HIGHWAY_SCENE -> (min(width, height) / 160f) * zoom
-                CppAssetType.MODULAR_FOOTBRIDGE -> (min(width, height) / 72f) * zoom
                 CppAssetType.MODULAR_EXPRESSWAY -> (min(width, height) / 110f) * zoom
                 CppAssetType.MODULAR_SIGNPOST -> (min(width, height) / 36f) * zoom
                 CppAssetType.MODULAR_BARRIER -> (min(width, height) / 44f) * zoom
                 CppAssetType.MODULAR_ROAD_BLOCK -> (min(width, height) / 38f) * zoom
+                CppAssetType.MODULAR_ROAD_NETWORK -> (min(width, height) / 72f) * zoom
+                CppAssetType.MODULAR_SPLINE_GRAPH -> (min(width, height) / 110f) * zoom
+                CppAssetType.MODULAR_ROAD_TILE -> (min(width, height) / 58f) * zoom
             }
 
             // Center of entire model for camera centering, rotation, and explosion disassembly
@@ -123,17 +131,19 @@ fun CppViewport3DCanvas(
                 CppAssetType.TEST_VEHICLE_LORRY -> 13.0f
                 CppAssetType.MODULAR_POWER_POST -> 20.0f
                 CppAssetType.POWER_GRID_NETWORK -> 56.0f
-                CppAssetType.MODULAR_BRIDGE -> 140.0f
+                CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_FOOTBRIDGE -> bridgeExtentM * 1.45f
                 CppAssetType.MODULAR_TOLL_PLAZA -> 75.0f
                 CppAssetType.MODULAR_TUNNEL -> 95.0f
                 CppAssetType.MODULAR_INTERCHANGE -> 150.0f
                 CppAssetType.MODULAR_RETAINING_WALL -> 70.0f
                 CppAssetType.CONNECTED_HIGHWAY_SCENE -> 260.0f
-                CppAssetType.MODULAR_FOOTBRIDGE -> 110.0f
                 CppAssetType.MODULAR_EXPRESSWAY -> 160.0f
                 CppAssetType.MODULAR_SIGNPOST -> 58.0f
                 CppAssetType.MODULAR_BARRIER -> 66.0f
                 CppAssetType.MODULAR_ROAD_BLOCK -> 58.0f
+                CppAssetType.MODULAR_ROAD_NETWORK -> 95.0f
+                CppAssetType.MODULAR_SPLINE_GRAPH -> 155.0f
+                CppAssetType.MODULAR_ROAD_TILE -> 78.0f
             }
 
             // 1. Draw 3D Ground Grid with matching perspective convergence
@@ -148,7 +158,8 @@ fun CppViewport3DCanvas(
                     centerZ = centerModelZ,
                     cameraDist = cameraDist,
                     isPerspective = isPerspective,
-                    fovDeg = fovAngleDeg
+                    fovDeg = fovAngleDeg,
+                    bridgeGridHalfM = bridgeGridHalfM
                 )
             }
 
@@ -647,28 +658,33 @@ private fun DrawScope.drawGroundGrid(
     centerX: Float, centerY: Float, centerZ: Float,
     cameraDist: Float,
     isPerspective: Boolean,
-    fovDeg: Float
+    fovDeg: Float,
+    bridgeGridHalfM: Float = 100f
 ) {
     val halfSize = when (assetType) {
         CppAssetType.GARAGE_001 -> 36f
         CppAssetType.POWER_GRID_NETWORK -> 42f
         CppAssetType.MODULAR_POWER_POST -> 9f
         CppAssetType.TEST_VEHICLE_LORRY -> 7f
-        CppAssetType.MODULAR_BRIDGE -> 100f
+        CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_FOOTBRIDGE -> bridgeGridHalfM
         CppAssetType.MODULAR_TOLL_PLAZA -> 45f
         CppAssetType.MODULAR_TUNNEL -> 60f
         CppAssetType.MODULAR_INTERCHANGE -> 120f
         CppAssetType.MODULAR_RETAINING_WALL -> 50f
         CppAssetType.CONNECTED_HIGHWAY_SCENE -> 180f
-        CppAssetType.MODULAR_FOOTBRIDGE -> 75f
         CppAssetType.MODULAR_EXPRESSWAY -> 110f
         CppAssetType.MODULAR_SIGNPOST -> 28f
         CppAssetType.MODULAR_BARRIER -> 45f
         CppAssetType.MODULAR_ROAD_BLOCK -> 35f
+        CppAssetType.MODULAR_ROAD_NETWORK -> 60f
+        CppAssetType.MODULAR_SPLINE_GRAPH -> 100f
+        CppAssetType.MODULAR_ROAD_TILE -> 42f
     }
     val step = when (assetType) {
         CppAssetType.GARAGE_001, CppAssetType.POWER_GRID_NETWORK -> 4f
-        CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_INTERCHANGE, CppAssetType.CONNECTED_HIGHWAY_SCENE, CppAssetType.MODULAR_EXPRESSWAY -> 10f
+        CppAssetType.MODULAR_BRIDGE, CppAssetType.MODULAR_FOOTBRIDGE, CppAssetType.MODULAR_INTERCHANGE,
+        CppAssetType.CONNECTED_HIGHWAY_SCENE, CppAssetType.MODULAR_EXPRESSWAY,
+        CppAssetType.MODULAR_ROAD_NETWORK, CppAssetType.MODULAR_SPLINE_GRAPH -> 10f
         else -> 2f
     }
 

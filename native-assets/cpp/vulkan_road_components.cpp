@@ -770,6 +770,218 @@ RoadComponentMeshSummary VulkanRoadComponentEngine::GenerateRoadBlock(
     return s;
 }
 
+RoadComponentMeshSummary VulkanRoadComponentEngine::GenerateRoadNetwork(
+    ApexAssets::Road::RoadNetworkType type,
+    float roadWidthM,
+    float armSpanM,
+    uint32_t laneCount,
+    float cornerRadiusM,
+    bool hasSignals,
+    std::vector<RoadEngineVertex>& outVertices,
+    std::vector<uint32_t>& outIndices
+) {
+    ApexAssets::Road::RoadNetworkParams p;
+    p.type = type;
+    p.roadWidthM = roadWidthM;
+    p.armSpanM = armSpanM;
+    p.laneCount = laneCount;
+    p.cornerRadiusM = cornerRadiusM;
+    p.hasTrafficSignals = hasSignals;
+
+    auto mesh = ApexAssets::Road::RoadNetworkGenerator::GenerateNetworkMesh(p);
+
+    outVertices.clear();
+    outIndices.clear();
+    outVertices.reserve(mesh.vertices.size());
+
+    for (const auto& nv : mesh.vertices) {
+        RoadEngineVertex v{};
+        v.pos[0] = nv.pos[0]; v.pos[1] = nv.pos[1]; v.pos[2] = nv.pos[2];
+        v.normal[0] = nv.normal[0]; v.normal[1] = nv.normal[1]; v.normal[2] = nv.normal[2];
+        v.uv[0] = nv.uv[0]; v.uv[1] = nv.uv[1];
+        CopyColorOrFallback(nv, v);
+        outVertices.push_back(v);
+    }
+    outIndices = mesh.indices;
+
+    RoadComponentMeshSummary s;
+    s.componentId = "modular_road_network";
+    switch (type) {
+        case ApexAssets::Road::RoadNetworkType::Signalized4WayIntersection:
+            s.name = "Signalized 4-Way Urban Intersection & Crosswalks";
+            s.subType = "4-Way Signalized";
+            break;
+        case ApexAssets::Road::RoadNetworkType::TJunctionArterial:
+            s.name = "Channelized Arterial T-Junction with Splitter Island";
+            s.subType = "T-Junction";
+            break;
+        case ApexAssets::Road::RoadNetworkType::YForkBifurcation:
+            s.name = "Expressway Y-Fork Bifurcation & Gore Nose";
+            s.subType = "Y-Fork Split";
+            break;
+        case ApexAssets::Road::RoadNetworkType::DistrictStreetGrid:
+            s.name = "2x2 Connected Urban Street Network Block";
+            s.subType = "2x2 Street Grid";
+            break;
+    }
+    s.vertexCount = static_cast<uint32_t>(outVertices.size());
+    s.triangleCount = static_cast<uint32_t>(outIndices.size() / 3);
+    s.lengthMeters = armSpanM;
+    s.widthMeters = armSpanM;
+    s.heightMeters = hasSignals ? 8.8f : 1.0f;
+    s.curvatureRadiusM = cornerRadiusM;
+    s.bankingAngleDeg = 0.0f;
+    s.civilStandard = "FHWA MUTCD Chapter 4 / NACTO Urban Street Design Guide";
+    s.vulkanPipelineConfig = "Vulkan 1.3 / Topological Intersection Graph & Signal LEDs";
+    s.boundingBoxMin[0] = mesh.minAABB[0]; s.boundingBoxMin[1] = mesh.minAABB[1]; s.boundingBoxMin[2] = mesh.minAABB[2];
+    s.boundingBoxMax[0] = mesh.maxAABB[0]; s.boundingBoxMax[1] = mesh.maxAABB[1]; s.boundingBoxMax[2] = mesh.maxAABB[2];
+    return s;
+}
+
+RoadComponentMeshSummary VulkanRoadComponentEngine::GenerateSplineGraph(
+    ApexAssets::Road::SplineCurveType type,
+    float splineLengthM,
+    float roadWidthM,
+    float designSpeedKmH,
+    float elevationGainM,
+    float curvatureIntensity,
+    std::vector<RoadEngineVertex>& outVertices,
+    std::vector<uint32_t>& outIndices
+) {
+    ApexAssets::Road::RoadSplineParams p;
+    p.type = type;
+    p.splineLengthM = splineLengthM;
+    p.roadWidthM = roadWidthM;
+    p.designSpeedKmH = designSpeedKmH;
+    p.elevationGainM = elevationGainM;
+    p.curvatureIntensity = curvatureIntensity;
+
+    auto mesh = ApexAssets::Road::RoadSplineGraph::GenerateSplineMesh(p);
+
+    outVertices.clear();
+    outIndices.clear();
+    outVertices.reserve(mesh.vertices.size());
+
+    for (const auto& sv : mesh.vertices) {
+        RoadEngineVertex v{};
+        v.pos[0] = sv.pos[0]; v.pos[1] = sv.pos[1]; v.pos[2] = sv.pos[2];
+        v.normal[0] = sv.normal[0]; v.normal[1] = sv.normal[1]; v.normal[2] = sv.normal[2];
+        v.uv[0] = sv.uv[0]; v.uv[1] = sv.uv[1];
+        CopyColorOrFallback(sv, v);
+        outVertices.push_back(v);
+    }
+    outIndices = mesh.indices;
+
+    RoadComponentMeshSummary s;
+    s.componentId = "modular_spline_graph";
+    switch (type) {
+        case ApexAssets::Road::SplineCurveType::ClothoidSCurve:
+            s.name = "Reverse Clothoid S-Curve & Roll Transition";
+            s.subType = "Clothoid S-Curve";
+            break;
+        case ApexAssets::Road::SplineCurveType::HairpinSwitchback:
+            s.name = "180° Ascending Mountain Hairpin Switchback";
+            s.subType = "Mountain Hairpin";
+            break;
+        case ApexAssets::Road::SplineCurveType::CatmullRomCorridor:
+            s.name = "Centripetal Catmull-Rom Undulating Corridor";
+            s.subType = "Catmull-Rom Ribbon";
+            break;
+        case ApexAssets::Road::SplineCurveType::BankedSpiralHelix:
+            s.name = "Superelevated 290° Helical Spiral Viaduct";
+            s.subType = "Banked Spiral Helix";
+            break;
+    }
+    s.vertexCount = static_cast<uint32_t>(outVertices.size());
+    s.triangleCount = static_cast<uint32_t>(outIndices.size() / 3);
+    s.lengthMeters = splineLengthM;
+    s.widthMeters = roadWidthM;
+    s.heightMeters = elevationGainM + 2.0f;
+    s.curvatureRadiusM = mesh.minRadiusM;
+    s.bankingAngleDeg = mesh.maxSuperelevationDeg;
+    s.civilStandard = "AASHTO Table 3-7 Superelevation / C2 Catmull-Rom Splines";
+    s.vulkanPipelineConfig = "Vulkan 1.3 / GPU Spline Extrude Compute & Banked PBR";
+    s.boundingBoxMin[0] = mesh.minAABB[0]; s.boundingBoxMin[1] = mesh.minAABB[1]; s.boundingBoxMin[2] = mesh.minAABB[2];
+    s.boundingBoxMax[0] = mesh.maxAABB[0]; s.boundingBoxMax[1] = mesh.maxAABB[1]; s.boundingBoxMax[2] = mesh.maxAABB[2];
+    return s;
+}
+
+RoadComponentMeshSummary VulkanRoadComponentEngine::GenerateRoadTile(
+    ApexAssets::Road::RoadTileType type,
+    float tileSizeM,
+    float roadWidthM,
+    float cutFillHeightM,
+    float distressDepthM,
+    bool hasDrainageAndCurbs,
+    std::vector<RoadEngineVertex>& outVertices,
+    std::vector<uint32_t>& outIndices
+) {
+    ApexAssets::Road::RoadTileParams p;
+    p.type = type;
+    p.tileSizeM = tileSizeM;
+    p.roadWidthM = roadWidthM;
+    p.cutFillHeightM = cutFillHeightM;
+    p.distressDepthM = distressDepthM;
+    p.hasDrainageAndCurbs = hasDrainageAndCurbs;
+
+    auto mesh = ApexAssets::Road::RoadTileGen::GenerateRoadTileMesh(p);
+
+    outVertices.clear();
+    outIndices.clear();
+    outVertices.reserve(mesh.vertices.size());
+
+    for (const auto& tv : mesh.vertices) {
+        RoadEngineVertex v{};
+        v.pos[0] = tv.pos[0]; v.pos[1] = tv.pos[1]; v.pos[2] = tv.pos[2];
+        v.normal[0] = tv.normal[0]; v.normal[1] = tv.normal[1]; v.normal[2] = tv.normal[2];
+        v.uv[0] = tv.uv[0]; v.uv[1] = tv.uv[1];
+        CopyColorOrFallback(tv, v);
+        outVertices.push_back(v);
+    }
+    outIndices = mesh.indices;
+
+    RoadComponentMeshSummary s;
+    s.componentId = "modular_road_tile";
+    switch (type) {
+        case ApexAssets::Road::RoadTileType::CutFillHillsideTile:
+            s.name = "Streaming Cut & Fill Hillside Road Tile";
+            s.subType = "Cut/Fill Hillside";
+            break;
+        case ApexAssets::Road::RoadTileType::QuadtreeUrbanTile:
+            s.name = "Quadtree Urban Kerb & Storm Grate Tile";
+            s.subType = "Urban Quadtree";
+            break;
+        case ApexAssets::Road::RoadTileType::WetPuddleStateTile:
+            s.name = "Rain-Slicked Wet Puddle State Tile (mu=0.62)";
+            s.subType = "Wet Puddles";
+            break;
+        case ApexAssets::Road::RoadTileType::MuddyGravelRutTile:
+            s.name = "Muddy & Washboard Gravel Haul Tile (mu=0.34)";
+            s.subType = "Muddy / Gravel";
+            break;
+        case ApexAssets::Road::RoadTileType::PotholedCrackedTile:
+            s.name = "Potholed & Cracked Pavement Distress Tile";
+            s.subType = "Potholed / Cracked";
+            break;
+        case ApexAssets::Road::RoadTileType::SnowyIcyCorridorTile:
+            s.name = "Snowy Berms & Glazed Black-Ice Tile (mu=0.18)";
+            s.subType = "Snowy / Icy";
+            break;
+    }
+    s.vertexCount = static_cast<uint32_t>(outVertices.size());
+    s.triangleCount = static_cast<uint32_t>(outIndices.size() / 3);
+    s.lengthMeters = tileSizeM;
+    s.widthMeters = tileSizeM;
+    s.heightMeters = cutFillHeightM + 1.5f;
+    s.curvatureRadiusM = 0.0f;
+    s.bankingAngleDeg = 0.0f;
+    s.civilStandard = "Streaming Quadtree LOD Tile & 10-State Surface Friction Physics";
+    s.vulkanPipelineConfig = "Vulkan 1.3 / Procedural Surface Compute (.comp) & Wet ORM";
+    s.boundingBoxMin[0] = mesh.minAABB[0]; s.boundingBoxMin[1] = mesh.minAABB[1]; s.boundingBoxMin[2] = mesh.minAABB[2];
+    s.boundingBoxMax[0] = mesh.maxAABB[0]; s.boundingBoxMax[1] = mesh.maxAABB[1]; s.boundingBoxMax[2] = mesh.maxAABB[2];
+    return s;
+}
+
 RoadComponentMeshSummary VulkanRoadComponentEngine::AssembleConnectedHighwayScene(
     float sceneScale,
     std::vector<RoadEngineVertex>& outVertices,

@@ -1,0 +1,53 @@
+// ==============================================================================
+// Aerodynamic Aluminum/PV Toll Canopy Cladding Texture Compute Kernel (.comp)
+// Path: src/road/tolls/shaders/toll_canopy_tex.comp
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "../../shaders/include/road_common.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outCanopyAlbedo;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D outCanopyMaterial;
+
+layout(push_constant) uniform TollCanopyPC {
+    uint texSize;
+    uint isSolarPvRoof;
+    float seamPitch;
+    float patinaFactor;
+} pc;
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.texSize) || px.y >= int(pc.texSize)) {
+        return;
+    }
+
+    vec2 uv = vec2(px) / float(max(pc.texSize - 1u, 1u));
+    float pitch = max(pc.seamPitch, 8.0);
+    vec2 panelGrid = abs(fract(uv * vec2(pitch, pitch * 0.5)) - 0.5);
+    float seam = max(1.0 - smoothstep(0.45, 0.495, panelGrid.x), 1.0 - smoothstep(0.46, 0.495, panelGrid.y));
+
+    vec3 albedo;
+    float roughness;
+    float metallic;
+
+    if (pc.isSolarPvRoof != 0u) {
+        // Monocrystalline silicon PV wafers with aluminum busbar ribs
+        float waferMicro = roadValueNoise(uv * 120.0) * 0.04;
+        albedo = mix(vec3(0.05, 0.09, 0.22) + waferMicro, vec3(0.75, 0.79, 0.84), seam);
+        roughness = mix(0.14, 0.34, seam);
+        metallic = mix(0.35, 0.88, seam);
+    } else {
+        // Brushed architectural composite cladding
+        float grain = roadValueNoise(vec2(uv.x * 20.0, uv.y * 90.0)) * 0.05;
+        albedo = vec3(0.84, 0.87, 0.90) * (1.0 - seam * 0.35) - grain;
+        roughness = mix(0.28 + clamp(pc.patinaFactor, 0.0, 0.35), 0.55, seam);
+        metallic = 0.72;
+    }
+
+    imageStore(outCanopyAlbedo, px, vec4(albedo, 1.0));
+    imageStore(outCanopyMaterial, px, vec4(1.0 - seam * 0.3, roughness, metallic, 1.0));
+}

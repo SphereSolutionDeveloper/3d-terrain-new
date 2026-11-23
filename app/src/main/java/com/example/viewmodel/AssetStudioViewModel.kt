@@ -1006,6 +1006,15 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
             CppAssetType.MODULAR_ROAD_BLOCK -> {
                 _cppMesh.value = NativeEngineBridge.generateModularRoadBlockMesh().toProceduralModelMesh()
             }
+            CppAssetType.MODULAR_ROAD_NETWORK -> {
+                _cppMesh.value = NativeEngineBridge.generateModularRoadNetworkMesh().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_SPLINE_GRAPH -> {
+                _cppMesh.value = NativeEngineBridge.generateModularSplineGraphMesh().toProceduralModelMesh()
+            }
+            CppAssetType.MODULAR_ROAD_TILE -> {
+                _cppMesh.value = NativeEngineBridge.generateModularRoadTileMesh().toProceduralModelMesh()
+            }
         }
     }
 
@@ -1081,6 +1090,15 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
             }
             "ROAD_BLOCK" -> {
                 _roadMesh.value = NativeEngineBridge.generateModularRoadBlockMesh().toProceduralModelMesh()
+            }
+            "ROAD_NETWORK" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularRoadNetworkMesh().toProceduralModelMesh()
+            }
+            "SPLINE_GRAPH" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularSplineGraphMesh().toProceduralModelMesh()
+            }
+            "ROAD_TILE" -> {
+                _roadMesh.value = NativeEngineBridge.generateModularRoadTileMesh().toProceduralModelMesh()
             }
             else -> {
                 _roadMesh.value = NativeEngineBridge.generateConnectedHighwayScene().toProceduralModelMesh()
@@ -1180,7 +1198,10 @@ class AssetStudioViewModel(application: Application) : AndroidViewModel(applicat
             CppAssetType.MODULAR_EXPRESSWAY,
             CppAssetType.MODULAR_SIGNPOST,
             CppAssetType.MODULAR_BARRIER,
-            CppAssetType.MODULAR_ROAD_BLOCK -> {
+            CppAssetType.MODULAR_ROAD_BLOCK,
+            CppAssetType.MODULAR_ROAD_NETWORK,
+            CppAssetType.MODULAR_SPLINE_GRAPH,
+            CppAssetType.MODULAR_ROAD_TILE -> {
                 when (preset) {
                     "Front" -> { cppYaw.value = 0.0f; cppPitch.value = 0.20f }
                     "Side" -> { cppYaw.value = 1.57f; cppPitch.value = 0.20f }

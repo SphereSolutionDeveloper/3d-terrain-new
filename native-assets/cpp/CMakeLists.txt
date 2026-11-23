@@ -35,6 +35,9 @@ add_library(apex_vulkan SHARED
     ../src/road/barriers/BarrierKit.cpp
     ../src/road/signage/SignpostGenerator.cpp
     ../src/road/roadblocks/RoadBlockGenerator.cpp
+    ../src/road/RoadNetwork.cpp
+    ../src/road/RoadSplineGraph.cpp
+    ../src/road/RoadTileGen.cpp
     ../src/road/vulkan/VulkanRoadScene.cpp
 )
 

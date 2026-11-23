@@ -279,6 +279,9 @@ private fun CppAssetSelectorRow(
                 CppAssetType.MODULAR_SIGNPOST -> Color(0xFF66BB6A)
                 CppAssetType.MODULAR_BARRIER -> Color(0xFFFFCA28)
                 CppAssetType.MODULAR_ROAD_BLOCK -> Color(0xFFFF7043)
+                CppAssetType.MODULAR_ROAD_NETWORK -> Color(0xFF29B6F6)
+                CppAssetType.MODULAR_SPLINE_GRAPH -> Color(0xFFAB47BC)
+                CppAssetType.MODULAR_ROAD_TILE -> Color(0xFFFFA726)
             }
 
             Surface(
@@ -313,6 +316,9 @@ private fun CppAssetSelectorRow(
                         CppAssetType.MODULAR_SIGNPOST -> Icons.Default.Signpost
                         CppAssetType.MODULAR_BARRIER -> Icons.Default.Fence
                         CppAssetType.MODULAR_ROAD_BLOCK -> Icons.Default.Block
+                        CppAssetType.MODULAR_ROAD_NETWORK -> Icons.Default.Traffic
+                        CppAssetType.MODULAR_SPLINE_GRAPH -> Icons.Default.Timeline
+                        CppAssetType.MODULAR_ROAD_TILE -> Icons.Default.Terrain
                     }
                     Icon(
                         imageVector = iconVector,

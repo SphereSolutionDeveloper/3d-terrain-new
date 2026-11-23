@@ -15,7 +15,7 @@ import kotlin.math.*
 
 class C58CorridorRepository(private val context: Context) {
 
-    private val cacheFile = File(context.filesDir, "route_c58_3km_corridor_v1_cache.json")
+    private val cacheFile = File(context.filesDir, "route_c58_3km_corridor_v3_cache.json")
 
     // Pure-Kotlin UTM Zone 37S + centerline mirror state for headless JVM tests when .so isn't loaded
     private var fallbackCenterlineLatLon: List<Pair<Double, Double>> = buildDefaultAnchorsLatLon()
@@ -208,8 +208,15 @@ class C58CorridorRepository(private val context: Context) {
     suspend fun loadBinaryAssetBundle(): C58CorridorBundle? = withContext(Dispatchers.IO) {
         return@withContext try {
             context.assets.open("terrain_grid/c58_corridor_3km.bin").use { stream ->
-                val bundle = parseBinaryStream(stream)
+                val bytes = stream.readBytes()
+                val bundle = parseBinaryStream(bytes.inputStream())
                 syncBundleToCpp(bundle)
+                if (NativeEngineBridge.isLoaded()) {
+                    try {
+                        NativeEngineBridge.nativeParseBuildingsFromBinary(bytes, true)
+                    } catch (_: Throwable) {
+                    }
+                }
                 bundle
             }
         } catch (e: Exception) {
@@ -218,291 +225,16 @@ class C58CorridorRepository(private val context: Context) {
         }
     }
 
-    fun parseBinaryStream(stream: InputStream): C58CorridorBundle {
-        val bytes = stream.readBytes()
-        val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+    fun parseBinaryStream(stream: InputStream): C58CorridorBundle =
+        parseBinaryBytesWithCallbacks(stream.readBytes(), { pairs -> setCenterlinePairs(pairs) }, { getCorridorSummary() }, { getCorridorRibbon() }, { s -> buildSectorSpecs(s) })
 
-        val magic = ByteArray(4)
-        buf.get(magic)
-        check(String(magic, Charsets.US_ASCII) == "C58B") { "Invalid C58B binary header" }
-        buf.short // version
-        val isLiveCl = buf.short.toInt() != 0
-
-        fun readStr(): String {
-            val len = buf.short.toInt() and 0xFFFF
-            if (len == 0) return ""
-            val arr = ByteArray(len)
-            buf.get(arr)
-            return String(arr, Charsets.UTF_8)
-        }
-
-        val refE = buf.double
-        val refN = buf.double
-
-        // Exact inverse for points; nearby house vertices use local scale+rotation around centroid
-        fun readC58Coord(): C58Coord {
-            val ue = refE + buf.float.toDouble()
-            val un = refN + buf.float.toDouble()
-            val ch = buf.float.toDouble()
-            val off = buf.float
-            val (lat, lon) = utm37SToLatLonKotlin(ue, un)
-            return C58Coord(
-                lat = lat,
-                lon = lon,
-                utmEast = ue,
-                utmNorth = un,
-                chainageM = ch,
-                lateralOffsetM = off,
-                insideCorridor = abs(off) <= 1500.5f
-            )
-        }
-
-        fun readC58CoordNear(anchor: C58Coord, dLatPerE: Double, dLatPerN: Double, dLonPerE: Double, dLonPerN: Double): C58Coord {
-            val ue = refE + buf.float.toDouble()
-            val un = refN + buf.float.toDouble()
-            val ch = buf.float.toDouble()
-            val off = buf.float
-            val de = ue - anchor.utmEast
-            val dn = un - anchor.utmNorth
-            return C58Coord(
-                lat = anchor.lat + de * dLatPerE + dn * dLatPerN,
-                lon = anchor.lon + de * dLonPerE + dn * dLonPerN,
-                utmEast = ue,
-                utmNorth = un,
-                chainageM = ch,
-                lateralOffsetM = off,
-                insideCorridor = abs(off) <= 1500.5f
-            )
-        }
-
-        val routeName = readStr()
-        val extractedAtIso = readStr()
-        val osmSourceUrl = readStr()
-        val demSourceUrl = readStr()
-        val demResolutionM = buf.float
-        val lakeLevelAslM = buf.float
-        val elevMinM = buf.float
-        val elevMaxM = buf.float
-        val elevMeanM = buf.float
-
-        val secCount = buf.get().toInt() and 0xFF
-        val extractedSectors = ArrayList<Int>(secCount)
-        for (i in 0 until secCount) {
-            extractedSectors.add(buf.get().toInt() and 0xFF)
-        }
-
-        val clCount = buf.int
-        val clPairs = ArrayList<Pair<Double, Double>>(clCount)
-        for (i in 0 until clCount) {
-            val lat = buf.double
-            val lon = buf.double
-            clPairs.add(lat to lon)
-        }
-        if (clPairs.size >= 2) {
-            setCenterlinePairs(clPairs)
-        }
-        val summary = getCorridorSummary()
-        val ribbon = getCorridorRibbon()
-        val sectors = buildSectorSpecs(summary)
-
-        val demSource = readStr()
-        val uCols = buf.int
-        val vRows = buf.int
-        val demNativeRes = buf.float
-        val demMinE = buf.float
-        val demMaxE = buf.float
-        val demMeanE = buf.float
-        val demCount = uCols * vRows
-        val demVals = FloatArray(demCount)
-        for (i in 0 until demCount) {
-            demVals[i] = buf.float
-        }
-        val demGrid = if (demCount > 0) {
-            C58DemGrid(
-                source = demSource,
-                nativeResolutionM = demNativeRes,
-                uCols = uCols,
-                vRows = vRows,
-                elevationsM = demVals,
-                minElevM = demMinE,
-                maxElevM = demMaxE,
-                meanElevM = demMeanE
-            )
-        } else null
-
-        val roadCount = buf.int
-        val roads = ArrayList<C58ExtractedRoad>(roadCount)
-        for (i in 0 until roadCount) {
-            val osmId = buf.long
-            val rawName = readStr()
-            val ref = readStr()
-            val hType = readStr()
-            val surface = readStr()
-            val lanes = buf.get().toInt() and 0xFF
-            val rFlags = buf.get().toInt() and 0xFF
-            val secIdx = buf.get().toInt() and 0xFF
-            val widthM = buf.float
-            val lengthM = buf.float
-            val mid = readC58Coord()
-            val nCount = buf.short.toInt() and 0xFFFF
-            val nodes = ArrayList<C58Coord>(nCount)
-            for (k in 0 until nCount) nodes.add(readC58Coord())
-            val normalizedName = if (
-                ref.isBlank() &&
-                rawName.startsWith("C58 ") &&
-                rawName.endsWith("#$osmId") &&
-                !rawName.contains("Magadi", ignoreCase = true)
-            ) {
-                "Unnamed " + rawName.removePrefix("C58 ")
-            } else {
-                rawName
-            }
-            roads.add(
-                C58ExtractedRoad(
-                    osmId = osmId,
-                    name = normalizedName,
-                    highwayType = hType,
-                    surface = surface,
-                    lanes = lanes,
-                    widthM = widthM,
-                    lengthM = lengthM,
-                    sectorIndex = secIdx,
-                    midCoord = mid,
-                    nodes = nodes,
-                    ref = ref,
-                    oneWay = (rFlags and 1) != 0,
-                    isBridge = (rFlags and 2) != 0,
-                    isRoundabout = (rFlags and 4) != 0
-                )
-            )
-        }
-
-        val houseCount = buf.int
-        val houses = ArrayList<C58ExtractedHouse>(houseCount)
-        val degToRad = Math.PI / 180.0
-        for (i in 0 until houseCount) {
-            val osmId = buf.long
-            val name = readStr()
-            val bType = readStr()
-            val amenity = readStr()
-            val levels = buf.get().toInt() and 0xFF
-            val secIdx = buf.get().toInt() and 0xFF
-            val heightM = buf.float
-            val elevM = buf.float
-            val areaM2 = buf.float
-            val perimM = buf.float
-            buf.float // reserved lateral offset
-            val centroid = readC58Coord()
-            val polyCount = buf.short.toInt() and 0xFFFF
-            val poly = ArrayList<C58Coord>(polyCount)
-            val cosLat = cos(centroid.lat * degToRad).coerceAtLeast(0.5)
-            val gamma = ((centroid.lon - 39.0) * degToRad) * sin(centroid.lat * degToRad)
-            val cosG = cos(gamma)
-            val sinG = sin(gamma)
-            val dLatPerN = cosG / (0.9996 * 110574.0)
-            val dLatPerE = -sinG / (0.9996 * 110574.0)
-            val dLonPerE = cosG / (0.9996 * 111320.0 * cosLat)
-            val dLonPerN = sinG / (0.9996 * 111320.0 * cosLat)
-            for (k in 0 until polyCount) {
-                poly.add(readC58CoordNear(centroid, dLatPerE, dLatPerN, dLonPerE, dLonPerN))
-            }
-            houses.add(
-                C58ExtractedHouse(
-                    osmId = osmId,
-                    name = name,
-                    buildingType = bType,
-                    amenity = amenity,
-                    levels = levels,
-                    heightM = heightM,
-                    centroid = centroid,
-                    elevM = elevM,
-                    footprintAreaM2 = areaM2,
-                    perimeterM = perimM,
-                    sectorIndex = secIdx,
-                    polygon = poly
-                )
-            )
-        }
-
-        val waterCount = buf.int
-        val waterPolys = ArrayList<C58WaterPolygon>(waterCount)
-        for (i in 0 until waterCount) {
-            val osmId = buf.long
-            val name = readStr()
-            val wType = readStr()
-            val meanE = buf.float
-            val polyCount = buf.short.toInt() and 0xFFFF
-            val poly = ArrayList<C58Coord>(polyCount)
-            for (k in 0 until polyCount) poly.add(readC58Coord())
-            waterPolys.add(
-                C58WaterPolygon(
-                    osmId = osmId,
-                    name = name,
-                    waterType = wType,
-                    polygon = poly,
-                    meanElevM = meanE
-                )
-            )
-        }
-
-        val poiCount = buf.int
-        val pois = ArrayList<C58ExtractedPoi>(poiCount)
-        for (i in 0 until poiCount) {
-            val osmId = buf.long
-            val name = readStr()
-            val cat = readStr()
-            val secIdx = buf.get().toInt() and 0xFF
-            val elevM = buf.float
-            val coord = readC58Coord()
-            pois.add(
-                C58ExtractedPoi(
-                    osmId = osmId,
-                    name = name,
-                    category = cat,
-                    coord = coord,
-                    elevM = elevM,
-                    sectorIndex = secIdx
-                )
-            )
-        }
-
-        val leftHouses = houses.count { it.centroid.lateralOffsetM < 0f }
-        val metadata = C58CorridorMetadata(
-            routeName = routeName,
-            isLiveOsmCenterline = isLiveCl,
-            extractedSectors = extractedSectors.ifEmpty { (1..10).toList() },
-            extractedAtIso = extractedAtIso,
-            osmSourceUrl = "Binary Pack ($osmSourceUrl)",
-            demSourceUrl = demSourceUrl,
-            demResolutionM = demResolutionM,
-            lakeLevelAslM = lakeLevelAslM,
-            roadCount = roads.size,
-            totalRoadLengthKm = roads.sumOf { it.lengthM.toDouble() }.toFloat() / 1000f,
-            houseCount = houses.size,
-            leftSideHouseCount = leftHouses,
-            rightSideHouseCount = houses.size - leftHouses,
-            totalHouseAreaM2 = houses.sumOf { it.footprintAreaM2.toDouble() }.toFloat(),
-            waterCount = waterPolys.size,
-            poiCount = pois.size,
-            elevMinM = elevMinM,
-            elevMaxM = elevMaxM,
-            elevMeanM = elevMeanM,
-            isBinaryServed = true
-        )
-
-        return C58CorridorBundle(
-            summary = summary,
-            metadata = metadata,
-            centerlineLatLon = clPairs.ifEmpty { fallbackCenterlineLatLon },
-            ribbon = ribbon,
-            sectors = sectors,
-            demGrid = demGrid,
-            roads = roads,
-            houses = houses,
-            pois = pois,
-            waterPolygons = waterPolys
-        )
-    }
+    private fun parseBinaryBytesWithCallbacks(
+        bytes: ByteArray,
+        onCenterline: (List<Pair<Double, Double>>) -> Unit,
+        onSummary: () -> C58CorridorSummary,
+        onRibbon: () -> List<C58RibbonVertex>,
+        onSectors: (C58CorridorSummary) -> List<C58SectorSpec>
+    ): C58CorridorBundle = Companion.parseBinaryBytesInternal(bytes, onCenterline, onSummary, onRibbon, onSectors)
 
     suspend fun loadCachedBundle(): C58CorridorBundle? = withContext(Dispatchers.IO) {
         if (!cacheFile.exists()) return@withContext null
@@ -749,6 +481,29 @@ class C58CorridorRepository(private val context: Context) {
                     put("feature_class", "house")
                     put("name", h.name)
                     put("building", h.buildingType)
+                    put("levels", h.levels)
+                    put("height_m", h.heightM)
+                    put("floor_height_m", h.floorHeightM)
+                    put("shape_type", h.shapeType)
+                    put("roof_type", h.roofType)
+                    put("roof_pitch_deg", h.roofPitchDeg)
+                    put("roof_material", h.roofMaterial)
+                    put("wall_type", h.wallType)
+                    put("window_type", h.windowType)
+                    put("window_to_wall_ratio", h.windowToWallRatio)
+                    if (h.parentCompoundName.isNotBlank()) put("parent_compound", h.parentCompoundName)
+                    put("has_fence", h.hasFence)
+                    if (h.hasFence) {
+                        put("fence_type", h.fenceType)
+                        put("fence_height_m", h.fenceHeightM)
+                    }
+                    put("has_gate", h.hasGate)
+                    h.gateCoord?.let { gc ->
+                        put("gate_type", h.gateType)
+                        put("gate_width_m", h.gateWidthM)
+                        put("gate_lat", gc.lat)
+                        put("gate_lon", gc.lon)
+                    }
                     put("sector", h.sectorIndex)
                     put("chainage_km", h.centroid.chainageKm)
                     put("lateral_offset_m", h.centroid.lateralOffsetM)
@@ -917,66 +672,347 @@ class C58CorridorRepository(private val context: Context) {
         return easting to (if (lat < 0.0) 10000000.0 + northingRaw else northingRaw)
     }
 
-    private fun utm37SToLatLonKotlin(easting: Double, northing: Double): Pair<Double, Double> {
-        val x = easting - 500000.0
-        val y = northing - 10000000.0
-        val mVal = y / UTM_K0
-        val mu = mVal / UTM_M_SCALE
-        val sin2mu = sin(2.0 * mu)
-        val cos2mu = cos(2.0 * mu)
-        val sin4mu = 2.0 * sin2mu * cos2mu
-        val sin6mu = sin(6.0 * mu)
-        val sin8mu = sin(8.0 * mu)
-        val phi1 = mu + UTM_P1 * sin2mu + UTM_P2 * sin4mu + UTM_P3 * sin6mu + UTM_P4 * sin8mu
-        val sinP1 = sin(phi1)
-        val cosP1 = cos(phi1)
-        val tanP1 = sinP1 / cosP1
-        val sin2P1 = sinP1 * sinP1
-        val denomSq = 1.0 - UTM_E2 * sin2P1
-        val sqrtDenom = sqrt(denomSq)
-        val n1 = UTM_A / sqrtDenom
-        val t1 = tanP1 * tanP1
-        val c1 = UTM_EP2 * cosP1 * cosP1
-        val r1 = UTM_A_ONE_M_E2 / (denomSq * sqrtDenom)
-        val dVal = x / (n1 * UTM_K0)
-        val d2 = dVal * dVal
-        val d3 = d2 * dVal
-        val d4 = d2 * d2
-        val d5 = d4 * dVal
-        val d6 = d4 * d2
-        val t1sq = t1 * t1
-        val c1sq = c1 * c1
-        val latRad = phi1 - (n1 * tanP1 / r1) * (
-            d2 * 0.5 -
-                (5.0 + 3.0 * t1 + 10.0 * c1 - 4.0 * c1sq - 9.0 * UTM_EP2) * d4 / 24.0 +
-                (61.0 + 90.0 * t1 + 298.0 * c1 + 45.0 * t1sq - 252.0 * UTM_EP2 - 3.0 * c1sq) * d6 / 720.0
-            )
-        val lonRad = UTM_LON0_RAD + (
-            dVal - (1.0 + 2.0 * t1 + c1) * d3 / 6.0 +
-                (5.0 - 2.0 * c1 + 28.0 * t1 - 3.0 * c1sq + 8.0 * UTM_EP2 + 24.0 * t1sq) * d5 / 120.0
-            ) / cosP1
-        return Math.toDegrees(latRad) to Math.toDegrees(lonRad)
-    }
+    private fun utm37SToLatLonKotlin(easting: Double, northing: Double): Pair<Double, Double> =
+        Companion.utm37SToLatLonStatic(easting, northing)
 
-    private companion object {
-        const val UTM_A = 6378137.0
-        const val UTM_F = 1.0 / 298.257223563
-        const val UTM_E2 = UTM_F * (2.0 - UTM_F)
-        const val UTM_E4 = UTM_E2 * UTM_E2
-        const val UTM_E6 = UTM_E4 * UTM_E2
-        const val UTM_EP2 = UTM_E2 / (1.0 - UTM_E2)
-        const val UTM_K0 = 0.9996
-        val UTM_LON0_RAD = Math.toRadians(39.0)
-        const val UTM_A_ONE_M_E2 = UTM_A * (1.0 - UTM_E2)
-        const val UTM_M_SCALE = UTM_A * (1.0 - UTM_E2 / 4.0 - 3.0 * UTM_E4 / 64.0 - 5.0 * UTM_E6 / 256.0)
-        val UTM_E1 = (1.0 - sqrt(1.0 - UTM_E2)) / (1.0 + sqrt(1.0 - UTM_E2))
-        val UTM_E1_2 = UTM_E1 * UTM_E1
-        val UTM_E1_3 = UTM_E1_2 * UTM_E1
-        val UTM_E1_4 = UTM_E1_2 * UTM_E1_2
-        val UTM_P1 = 3.0 * UTM_E1 / 2.0 - 27.0 * UTM_E1_3 / 32.0
-        val UTM_P2 = 21.0 * UTM_E1_2 / 16.0 - 55.0 * UTM_E1_4 / 32.0
-        val UTM_P3 = 151.0 * UTM_E1_3 / 96.0
-        val UTM_P4 = 1097.0 * UTM_E1_4 / 512.0
+    companion object {
+        private const val UTM_A = 6378137.0
+        private const val UTM_F = 1.0 / 298.257223563
+        private const val UTM_E2 = UTM_F * (2.0 - UTM_F)
+        private const val UTM_E4 = UTM_E2 * UTM_E2
+        private const val UTM_E6 = UTM_E4 * UTM_E2
+        private const val UTM_EP2 = UTM_E2 / (1.0 - UTM_E2)
+        private const val UTM_K0 = 0.9996
+        private val UTM_LON0_RAD = Math.toRadians(39.0)
+        private const val UTM_A_ONE_M_E2 = UTM_A * (1.0 - UTM_E2)
+        private const val UTM_M_SCALE = UTM_A * (1.0 - UTM_E2 / 4.0 - 3.0 * UTM_E4 / 64.0 - 5.0 * UTM_E6 / 256.0)
+        private val UTM_E1 = (1.0 - sqrt(1.0 - UTM_E2)) / (1.0 + sqrt(1.0 - UTM_E2))
+        private val UTM_E1_2 = UTM_E1 * UTM_E1
+        private val UTM_E1_3 = UTM_E1_2 * UTM_E1
+        private val UTM_E1_4 = UTM_E1_2 * UTM_E1_2
+        private val UTM_P1 = 3.0 * UTM_E1 / 2.0 - 27.0 * UTM_E1_3 / 32.0
+        private val UTM_P2 = 21.0 * UTM_E1_2 / 16.0 - 55.0 * UTM_E1_4 / 32.0
+        private val UTM_P3 = 151.0 * UTM_E1_3 / 96.0
+        private val UTM_P4 = 1097.0 * UTM_E1_4 / 512.0
+
+        private fun utm37SToLatLonStatic(easting: Double, northing: Double): Pair<Double, Double> {
+            val x = easting - 500000.0
+            val y = northing - 10000000.0
+            val mVal = y / UTM_K0
+            val mu = mVal / UTM_M_SCALE
+            val sin2mu = sin(2.0 * mu)
+            val cos2mu = cos(2.0 * mu)
+            val sin4mu = 2.0 * sin2mu * cos2mu
+            val sin6mu = sin(6.0 * mu)
+            val sin8mu = sin(8.0 * mu)
+            val phi1 = mu + UTM_P1 * sin2mu + UTM_P2 * sin4mu + UTM_P3 * sin6mu + UTM_P4 * sin8mu
+            val sinP1 = sin(phi1)
+            val cosP1 = cos(phi1)
+            val tanP1 = sinP1 / cosP1
+            val sin2P1 = sinP1 * sinP1
+            val denomSq = 1.0 - UTM_E2 * sin2P1
+            val sqrtDenom = sqrt(denomSq)
+            val n1 = UTM_A / sqrtDenom
+            val t1 = tanP1 * tanP1
+            val c1 = UTM_EP2 * cosP1 * cosP1
+            val r1 = UTM_A_ONE_M_E2 / (denomSq * sqrtDenom)
+            val dVal = x / (n1 * UTM_K0)
+            val d2 = dVal * dVal
+            val d3 = d2 * dVal
+            val d4 = d2 * d2
+            val d5 = d4 * dVal
+            val d6 = d4 * d2
+            val t1sq = t1 * t1
+            val c1sq = c1 * c1
+            val latRad = phi1 - (n1 * tanP1 / r1) * (
+                d2 * 0.5 -
+                    (5.0 + 3.0 * t1 + 10.0 * c1 - 4.0 * c1sq - 9.0 * UTM_EP2) * d4 / 24.0 +
+                    (61.0 + 90.0 * t1 + 298.0 * c1 + 45.0 * t1sq - 252.0 * UTM_EP2 - 3.0 * c1sq) * d6 / 720.0
+                )
+            val lonRad = UTM_LON0_RAD + (
+                dVal - (1.0 + 2.0 * t1 + c1) * d3 / 6.0 +
+                    (5.0 - 2.0 * c1 + 28.0 * t1 - 3.0 * c1sq + 8.0 * UTM_EP2 + 24.0 * t1sq) * d5 / 120.0
+                ) / cosP1
+            return Math.toDegrees(latRad) to Math.toDegrees(lonRad)
+        }
+
+        private fun latLonToUtm37SStatic(lat: Double, lon: Double): Pair<Double, Double> {
+            val phi = Math.toRadians(lat)
+            val lam = Math.toRadians(lon)
+            val sinP = sin(phi); val cosP = cos(phi); val tanP = tan(phi)
+            val nVal = UTM_A / sqrt(1.0 - UTM_E2 * sinP * sinP)
+            val tVal = tanP * tanP
+            val cVal = UTM_EP2 * cosP * cosP
+            val aVal = cosP * (lam - UTM_LON0_RAD)
+            val mVal = UTM_A * ((1.0 - UTM_E2 / 4.0 - 3.0 * UTM_E4 / 64.0 - 5.0 * UTM_E6 / 256.0) * phi -
+                (3.0 * UTM_E2 / 8.0 + 3.0 * UTM_E4 / 32.0 + 45.0 * UTM_E6 / 1024.0) * sin(2.0 * phi) +
+                (15.0 * UTM_E4 / 256.0 + 45.0 * UTM_E6 / 1024.0) * sin(4.0 * phi) -
+                (35.0 * UTM_E6 / 3072.0) * sin(6.0 * phi))
+            val easting = 500000.0 + UTM_K0 * nVal * (aVal + (1.0 - tVal + cVal) * aVal.pow(3) / 6.0 +
+                (5.0 - 18.0 * tVal + tVal * tVal + 72.0 * cVal - 58.0 * UTM_EP2) * aVal.pow(5) / 120.0)
+            val northingRaw = UTM_K0 * (mVal + nVal * tanP * (aVal * aVal / 2.0 +
+                (5.0 - tVal + 9.0 * cVal + 4.0 * cVal * cVal) * aVal.pow(4) / 24.0 +
+                (61.0 - 58.0 * tVal + tVal * tVal + 600.0 * cVal - 330.0 * UTM_EP2) * aVal.pow(6) / 720.0))
+            return easting to (if (lat < 0.0) 10000000.0 + northingRaw else northingRaw)
+        }
+
+        fun parseBinaryBytes(bytes: ByteArray): C58CorridorBundle {
+            var localRibbon: List<C58RibbonVertex> = emptyList()
+            var localSummary = C58CorridorSummary()
+            return parseBinaryBytesInternal(
+                bytes = bytes,
+                onCenterline = { pairs ->
+                    val utmPts = pairs.map { latLonToUtm37SStatic(it.first, it.second) }
+                    if (utmPts.size >= 2) {
+                        val ribbon = ArrayList<C58RibbonVertex>(utmPts.size)
+                        var cumS = 0.0
+                        var minE = Double.MAX_VALUE; var maxE = -Double.MAX_VALUE
+                        var minN = Double.MAX_VALUE; var maxN = -Double.MAX_VALUE
+                        for (i in utmPts.indices) {
+                            if (i > 0) cumS += hypot(utmPts[i].first - utmPts[i - 1].first, utmPts[i].second - utmPts[i - 1].second)
+                            val prev = utmPts[(i - 1).coerceAtLeast(0)]
+                            val next = utmPts[(i + 1).coerceAtMost(utmPts.lastIndex)]
+                            var te = next.first - prev.first
+                            var tn = next.second - prev.second
+                            val tl = hypot(te, tn).coerceAtLeast(1e-6)
+                            te /= tl; tn /= tl
+                            val re = tn; val rn = -te
+                            val ce = utmPts[i].first; val cn = utmPts[i].second
+                            val le = ce - re * 1500.0; val ln = cn - rn * 1500.0
+                            val rre = ce + re * 1500.0; val rrn = cn + rn * 1500.0
+                            ribbon.add(C58RibbonVertex(ce, cn, le, ln, rre, rrn, cumS))
+                            minE = minOf(minE, ce, le, rre); maxE = maxOf(maxE, ce, le, rre)
+                            minN = minOf(minN, cn, ln, rrn); maxN = maxOf(maxN, cn, ln, rrn)
+                        }
+                        localRibbon = ribbon
+                        localSummary = C58CorridorSummary(
+                            totalLengthM = cumS, halfWidthM = 1500f, centerlinePoints = ribbon.size,
+                            minUtmEast = minE, maxUtmEast = maxE, minUtmNorth = minN, maxUtmNorth = maxN,
+                            minLat = pairs.minOf { it.first } - 0.015, maxLat = pairs.maxOf { it.first } + 0.015,
+                            minLon = pairs.minOf { it.second } - 0.015, maxLon = pairs.maxOf { it.second } + 0.015
+                        )
+                    }
+                },
+                onSummary = { localSummary },
+                onRibbon = { localRibbon },
+                onSectors = { sum ->
+                    val step = sum.totalLengthM.coerceAtLeast(10_000.0) / 10.0
+                    (1..10).map { idx -> C58SectorSpec(idx, "S$idx", "S$idx", (idx - 1) * step, idx * step) }
+                }
+            )
+        }
+
+        internal fun parseBinaryBytesInternal(
+            bytes: ByteArray,
+            onCenterline: (List<Pair<Double, Double>>) -> Unit,
+            onSummary: () -> C58CorridorSummary,
+            onRibbon: () -> List<C58RibbonVertex>,
+            onSectors: (C58CorridorSummary) -> List<C58SectorSpec>
+        ): C58CorridorBundle {
+            val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+            val magic = ByteArray(4)
+            buf.get(magic)
+            check(String(magic, Charsets.US_ASCII) == "C58B") { "Invalid C58B binary header" }
+            val version = buf.short.toInt() and 0xFFFF
+            val isLiveCl = buf.short.toInt() != 0
+            fun readStr(): String {
+                val len = buf.short.toInt() and 0xFFFF
+                if (len == 0) return ""
+                val arr = ByteArray(len)
+                buf.get(arr)
+                return String(arr, Charsets.UTF_8)
+            }
+            val refE = buf.double
+            val refN = buf.double
+            fun readC58Coord(): C58Coord {
+                val ue = refE + buf.float.toDouble()
+                val un = refN + buf.float.toDouble()
+                val ch = buf.float.toDouble()
+                val off = buf.float
+                val (lat, lon) = utm37SToLatLonStatic(ue, un)
+                return C58Coord(lat, lon, ue, un, ch, off, abs(off) <= 1500.5f)
+            }
+            fun readC58CoordNear(anchor: C58Coord, dLatPerE: Double, dLatPerN: Double, dLonPerE: Double, dLonPerN: Double): C58Coord {
+                val ue = refE + buf.float.toDouble()
+                val un = refN + buf.float.toDouble()
+                val ch = buf.float.toDouble()
+                val off = buf.float
+                val de = ue - anchor.utmEast
+                val dn = un - anchor.utmNorth
+                return C58Coord(
+                    anchor.lat + de * dLatPerE + dn * dLatPerN,
+                    anchor.lon + de * dLonPerE + dn * dLonPerN,
+                    ue, un, ch, off, abs(off) <= 1500.5f
+                )
+            }
+            val routeName = readStr()
+            val extractedAtIso = readStr()
+            val osmSourceUrl = readStr()
+            val demSourceUrl = readStr()
+            val demResolutionM = buf.float
+            val lakeLevelAslM = buf.float
+            val elevMinM = buf.float
+            val elevMaxM = buf.float
+            val elevMeanM = buf.float
+            val secCount = buf.get().toInt() and 0xFF
+            val extractedSectors = ArrayList<Int>(secCount)
+            for (i in 0 until secCount) extractedSectors.add(buf.get().toInt() and 0xFF)
+            val clCount = buf.int
+            val clPairs = ArrayList<Pair<Double, Double>>(clCount)
+            for (i in 0 until clCount) clPairs.add(buf.double to buf.double)
+            if (clPairs.size >= 2) onCenterline(clPairs)
+            val summary = onSummary()
+            val ribbon = onRibbon()
+            val sectors = onSectors(summary)
+            val demSource = readStr()
+            val uCols = buf.int
+            val vRows = buf.int
+            val demNativeRes = buf.float
+            val demMinE = buf.float
+            val demMaxE = buf.float
+            val demMeanE = buf.float
+            val demCount = uCols * vRows
+            val demVals = FloatArray(demCount) { buf.float }
+            val demGrid = if (demCount > 0) C58DemGrid(demSource, demNativeRes, uCols, vRows, demVals, demMinE, demMaxE, demMeanE) else null
+            val roadCount = buf.int
+            val roads = ArrayList<C58ExtractedRoad>(roadCount)
+            for (i in 0 until roadCount) {
+                val osmId = buf.long
+                val rawName = readStr()
+                val ref = readStr()
+                val hType = readStr()
+                val surface = readStr()
+                val lanes = buf.get().toInt() and 0xFF
+                val rFlags = buf.get().toInt() and 0xFF
+                val secIdx = buf.get().toInt() and 0xFF
+                val widthM = buf.float
+                val lengthM = buf.float
+                val mid = readC58Coord()
+                val nCount = buf.short.toInt() and 0xFFFF
+                val nodes = ArrayList<C58Coord>(nCount)
+                for (k in 0 until nCount) nodes.add(readC58Coord())
+                val normalizedName = if (ref.isBlank() && rawName.startsWith("C58 ") && rawName.endsWith("#$osmId") && !rawName.contains("Magadi", ignoreCase = true)) {
+                    "Unnamed " + rawName.removePrefix("C58 ")
+                } else rawName
+                roads.add(C58ExtractedRoad(osmId, normalizedName, hType, surface, lanes, widthM, lengthM, secIdx, mid, nodes, ref = ref, oneWay = (rFlags and 1) != 0, isBridge = (rFlags and 2) != 0, isRoundabout = (rFlags and 4) != 0))
+            }
+            val houseCount = buf.int
+            val houses = ArrayList<C58ExtractedHouse>(houseCount)
+            val degToRad = Math.PI / 180.0
+            for (i in 0 until houseCount) {
+                val osmId = buf.long
+                val name = readStr()
+                val bType = readStr()
+                val amenity = readStr()
+                val levels = buf.get().toInt() and 0xFF
+                val secIdx = buf.get().toInt() and 0xFF
+                val heightM = buf.float
+                val elevM = buf.float
+                val areaM2 = buf.float
+                val perimM = buf.float
+                buf.float
+                val centroid = readC58Coord()
+                val polyCount = buf.short.toInt() and 0xFFFF
+                val poly = ArrayList<C58Coord>(polyCount)
+                val cosLat = cos(centroid.lat * degToRad).coerceAtLeast(0.5)
+                val gamma = ((centroid.lon - 39.0) * degToRad) * sin(centroid.lat * degToRad)
+                val cosG = cos(gamma)
+                val sinG = sin(gamma)
+                val dLatPerN = cosG / (0.9996 * 110574.0)
+                val dLatPerE = -sinG / (0.9996 * 110574.0)
+                val dLonPerE = cosG / (0.9996 * 111320.0 * cosLat)
+                val dLonPerN = sinG / (0.9996 * 111320.0 * cosLat)
+                for (k in 0 until polyCount) poly.add(readC58CoordNear(centroid, dLatPerE, dLatPerN, dLonPerE, dLonPerN))
+                var floorHeightM = if (levels > 0) heightM / levels else heightM
+                var shapeType = "RECTANGULAR"
+                var roofType = "GABLED"
+                var roofPitchDeg = 20f
+                var roofMaterial = "CORRUGATED_IRON_MABATI"
+                var wallType = "CONCRETE_BLOCK_PLASTER"
+                var windowType = "SLIDING_ALUMINUM"
+                var windowToWallRatio = 0.20f
+                var parentCompoundId = 0L
+                var parentCompoundName = ""
+                var hasFence = false
+                var fenceType = "NONE"
+                var fenceHeightM = 0f
+                var fencePolygon: List<C58Coord> = emptyList()
+                var hasGate = false
+                var gateType = "NONE"
+                var gateWidthM = 0f
+                var gateAngleRad = 0f
+                var gateCoord: C58Coord? = null
+                if (version >= 2) {
+                    val shapeId = buf.get().toInt() and 0xFF
+                    val roofId = buf.get().toInt() and 0xFF
+                    val roofMatId = buf.get().toInt() and 0xFF
+                    val wallId = buf.get().toInt() and 0xFF
+                    val windowId = buf.get().toInt() and 0xFF
+                    val pFlags = buf.get().toInt() and 0xFF
+                    val fenceId = buf.get().toInt() and 0xFF
+                    val gateId = buf.get().toInt() and 0xFF
+                    shapeType = BuildingV2Catalog.shapeAt(shapeId)
+                    roofType = BuildingV2Catalog.roofAt(roofId)
+                    roofMaterial = BuildingV2Catalog.roofMatAt(roofMatId)
+                    wallType = BuildingV2Catalog.wallAt(wallId)
+                    windowType = BuildingV2Catalog.windowAt(windowId)
+                    hasFence = (pFlags and 1) != 0
+                    hasGate = (pFlags and 2) != 0
+                    fenceType = BuildingV2Catalog.fenceAt(fenceId)
+                    gateType = BuildingV2Catalog.gateAt(gateId)
+                    floorHeightM = buf.float
+                    roofPitchDeg = buf.float
+                    windowToWallRatio = buf.float
+                    parentCompoundId = buf.long
+                    parentCompoundName = readStr()
+                    fenceHeightM = buf.float
+                    val fenceCount = buf.short.toInt() and 0xFFFF
+                    val fPoly = ArrayList<C58Coord>(fenceCount)
+                    for (fk in 0 until fenceCount) fPoly.add(readC58CoordNear(centroid, dLatPerE, dLatPerN, dLonPerE, dLonPerN))
+                    fencePolygon = fPoly
+                    gateWidthM = buf.float
+                    gateAngleRad = buf.float
+                    val rawGate = readC58CoordNear(centroid, dLatPerE, dLatPerN, dLonPerE, dLonPerN)
+                    gateCoord = if (hasGate) rawGate else null
+                }
+                houses.add(
+                    C58ExtractedHouse(
+                        osmId, name, bType, amenity, levels, heightM, centroid, elevM, areaM2, perimM, secIdx, poly,
+                        floorHeightM = floorHeightM, shapeType = shapeType, roofType = roofType, roofPitchDeg = roofPitchDeg,
+                        roofMaterial = roofMaterial, wallType = wallType, windowType = windowType, windowToWallRatio = windowToWallRatio,
+                        parentCompoundId = parentCompoundId, parentCompoundName = parentCompoundName,
+                        hasFence = hasFence, fenceType = fenceType, fenceHeightM = fenceHeightM, fencePolygon = fencePolygon,
+                        hasGate = hasGate, gateType = gateType, gateWidthM = gateWidthM, gateAngleRad = gateAngleRad, gateCoord = gateCoord
+                    )
+                )
+            }
+            val waterCount = buf.int
+            val waterPolys = ArrayList<C58WaterPolygon>(waterCount)
+            for (i in 0 until waterCount) {
+                val osmId = buf.long; val name = readStr(); val wType = readStr(); val meanE = buf.float
+                val polyCount = buf.short.toInt() and 0xFFFF
+                val poly = List(polyCount) { readC58Coord() }
+                waterPolys.add(C58WaterPolygon(osmId, name, wType, poly, meanE))
+            }
+            val poiCount = buf.int
+            val pois = ArrayList<C58ExtractedPoi>(poiCount)
+            for (i in 0 until poiCount) {
+                val osmId = buf.long; val name = readStr(); val cat = readStr()
+                val secIdx = buf.get().toInt() and 0xFF; val elevM = buf.float; val coord = readC58Coord()
+                pois.add(C58ExtractedPoi(osmId, name, cat, coord, elevM, secIdx))
+            }
+            val leftHouses = houses.count { it.centroid.lateralOffsetM < 0f }
+            val metadata = C58CorridorMetadata(
+                routeName = routeName, isLiveOsmCenterline = isLiveCl, extractedSectors = extractedSectors.ifEmpty { (1..10).toList() },
+                extractedAtIso = extractedAtIso, osmSourceUrl = "Binary Pack ($osmSourceUrl)", demSourceUrl = demSourceUrl,
+                demResolutionM = demResolutionM, lakeLevelAslM = lakeLevelAslM, roadCount = roads.size,
+                totalRoadLengthKm = roads.sumOf { it.lengthM.toDouble() }.toFloat() / 1000f,
+                houseCount = houses.size, leftSideHouseCount = leftHouses, rightSideHouseCount = houses.size - leftHouses,
+                totalHouseAreaM2 = houses.sumOf { it.footprintAreaM2.toDouble() }.toFloat(), waterCount = waterPolys.size,
+                poiCount = pois.size, elevMinM = elevMinM, elevMaxM = elevMaxM, elevMeanM = elevMeanM, isBinaryServed = true
+            )
+            return C58CorridorBundle(summary, metadata, clPairs, ribbon, sectors, demGrid, roads, houses, pois, waterPolys)
+        }
     }
 
     // ─── JSON Cache Serialization ───────────────────────────────────────────────
@@ -1042,6 +1078,22 @@ class C58CorridorRepository(private val context: Context) {
                 put("osmId", h.osmId); put("name", h.name)
                 put("bType", h.buildingType); put("amenity", h.amenity)
                 put("levels", h.levels); put("heightM", h.heightM.toDouble())
+                put("floorH", h.floorHeightM.toDouble())
+                put("shapeType", h.shapeType); put("roofType", h.roofType)
+                put("roofPitch", h.roofPitchDeg.toDouble()); put("roofMat", h.roofMaterial)
+                put("wallType", h.wallType); put("windowType", h.windowType)
+                put("wwr", h.windowToWallRatio.toDouble())
+                put("parentId", h.parentCompoundId); put("parentName", h.parentCompoundName)
+                put("hasFence", h.hasFence); put("fenceType", h.fenceType)
+                put("fenceH", h.fenceHeightM.toDouble())
+                if (h.fencePolygon.isNotEmpty()) {
+                    val fArr = JSONArray()
+                    h.fencePolygon.forEach { fArr.put(coordJson(it)) }
+                    put("fencePoly", fArr)
+                }
+                put("hasGate", h.hasGate); put("gateType", h.gateType)
+                put("gateW", h.gateWidthM.toDouble()); put("gateAng", h.gateAngleRad.toDouble())
+                h.gateCoord?.let { put("gateCoord", coordJson(it)) }
                 put("elevM", h.elevM.toDouble()); put("area", h.footprintAreaM2.toDouble())
                 put("perim", h.perimeterM.toDouble()); put("sec", h.sectorIndex)
                 put("centroid", coordJson(h.centroid))
@@ -1138,6 +1190,9 @@ class C58CorridorRepository(private val context: Context) {
             val pArr = o.getJSONArray("polygon")
             val poly = ArrayList<C58Coord>(pArr.length())
             for (j in 0 until pArr.length()) poly.add(jsonCoord(pArr.getJSONObject(j)))
+            val fArr = o.optJSONArray("fencePoly")
+            val fPoly = if (fArr != null) (0 until fArr.length()).map { j -> jsonCoord(fArr.getJSONObject(j)) } else emptyList()
+            val gcObj = o.optJSONObject("gateCoord")
             houses.add(
                 C58ExtractedHouse(
                     osmId = o.getLong("osmId"), name = o.getString("name"),
@@ -1146,7 +1201,26 @@ class C58CorridorRepository(private val context: Context) {
                     centroid = jsonCoord(o.getJSONObject("centroid")),
                     elevM = o.getDouble("elevM").toFloat(), footprintAreaM2 = o.getDouble("area").toFloat(),
                     perimeterM = o.getDouble("perim").toFloat(), sectorIndex = o.optInt("sec", 1),
-                    polygon = poly
+                    polygon = poly,
+                    floorHeightM = o.optDouble("floorH", o.getDouble("heightM")).toFloat(),
+                    shapeType = o.optString("shapeType", "RECTANGULAR"),
+                    roofType = o.optString("roofType", "GABLED"),
+                    roofPitchDeg = o.optDouble("roofPitch", 20.0).toFloat(),
+                    roofMaterial = o.optString("roofMat", "CORRUGATED_IRON_MABATI"),
+                    wallType = o.optString("wallType", "CONCRETE_BLOCK_PLASTER"),
+                    windowType = o.optString("windowType", "SLIDING_ALUMINUM"),
+                    windowToWallRatio = o.optDouble("wwr", 0.20).toFloat(),
+                    parentCompoundId = o.optLong("parentId", 0L),
+                    parentCompoundName = o.optString("parentName", ""),
+                    hasFence = o.optBoolean("hasFence", false),
+                    fenceType = o.optString("fenceType", "NONE"),
+                    fenceHeightM = o.optDouble("fenceH", 0.0).toFloat(),
+                    fencePolygon = fPoly,
+                    hasGate = o.optBoolean("hasGate", false),
+                    gateType = o.optString("gateType", "NONE"),
+                    gateWidthM = o.optDouble("gateW", 0.0).toFloat(),
+                    gateAngleRad = o.optDouble("gateAng", 0.0).toFloat(),
+                    gateCoord = gcObj?.let { jsonCoord(it) }
                 )
             )
         }

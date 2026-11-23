@@ -148,7 +148,25 @@ data class TerrainBuilding3D(
     val baseCornersXZ: List<Pair<Float, Float>>,
     val baseY: Float,
     val roofY: Float,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    val levels: Int = 1,
+    val shapeType: String = "RECTANGULAR",
+    val roofType: String = "GABLED",
+    val roofPitchDeg: Float = 20f,
+    val roofMaterial: String = "CORRUGATED_IRON_MABATI",
+    val wallType: String = "CONCRETE_BLOCK_PLASTER",
+    val windowType: String = "SLIDING_ALUMINUM",
+    val windowToWallRatio: Float = 0.20f,
+    val parentCompoundName: String = "",
+    val hasFence: Boolean = false,
+    val fenceType: String = "NONE",
+    val fenceHeightSceneY: Float = 0f,
+    val fenceCornersXZ: List<Pair<Float, Float>> = emptyList(),
+    val hasGate: Boolean = false,
+    val gateType: String = "NONE",
+    val gatePosXZ: Pair<Float, Float>? = null,
+    val gateWidthScene: Float = 0f,
+    val gateAngleRad: Float = 0f
 )
 
 data class TerrainRoadSeg3D(
@@ -180,4 +198,33 @@ data class TerrainRoadSymbol3D(
     val label: String = "",
     val type: RoadSymbolType3D = RoadSymbolType3D.ROUTE_SHIELD
 )
+
+data class TerrainBridgePier3D(
+    val x: Float,
+    val z: Float,
+    val groundY: Float,
+    val seatY: Float,
+    val dirX: Float,
+    val dirZ: Float,
+    val colCount: Int,
+    val colRadiusScene: Float,
+    val capHalfWidthScene: Float,
+    val capHalfThickScene: Float,
+    val footingHalfWidthScene: Float
+)
+
+data class TerrainBridge3D(
+    val osmId: Long,
+    val name: String,
+    val centerlineXYZ: List<Triple<Float, Float, Float>>,
+    val groundElevY: List<Float>,
+    val halfWidthScene: Float,
+    val girderDepthScene: Float,
+    val deckThicknessScene: Float,
+    val girderCount: Int,
+    val piers: List<TerrainBridgePier3D>,
+    val expansionFractions: List<Float>,
+    val isSelected: Boolean = false
+)
+
 

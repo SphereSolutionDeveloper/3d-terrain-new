@@ -15,7 +15,7 @@ import kotlin.math.*
 
 class MagadiTownRepository(private val context: Context) {
 
-    private val cacheFile = File(context.filesDir, "magadi_town_3x5km_1m_v2_cache.json")
+    private val cacheFile = File(context.filesDir, "magadi_town_3x5km_1m_v3_cache.json")
 
     fun getNativeBounds(): MagadiTownBounds {
         return try {
@@ -143,8 +143,15 @@ class MagadiTownRepository(private val context: Context) {
     suspend fun loadBinaryAssetBundle(): MagadiTownBundle? = withContext(Dispatchers.IO) {
         return@withContext try {
             context.assets.open("terrain_grid/magadi_town_3x5km.bin").use { stream ->
-                val bundle = parseBinaryStream(stream)
+                val bytes = stream.readBytes()
+                val bundle = parseBinaryBytes(bytes)
                 syncBundleToCpp(bundle)
+                if (NativeEngineBridge.isLoaded()) {
+                    try {
+                        NativeEngineBridge.nativeParseBuildingsFromBinary(bytes, false)
+                    } catch (_: Throwable) {
+                    }
+                }
                 bundle
             }
         } catch (_: Exception) {
@@ -152,15 +159,18 @@ class MagadiTownRepository(private val context: Context) {
         }
     }
 
-    fun parseBinaryStream(stream: InputStream): MagadiTownBundle {
-        val bytes = stream.readBytes()
-        val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+    fun parseBinaryStream(stream: InputStream): MagadiTownBundle =
+        parseBinaryBytes(stream.readBytes())
 
-        val magic = ByteArray(4)
-        buf.get(magic)
-        check(String(magic, Charsets.US_ASCII) == "MAGT") { "Invalid MAGT binary header" }
-        buf.short // version
-        buf.short // flags
+    companion object {
+        fun parseBinaryBytes(bytes: ByteArray): MagadiTownBundle {
+            val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+
+            val magic = ByteArray(4)
+            buf.get(magic)
+            check(String(magic, Charsets.US_ASCII) == "MAGT") { "Invalid MAGT binary header" }
+            val version = buf.short.toInt() and 0xFFFF
+            buf.short // flags
 
         fun readStr(): String {
             val len = buf.short.toInt() and 0xFFFF
@@ -314,6 +324,74 @@ class MagadiTownRepository(private val context: Context) {
                 cellCol = floor(centX).toInt().coerceIn(0, bounds.gridCols - 1),
                 cellRow = floor(centY).toInt().coerceIn(0, bounds.gridRows - 1)
             )
+            var floorHeightM = if (levels > 0) heightM / levels else heightM
+            var shapeType = "RECTANGULAR"
+            var roofType = "GABLED"
+            var roofPitchDeg = 20f
+            var roofMaterial = "CORRUGATED_IRON_MABATI"
+            var wallType = "CONCRETE_BLOCK_PLASTER"
+            var windowType = "SLIDING_ALUMINUM"
+            var windowToWallRatio = 0.20f
+            var parentCompoundId = 0L
+            var parentCompoundName = ""
+            var hasFence = false
+            var fenceType = "NONE"
+            var fenceHeightM = 0f
+            var fencePolygon: List<MagadiGeoCoord> = emptyList()
+            var hasGate = false
+            var gateType = "NONE"
+            var gateWidthM = 0f
+            var gateAngleRad = 0f
+            var gateCoord: MagadiGeoCoord? = null
+
+            if (version >= 2) {
+                val shapeId = buf.get().toInt() and 0xFF
+                val roofId = buf.get().toInt() and 0xFF
+                val roofMatId = buf.get().toInt() and 0xFF
+                val wallId = buf.get().toInt() and 0xFF
+                val windowId = buf.get().toInt() and 0xFF
+                val pFlags = buf.get().toInt() and 0xFF
+                val fenceId = buf.get().toInt() and 0xFF
+                val gateId = buf.get().toInt() and 0xFF
+
+                shapeType = BuildingV2Catalog.shapeAt(shapeId)
+                roofType = BuildingV2Catalog.roofAt(roofId)
+                roofMaterial = BuildingV2Catalog.roofMatAt(roofMatId)
+                wallType = BuildingV2Catalog.wallAt(wallId)
+                windowType = BuildingV2Catalog.windowAt(windowId)
+                hasFence = (pFlags and 1) != 0
+                hasGate = (pFlags and 2) != 0
+                fenceType = BuildingV2Catalog.fenceAt(fenceId)
+                gateType = BuildingV2Catalog.gateAt(gateId)
+
+                floorHeightM = buf.float
+                roofPitchDeg = buf.float
+                windowToWallRatio = buf.float
+                parentCompoundId = buf.long
+                parentCompoundName = readStr()
+                fenceHeightM = buf.float
+                val fenceCount = buf.short.toInt() and 0xFFFF
+                val fPoly = ArrayList<MagadiGeoCoord>(fenceCount)
+                for (fk in 0 until fenceCount) fPoly.add(readLocalCoord())
+                fencePolygon = fPoly
+                gateWidthM = buf.float
+                gateAngleRad = buf.float
+                val gxM = buf.float
+                val gyM = buf.float
+                gateCoord = if (hasGate) {
+                    MagadiGeoCoord(
+                        lat = minLat + gyM / mPerLat,
+                        lon = minLon + gxM / mPerLon,
+                        xM = gxM,
+                        yM = gyM,
+                        utmEast = originUtmE + gxM,
+                        utmNorth = originUtmN + gyM,
+                        cellCol = floor(gxM).toInt().coerceIn(0, bounds.gridCols - 1),
+                        cellRow = floor(gyM).toInt().coerceIn(0, bounds.gridRows - 1)
+                    )
+                } else null
+            }
+
             buildings.add(
                 ExtractedBuilding(
                     osmId = osmId,
@@ -326,7 +404,26 @@ class MagadiTownRepository(private val context: Context) {
                     elevM = elevM,
                     footprintAreaM2 = areaM2,
                     perimeterM = perimM,
-                    polygon = poly
+                    polygon = poly,
+                    floorHeightM = floorHeightM,
+                    shapeType = shapeType,
+                    roofType = roofType,
+                    roofPitchDeg = roofPitchDeg,
+                    roofMaterial = roofMaterial,
+                    wallType = wallType,
+                    windowType = windowType,
+                    windowToWallRatio = windowToWallRatio,
+                    parentCompoundId = parentCompoundId,
+                    parentCompoundName = parentCompoundName,
+                    hasFence = hasFence,
+                    fenceType = fenceType,
+                    fenceHeightM = fenceHeightM,
+                    fencePolygon = fencePolygon,
+                    hasGate = hasGate,
+                    gateType = gateType,
+                    gateWidthM = gateWidthM,
+                    gateAngleRad = gateAngleRad,
+                    gateCoord = gateCoord
                 )
             )
         }
@@ -400,6 +497,7 @@ class MagadiTownRepository(private val context: Context) {
             pois = pois,
             waterPolygons = waters
         )
+        }
     }
 
     suspend fun loadCachedBundle(): MagadiTownBundle? = withContext(Dispatchers.IO) {
@@ -534,6 +632,28 @@ class MagadiTownRepository(private val context: Context) {
                         put("building", b.buildingType)
                         put("amenity", b.amenity)
                         put("height_m", b.heightM)
+                        put("levels", b.levels)
+                        put("floor_height_m", b.floorHeightM)
+                        put("shape_type", b.shapeType)
+                        put("roof_type", b.roofType)
+                        put("roof_pitch_deg", b.roofPitchDeg)
+                        put("roof_material", b.roofMaterial)
+                        put("wall_type", b.wallType)
+                        put("window_type", b.windowType)
+                        put("window_to_wall_ratio", b.windowToWallRatio)
+                        if (b.parentCompoundName.isNotBlank()) put("parent_compound", b.parentCompoundName)
+                        put("has_fence", b.hasFence)
+                        if (b.hasFence) {
+                            put("fence_type", b.fenceType)
+                            put("fence_height_m", b.fenceHeightM)
+                        }
+                        put("has_gate", b.hasGate)
+                        b.gateCoord?.let { gc ->
+                            put("gate_type", b.gateType)
+                            put("gate_width_m", b.gateWidthM)
+                            put("gate_lat", gc.lat)
+                            put("gate_lon", gc.lon)
+                        }
                         put("footprint_area_m2", b.footprintAreaM2)
                         put("elev_m", b.elevM)
                         put("grid_1m_col", b.centroid.cellCol)
@@ -627,6 +747,22 @@ class MagadiTownRepository(private val context: Context) {
                 put("osmId", b.osmId); put("name", b.name)
                 put("buildingType", b.buildingType); put("amenity", b.amenity)
                 put("levels", b.levels); put("heightM", b.heightM.toDouble())
+                put("floorH", b.floorHeightM.toDouble())
+                put("shapeType", b.shapeType); put("roofType", b.roofType)
+                put("roofPitch", b.roofPitchDeg.toDouble()); put("roofMat", b.roofMaterial)
+                put("wallType", b.wallType); put("windowType", b.windowType)
+                put("wwr", b.windowToWallRatio.toDouble())
+                put("parentId", b.parentCompoundId); put("parentName", b.parentCompoundName)
+                put("hasFence", b.hasFence); put("fenceType", b.fenceType)
+                put("fenceH", b.fenceHeightM.toDouble())
+                if (b.fencePolygon.isNotEmpty()) {
+                    val fArr = JSONArray()
+                    b.fencePolygon.forEach { fArr.put(coordToJson(it)) }
+                    put("fencePoly", fArr)
+                }
+                put("hasGate", b.hasGate); put("gateType", b.gateType)
+                put("gateW", b.gateWidthM.toDouble()); put("gateAng", b.gateAngleRad.toDouble())
+                b.gateCoord?.let { put("gateCoord", coordToJson(it)) }
                 put("elevM", b.elevM.toDouble()); put("area", b.footprintAreaM2.toDouble())
                 put("perim", b.perimeterM.toDouble())
                 put("centroid", coordToJson(b.centroid))
@@ -710,6 +846,9 @@ class MagadiTownRepository(private val context: Context) {
         val buildings = (0 until bArr.length()).map { i ->
             val bo = bArr.getJSONObject(i)
             val pArr = bo.getJSONArray("polygon")
+            val fArr = bo.optJSONArray("fencePoly")
+            val fPoly = if (fArr != null) (0 until fArr.length()).map { j -> jsonToCoord(fArr.getJSONObject(j)) } else emptyList()
+            val gcObj = bo.optJSONObject("gateCoord")
             ExtractedBuilding(
                 osmId = bo.getLong("osmId"), name = bo.getString("name"),
                 buildingType = bo.getString("buildingType"), amenity = bo.optString("amenity", ""),
@@ -718,7 +857,26 @@ class MagadiTownRepository(private val context: Context) {
                 elevM = bo.getDouble("elevM").toFloat(),
                 footprintAreaM2 = bo.getDouble("area").toFloat(),
                 perimeterM = bo.getDouble("perim").toFloat(),
-                polygon = (0 until pArr.length()).map { j -> jsonToCoord(pArr.getJSONObject(j)) }
+                polygon = (0 until pArr.length()).map { j -> jsonToCoord(pArr.getJSONObject(j)) },
+                floorHeightM = bo.optDouble("floorH", bo.getDouble("heightM")).toFloat(),
+                shapeType = bo.optString("shapeType", "RECTANGULAR"),
+                roofType = bo.optString("roofType", "GABLED"),
+                roofPitchDeg = bo.optDouble("roofPitch", 20.0).toFloat(),
+                roofMaterial = bo.optString("roofMat", "CORRUGATED_IRON_MABATI"),
+                wallType = bo.optString("wallType", "CONCRETE_BLOCK_PLASTER"),
+                windowType = bo.optString("windowType", "SLIDING_ALUMINUM"),
+                windowToWallRatio = bo.optDouble("wwr", 0.20).toFloat(),
+                parentCompoundId = bo.optLong("parentId", 0L),
+                parentCompoundName = bo.optString("parentName", ""),
+                hasFence = bo.optBoolean("hasFence", false),
+                fenceType = bo.optString("fenceType", "NONE"),
+                fenceHeightM = bo.optDouble("fenceH", 0.0).toFloat(),
+                fencePolygon = fPoly,
+                hasGate = bo.optBoolean("hasGate", false),
+                gateType = bo.optString("gateType", "NONE"),
+                gateWidthM = bo.optDouble("gateW", 0.0).toFloat(),
+                gateAngleRad = bo.optDouble("gateAng", 0.0).toFloat(),
+                gateCoord = gcObj?.let { jsonToCoord(it) }
             )
         }
 

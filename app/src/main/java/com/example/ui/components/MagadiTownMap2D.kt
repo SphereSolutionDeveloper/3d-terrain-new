@@ -78,13 +78,6 @@ fun MagadiTownMap2D(
     var canvasWidthPx by remember { mutableFloatStateOf(1f) }
     var canvasHeightPx by remember { mutableFloatStateOf(1f) }
 
-    val labelPaint = remember {
-        Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#E5E7EB")
-            textSize = 24f
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-        }
-    }
     val subLabelPaint = remember {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.parseColor("#00F0FF")
@@ -93,10 +86,110 @@ fun MagadiTownMap2D(
         }
     }
     val symbologyPaints = remember { GisSymbologyPaints() }
+    val waterLabelPaint = remember {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#80F8FF")
+            textSize = 20f
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD_ITALIC)
+        }
+    }
 
     val currentOnPan by rememberUpdatedState(onPan)
     val currentOnZoom by rememberUpdatedState(onZoom)
     val currentOnTapInspect by rememberUpdatedState(onTapInspect)
+
+    data class MagadiBuildingRenderItem(
+        val bldg: ExtractedBuilding,
+        val style: GisLandmarkStyle,
+        val isCompound: Boolean
+    )
+
+    data class MagadiLandmarkCandidate(
+        val xM: Float,
+        val yM: Float,
+        val label: String,
+        val style: GisLandmarkStyle,
+        val isFromPoi: Boolean
+    )
+
+    val orderedBuildings = remember(bundle?.buildings) {
+        val list = bundle?.buildings ?: emptyList()
+        list.map { b ->
+            val style = classifyGisLandmark(b.buildingType, b.amenity, b.name)
+            val isCompound = b.footprintAreaM2 > 18_000f
+            MagadiBuildingRenderItem(b, style, isCompound)
+        }.sortedWith(
+            compareByDescending<MagadiBuildingRenderItem> { it.isCompound }
+                .thenBy { it.style.kind != GisLandmarkKind.GENERIC }
+                .thenBy { it.bldg.footprintAreaM2 }
+        )
+    }
+
+    val (landmarkCandidates, infraPois) = remember(bundle?.pois, orderedBuildings) {
+        val infraCats = setOf(
+            "gate", "bollard", "lift_gate", "toll_booth",
+            "crossing", "bus_stop", "traffic_signals", "turning_circle", "mini_roundabout"
+        )
+        val pois = bundle?.pois ?: emptyList()
+        val infra = ArrayList<ExtractedPoiMetadata>()
+        val candidates = ArrayList<MagadiLandmarkCandidate>(pois.size + 64)
+        val seenNames = ArrayList<Triple<String, Float, Float>>()
+
+        fun isDupNameNearby(name: String, x: Float, y: Float): Boolean {
+            val nl = name.trim().lowercase()
+            if (nl.isEmpty()) return false
+            return seenNames.any { (sn, sx, sy) -> sn == nl && hypot(sx - x, sy - y) <= 180f }
+        }
+
+        for (p in pois) {
+            if (p.category in infraCats) {
+                infra.add(p)
+            } else {
+                val style = classifyGisLandmark(p.category, "", p.name)
+                candidates.add(
+                    MagadiLandmarkCandidate(
+                        xM = p.coord.xM,
+                        yM = p.coord.yM,
+                        label = p.name,
+                        style = style,
+                        isFromPoi = true
+                    )
+                )
+                if (p.name.isNotBlank()) {
+                    seenNames.add(Triple(p.name.trim().lowercase(), p.coord.xM, p.coord.yM))
+                }
+            }
+        }
+
+        for (item in orderedBuildings) {
+            val b = item.bldg
+            val hasMeaningfulName = b.name.isNotBlank() && !b.name.contains('#') && !b.name.startsWith("Unnamed ")
+            if (item.style.kind != GisLandmarkKind.GENERIC || hasMeaningfulName) {
+                val label = b.name.trim()
+                if (!isDupNameNearby(label, b.centroid.xM, b.centroid.yM)) {
+                    candidates.add(
+                        MagadiLandmarkCandidate(
+                            xM = b.centroid.xM,
+                            yM = b.centroid.yM,
+                            label = label,
+                            style = item.style,
+                            isFromPoi = false
+                        )
+                    )
+                    if (label.isNotEmpty()) {
+                        seenNames.add(Triple(label.lowercase(), b.centroid.xM, b.centroid.yM))
+                    }
+                }
+            }
+        }
+
+        candidates.sortWith(
+            compareByDescending<MagadiLandmarkCandidate> { it.style.priority }
+                .thenByDescending { it.isFromPoi }
+                .thenByDescending { it.label.isNotBlank() && !it.label.contains('#') }
+        )
+        candidates to infra
+    }
 
     Box(
         modifier = modifier
@@ -177,6 +270,8 @@ fun MagadiTownMap2D(
             fun toScreenX(xM: Float): Float = (xM - minX) * pxPerMeter
             fun toScreenY(yM: Float): Float = (maxY - yM) * pxPerMeter
 
+            val placedLabelBoxes = ArrayList<RectF>()
+
             // 1. Hypsometric Elevation & Bathymetric Lake Depth Raster Shading (from C++ 1m DEM + NNW Hillshade)
             if (showElevationRaster && raster != null && raster.cols >= 2 && raster.rows >= 2) {
                 val rCols = raster.cols
@@ -217,6 +312,7 @@ fun MagadiTownMap2D(
             }
 
             // 1b. Extracted OSM Lake Magadi Water Polygons & Salt Pans
+            val waterLabelTargets = ArrayList<Triple<String, Float, Float>>()
             if (showWater && bundle != null && bundle.waterPolygons.isNotEmpty()) {
                 val wPath = Path()
                 for (wp in bundle.waterPolygons) {
@@ -244,6 +340,12 @@ fun MagadiTownMap2D(
                         color = Color(0xFF00E5FF).copy(alpha = 0.78f),
                         style = Stroke(width = 2.0f)
                     )
+
+                    if (!hideAllText && wp.name.isNotBlank() && !wp.name.startsWith("Unnamed") && !wp.name.contains('#')) {
+                        val visCx = ((max(minWx, minX) + min(maxWx, maxX)) * 0.5f)
+                        val visCy = ((max(minWy, minY) + min(maxWy, maxY)) * 0.5f)
+                        waterLabelTargets.add(Triple(wp.name, visCx, visCy))
+                    }
                 }
             }
 
@@ -360,10 +462,11 @@ fun MagadiTownMap2D(
                 }
             }
 
-            // 5. Extracted OSM Buildings (Scale-adaptive visibility + shadows + roof ridge)
-            if (showBuildings && bundle != null) {
+            // 5. Extracted OSM Compounds & Buildings (Compounds drawn first, landmarks tinted by .bin classification)
+            if (showBuildings && orderedBuildings.isNotEmpty()) {
                 val bPath = Path()
-                for (b in bundle.buildings) {
+                for (item in orderedBuildings) {
+                    val b = item.bldg
                     if (b.polygon.size < 3) continue
                     val minBx = b.polygon.minOf { it.xM }
                     val maxBx = b.polygon.maxOf { it.xM }
@@ -377,38 +480,64 @@ fun MagadiTownMap2D(
                         screenPoly.add(Offset(toScreenX(pt.xM), toScreenY(pt.yM)))
                     }
                     val centerScreen = Offset(toScreenX(b.centroid.xM), toScreenY(b.centroid.yM))
+                    val fillColor = if (isSel) {
+                        CyberCyan.copy(alpha = 0.78f)
+                    } else if (item.style.kind != GisLandmarkKind.GENERIC) {
+                        item.style.fillColor
+                    } else {
+                        LaserOrange.copy(alpha = 0.62f)
+                    }
+                    val strokeColor = if (isSel) {
+                        Color.White
+                    } else if (item.style.kind != GisLandmarkKind.GENERIC) {
+                        item.style.strokeColor
+                    } else {
+                        Color(0xFFFFD180)
+                    }
                     drawScaleAdaptiveBuilding(
                         screenPoly = screenPoly,
                         centerScreen = centerScreen,
-                        fillColor = if (isSel) CyberCyan.copy(alpha = 0.72f) else LaserOrange.copy(alpha = 0.62f),
-                        strokeColor = if (isSel) Color.White else Color(0xFFFFD180),
+                        fillColor = fillColor,
+                        strokeColor = strokeColor,
                         isSelected = isSel,
                         viewWidthM = viewWidthM,
-                        pathBuffer = bPath
+                        pathBuffer = bPath,
+                        isCompoundPerimeter = item.isCompound,
+                        roofType = b.roofType,
+                        levels = b.levels
                     )
 
-                    if (!hideAllText && viewWidthM <= 260f) {
-                        val bLabel = b.name.take(18)
-                        symbologyPaints.labelTextPaint.textSize = if (viewWidthM <= 90f) 23f else 18f
-                        symbologyPaints.labelHaloPaint.textSize = symbologyPaints.labelTextPaint.textSize
-                        drawContext.canvas.nativeCanvas.drawText(
-                            bLabel,
-                            centerScreen.x - 28f,
-                            centerScreen.y,
-                            symbologyPaints.labelHaloPaint
+                    if (viewWidthM <= 700f && b.hasFence && b.fencePolygon.size >= 3) {
+                        val fPoly = ArrayList<Offset>(b.fencePolygon.size)
+                        for (fpt in b.fencePolygon) {
+                            fPoly.add(Offset(toScreenX(fpt.xM), toScreenY(fpt.yM)))
+                        }
+                        val gScreen = if (b.hasGate && b.gateCoord != null) {
+                            Offset(toScreenX(b.gateCoord.xM), toScreenY(b.gateCoord.yM))
+                        } else null
+                        val gWidthPx = (b.gateWidthM * pxPerMeter).coerceAtLeast(5f)
+                        drawPerimeterFence2D(
+                            fenceScreenPoly = fPoly,
+                            fenceType = b.fenceType,
+                            isSelected = isSel,
+                            gateScreenPos = gScreen,
+                            gateWidthPx = gWidthPx,
+                            showPosts = (viewWidthM <= 260f)
                         )
-                        drawContext.canvas.nativeCanvas.drawText(
-                            bLabel,
-                            centerScreen.x - 28f,
-                            centerScreen.y,
-                            symbologyPaints.labelTextPaint
-                        )
+                        if (gScreen != null) {
+                            drawPropertyGate2D(
+                                gateCenter = gScreen,
+                                gateAngleRad = b.gateAngleRad,
+                                gateWidthPx = gWidthPx,
+                                gateType = b.gateType,
+                                isSelected = isSel
+                            )
+                        }
                     }
                 }
             }
 
             // 6. Extracted OSM Roads + Cartographic Symbols (Shields, Labels, Centerlines, Bridges, Roundabouts, Arrows)
-            val placedLabelBoxes = ArrayList<RectF>()
             if (showRoads && bundle != null) {
                 val rPath = Path()
                 for (road in bundle.roads) {
@@ -441,46 +570,149 @@ fun MagadiTownMap2D(
                         paints = symbologyPaints,
                         placedBoxes = placedLabelBoxes,
                         pathBuffer = rPath,
-                        showTextLabels = !hideAllText
+                        showTextLabels = !hideAllText,
+                        pxPerMeter = pxPerMeter,
+                        roadWidthM = road.widthM,
+                        roadLengthM = road.lengthM
                     )
                 }
             }
 
-            // 7. Extracted POI Labels & Road Infrastructure Nodes (Crossings, Bus Stops, Gates, Signals)
-            if ((showPois || showRoadSymbols) && bundle != null) {
-                val maxLabels = if (viewWidthM > 1400f) 24 else 55
-                var drawn = 0
+            // 7. Extracted POI Labels, Landmark Compounds, Water Labels & Road Infrastructure Nodes (Collision-Free)
+            if (showRoadSymbols && infraPois.isNotEmpty()) {
+                val maxInfraLabels = if (viewWidthM <= 700f) 24 else 0
                 var infraDrawn = 0
-                for (poi in bundle.pois) {
+                var infraLabeled = 0
+                for (poi in infraPois) {
+                    if (infraDrawn >= 140) break
                     val px = toScreenX(poi.coord.xM)
                     val py = toScreenY(poi.coord.yM)
                     if (px < 10f || px > cw - 10f || py < 20f || py > ch - 10f) continue
-
-                    val drewInfra = if (showRoadSymbols && infraDrawn < 120) {
-                        drawRoadInfraNodeSymbol(Offset(px, py), poi.category, symbologyPaints)
-                    } else false
-
-                    if (drewInfra) {
+                    if (drawRoadInfraNodeSymbol(Offset(px, py), poi.category, symbologyPaints, showTextLabels = !hideAllText)) {
                         infraDrawn++
-                        if (!hideAllText && showPois && viewWidthM <= 700f && drawn < maxLabels && poi.name.isNotBlank()) {
-                            symbologyPaints.labelTextPaint.textSize = 19f
-                            symbologyPaints.labelHaloPaint.textSize = 19f
-                            drawContext.canvas.nativeCanvas.drawText(poi.name.take(20), px + 9f, py + 5f, symbologyPaints.labelHaloPaint)
-                            drawContext.canvas.nativeCanvas.drawText(poi.name.take(20), px + 9f, py + 5f, symbologyPaints.labelTextPaint)
-                            drawn++
+                        if (!hideAllText && showPois && infraLabeled < maxInfraLabels && poi.name.isNotBlank()) {
+                            val cleanName = poi.name.take(20)
+                            symbologyPaints.labelTextPaint.textSize = 18f
+                            symbologyPaints.labelHaloPaint.textSize = 18f
+                            val estW = symbologyPaints.labelTextPaint.measureText(cleanName)
+                            val tx = (px + 9f).coerceAtMost((cw - estW - 8f).coerceAtLeast(8f))
+                            val ty = (py + 5f).coerceIn(22f, ch - 8f)
+                            val rect = RectF(tx - 6f, ty - 18f, tx + estW + 6f, ty + 6f)
+                            if (placedLabelBoxes.none { RectF.intersects(it, rect) }) {
+                                placedLabelBoxes.add(rect)
+                                drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, symbologyPaints.labelHaloPaint)
+                                drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, symbologyPaints.labelTextPaint)
+                                infraLabeled++
+                            }
                         }
-                    } else if (showPois) {
-                        drawCircle(NeonLime, radius = if (hideAllText) 3.6f else 5f, center = Offset(px, py))
-                        drawCircle(DarkBackground, radius = if (hideAllText) 1.5f else 2.2f, center = Offset(px, py))
-                        if (!hideAllText && drawn < maxLabels) {
-                            drawContext.canvas.nativeCanvas.drawText(
-                                poi.name.take(22),
-                                px + 8f,
-                                py + 6f,
-                                labelPaint.apply { textSize = 22f }
-                            )
-                            drawn++
+                    }
+                }
+            }
+
+            if ((showPois || showBuildings) && landmarkCandidates.isNotEmpty()) {
+                val maxLabels = if (viewWidthM > 1400f) 32 else 65
+                var drawnLabels = 0
+                val textSz = if (viewWidthM <= 450f) 21f else 19.5f
+                for (cand in landmarkCandidates) {
+                    if (!cand.isFromPoi && !showBuildings) continue
+                    if (cand.isFromPoi && !showPois && cand.style.kind == GisLandmarkKind.GENERIC) continue
+                    val px = toScreenX(cand.xM)
+                    val py = toScreenY(cand.yM)
+                    if (px < 8f || px > cw - 8f || py < 14f || py > ch - 8f) continue
+
+                    val isMajorLandmark = cand.style.kind != GisLandmarkKind.GENERIC
+                    val canTryLabel = !hideAllText && drawnLabels < maxLabels &&
+                        (isMajorLandmark || cand.isFromPoi || viewWidthM <= 450f)
+
+                    if (canTryLabel) {
+                        val placed = drawLandmarkPinAndLabel(
+                            center = Offset(px, py),
+                            label = cand.label,
+                            style = cand.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = true,
+                            textSizePx = textSz,
+                            drawPinAlways = cand.isFromPoi || isMajorLandmark
+                        )
+                        if (placed) drawnLabels++
+                    } else if (cand.isFromPoi || isMajorLandmark) {
+                        drawLandmarkPinAndLabel(
+                            center = Offset(px, py),
+                            label = cand.label,
+                            style = cand.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = false,
+                            drawPinAlways = true
+                        )
+                    }
+                }
+            }
+
+            // Zoomed-in inner-compound structure roles & individual building labels (<= 340m, respecting hideAllText)
+            if (!hideAllText && showBuildings && viewWidthM <= 340f) {
+                var genericLabeled = 0
+                for (item in orderedBuildings) {
+                    if (genericLabeled >= 32) break
+                    val b = item.bldg
+                    val isInnerChild = b.parentCompoundName.isNotBlank() && !item.isCompound
+                    if (!isInnerChild && item.style.kind != GisLandmarkKind.GENERIC) continue
+                    val roleLabel = when {
+                        isInnerChild -> {
+                            val afterBullet = b.name.substringAfter("• ", "").substringBefore(" #").trim()
+                            val role = afterBullet.ifBlank { b.buildingType.replace('_', ' ') }
+                            if (b.levels > 1) "$role (${b.levels}F)" else role
                         }
+                        !b.name.contains('#') && !b.name.startsWith("Unnamed ") -> b.name
+                        viewWidthM <= 140f -> {
+                            val tLabel = b.buildingType.replace('_', ' ').replaceFirstChar { it.uppercase() }
+                            if (b.levels > 1) "$tLabel ${b.levels}F" else tLabel
+                        }
+                        else -> continue
+                    }
+                    val cx = toScreenX(b.centroid.xM)
+                    val cy = toScreenY(b.centroid.yM)
+                    if (drawLandmarkPinAndLabel(
+                            center = Offset(cx, cy),
+                            label = roleLabel,
+                            style = item.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = true,
+                            textSizePx = 17.5f,
+                            drawPinAlways = isInnerChild
+                        )
+                    ) {
+                        genericLabeled++
+                    }
+                }
+            }
+
+            // Named Water Polygons & Salt Pans from .bin (e.g. Lake Magadi)
+            if (!hideAllText && showWater && waterLabelTargets.isNotEmpty()) {
+                val drawnWaterNames = HashSet<String>()
+                for ((wName, wx, wy) in waterLabelTargets) {
+                    if (!drawnWaterNames.add(wName.lowercase())) continue
+                    val sx = toScreenX(wx)
+                    val sy = toScreenY(wy)
+                    if (sx !in 24f..(cw - 24f) || sy !in 24f..(ch - 24f)) continue
+                    val clean = wName.take(24)
+                    val estW = waterLabelPaint.measureText(clean)
+                    val tx = (sx - estW * 0.5f).coerceIn(10f, (cw - estW - 10f).coerceAtLeast(10f))
+                    val ty = sy.coerceIn(26f, ch - 12f)
+                    val rect = RectF(tx - 8f, ty - 22f, tx + estW + 8f, ty + 6f)
+                    if (placedLabelBoxes.none { RectF.intersects(it, rect) }) {
+                        placedLabelBoxes.add(rect)
+                        symbologyPaints.labelHaloPaint.textSize = 20f
+                        drawContext.canvas.nativeCanvas.drawText(clean, tx, ty, symbologyPaints.labelHaloPaint)
+                        drawContext.canvas.nativeCanvas.drawText(clean, tx, ty, waterLabelPaint)
                     }
                 }
             }

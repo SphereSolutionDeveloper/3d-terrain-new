@@ -148,8 +148,42 @@ class MagadiTownTest {
         assertTrue("Bundle must contain real OSM buildings", bundle.buildings.isNotEmpty())
         assertTrue("Roads must include route/highway metadata", bundle.roads.any { it.name.isNotBlank() && it.nodes.size >= 2 })
         assertTrue("Buildings must fall inside 3x5 km bounds", bundle.buildings.all { it.centroid.xM in 0f..3000f && it.centroid.yM in 0f..5000f })
+        assertTrue(
+            "MAGT must include Magadi Soda Factory compound/landmark from OSM",
+            bundle.buildings.any {
+                it.name.contains("Magadi Soda Factory", ignoreCase = true) &&
+                    (it.buildingType == "factory" || it.amenity.contains("industrial", ignoreCase = true))
+            }
+        )
+        assertTrue(
+            "MAGT must include hospital landmark properties from OSM",
+            bundle.buildings.any { it.buildingType == "hospital" || it.amenity.contains("hospital", ignoreCase = true) }
+        )
+        assertTrue(
+            "MAGT POIs must include synthesized landmark POIs like Magadi Soda Factory",
+            bundle.pois.any { it.name.contains("Magadi Soda Factory", ignoreCase = true) && it.category == "factory" }
+        )
         val dem = bundle.demGrid
         assertTrue("Terrarium DEM grid must be bundled", dem != null && dem.cols == 120 && dem.rows == 200 && dem.elevationsM.size == 24_000)
         assertTrue("DEM resolution must be ~9.5m Terrarium", dem!!.nativeResolutionM <= 12.0f)
+    }
+
+    @Test
+    fun `gis landmark classifier derives icon badges from bin properties without hardcoded place names`() {
+        val factory = com.example.ui.components.classifyGisLandmark("factory", "industrial:mine • sodium_carbonate", "Site A")
+        assertEquals(com.example.ui.components.GisLandmarkKind.FACTORY_INDUSTRIAL, factory.kind)
+        assertEquals("F", factory.badge)
+
+        val police = com.example.ui.components.classifyGisLandmark("police", "police", "Station 1")
+        assertEquals(com.example.ui.components.GisLandmarkKind.POLICE, police.kind)
+        assertEquals("P", police.badge)
+
+        val school = com.example.ui.components.classifyGisLandmark("school", "education", "Primary Academy")
+        assertEquals(com.example.ui.components.GisLandmarkKind.SCHOOL_EDUCATION, school.kind)
+        assertEquals("S", school.badge)
+
+        val hospital = com.example.ui.components.classifyGisLandmark("hospital", "healthcare", "Clinic")
+        assertEquals(com.example.ui.components.GisLandmarkKind.HOSPITAL_HEALTH, hospital.kind)
+        assertEquals("+", hospital.badge)
     }
 }

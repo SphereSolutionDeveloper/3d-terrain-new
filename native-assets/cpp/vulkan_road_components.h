@@ -30,6 +30,9 @@
 #include "../src/road/barriers/BarrierKit.h"
 #include "../src/road/roadblocks/RoadBlockParams.h"
 #include "../src/road/roadblocks/RoadBlockGenerator.h"
+#include "../src/road/RoadNetwork.h"
+#include "../src/road/RoadSplineGraph.h"
+#include "../src/road/RoadTileGen.h"
 #include "../src/road/vulkan/VulkanRoadScene.h"
 
 namespace custom_vulkan {
@@ -165,6 +168,42 @@ public:
         float zoneLengthM,
         uint32_t unitCount,
         bool hasBeacons,
+        std::vector<RoadEngineVertex>& outVertices,
+        std::vector<uint32_t>& outIndices
+    );
+
+    // Road Network & Intersection Topology Generation
+    RoadComponentMeshSummary GenerateRoadNetwork(
+        ApexAssets::Road::RoadNetworkType type,
+        float roadWidthM,
+        float armSpanM,
+        uint32_t laneCount,
+        float cornerRadiusM,
+        bool hasSignals,
+        std::vector<RoadEngineVertex>& outVertices,
+        std::vector<uint32_t>& outIndices
+    );
+
+    // Hermite & Catmull-Rom Spline Alignment Generation
+    RoadComponentMeshSummary GenerateSplineGraph(
+        ApexAssets::Road::SplineCurveType type,
+        float splineLengthM,
+        float roadWidthM,
+        float designSpeedKmH,
+        float elevationGainM,
+        float curvatureIntensity,
+        std::vector<RoadEngineVertex>& outVertices,
+        std::vector<uint32_t>& outIndices
+    );
+
+    // Streaming LOD Road Tile & Surface State Generation
+    RoadComponentMeshSummary GenerateRoadTile(
+        ApexAssets::Road::RoadTileType type,
+        float tileSizeM,
+        float roadWidthM,
+        float cutFillHeightM,
+        float distressDepthM,
+        bool hasDrainageAndCurbs,
         std::vector<RoadEngineVertex>& outVertices,
         std::vector<uint32_t>& outIndices
     );

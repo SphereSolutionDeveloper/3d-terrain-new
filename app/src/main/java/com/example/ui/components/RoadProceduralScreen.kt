@@ -12,12 +12,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -148,6 +151,30 @@ fun RoadProceduralScreen(
     var rbUnitCount by remember { mutableIntStateOf(6) }
     var rbHasBeacons by remember { mutableStateOf(true) }
 
+    // Road Network & Intersections Parameters
+    var roadNetworkType by remember { mutableStateOf("SIGNALIZED_4WAY") }
+    var rnRoadWidthM by remember { mutableFloatStateOf(12.0f) }
+    var rnArmSpanM by remember { mutableFloatStateOf(56.0f) }
+    var rnLaneCount by remember { mutableIntStateOf(3) }
+    var rnCornerRadiusM by remember { mutableFloatStateOf(8.0f) }
+    var rnHasSignalMasts by remember { mutableStateOf(true) }
+
+    // Clothoid Spline & Superelevation Parameters
+    var splineType by remember { mutableStateOf("CLOTHOID_S_CURVE") }
+    var spLengthM by remember { mutableFloatStateOf(110.0f) }
+    var spWidthM by remember { mutableFloatStateOf(10.5f) }
+    var spDesignSpeedKmh by remember { mutableFloatStateOf(80.0f) }
+    var spElevationGainM by remember { mutableFloatStateOf(8.0f) }
+    var spCurvatureIntensity by remember { mutableFloatStateOf(1.0f) }
+
+    // Terrain-Conforming Road Tile & Surface States Parameters
+    var roadTileType by remember { mutableStateOf("CUT_FILL_HILLSIDE") }
+    var rtTileSizeM by remember { mutableFloatStateOf(36.0f) }
+    var rtRoadWidthM by remember { mutableFloatStateOf(11.0f) }
+    var rtCutFillHeightM by remember { mutableFloatStateOf(4.5f) }
+    var rtDistressDepthM by remember { mutableFloatStateOf(0.06f) }
+    var rtHasDrainageAndCurbs by remember { mutableStateOf(true) }
+
     // 3D Camera & Viewport States (Stationary default for fixed inspection)
     var yaw by remember { mutableFloatStateOf(0.68f) }
     var pitch by remember { mutableFloatStateOf(0.36f) }
@@ -158,7 +185,8 @@ fun RoadProceduralScreen(
     var shadingMode by remember { mutableStateOf("Lit Shaded") } // Lit Shaded, Wireframe, Normals
     var isPerspective by remember { mutableStateOf(true) }
 
-    // C++ File Code Viewer
+    // C++ / GLSL / Compute Shader Code Viewer
+    var codeFilter by remember { mutableStateOf("ALL") } // ALL, CPP, GLSL, COMP
     var selectedFile by remember { mutableStateOf(NativeSourceCatalog.roadFiles.first()) }
     var copyNotice by remember { mutableStateOf("") }
 
@@ -182,7 +210,10 @@ fun RoadProceduralScreen(
         expresswayType, expLanesPerDir, expSectionLength, expCurveBendDeg, expBankingDeg, expHasLighting,
         signpostType, signSpanM, signClearanceM, signBoardWidthM, signCount, signHasDMS,
         barrierType, barrierLengthM, barrierHeightM, barrierCurveDeg, barrierPostSpacingM, barrierHasReflectors,
-        roadBlockType, rbRoadWidthM, rbZoneLengthM, rbUnitCount, rbHasBeacons
+        roadBlockType, rbRoadWidthM, rbZoneLengthM, rbUnitCount, rbHasBeacons,
+        roadNetworkType, rnRoadWidthM, rnArmSpanM, rnLaneCount, rnCornerRadiusM, rnHasSignalMasts,
+        splineType, spLengthM, spWidthM, spDesignSpeedKmh, spElevationGainM, spCurvatureIntensity,
+        roadTileType, rtTileSizeM, rtRoadWidthM, rtCutFillHeightM, rtDistressDepthM, rtHasDrainageAndCurbs
     ) {
         when (selectedCategory) {
             "BRIDGE" -> NativeEngineBridge.generateModularBridgeMesh(
@@ -267,6 +298,30 @@ fun RoadProceduralScreen(
                 wallLengthM = wallLength,
                 wallBatterAngleDeg = wallBatterDeg
             )
+            "ROAD_NETWORK" -> NativeEngineBridge.generateModularRoadNetworkMesh(
+                networkType = roadNetworkType,
+                roadWidthM = rnRoadWidthM,
+                armSpanM = rnArmSpanM,
+                laneCount = rnLaneCount,
+                cornerRadiusM = rnCornerRadiusM,
+                hasSignals = rnHasSignalMasts
+            )
+            "SPLINE_GRAPH" -> NativeEngineBridge.generateModularSplineGraphMesh(
+                splineType = splineType,
+                splineLengthM = spLengthM,
+                roadWidthM = spWidthM,
+                designSpeedKmH = spDesignSpeedKmh,
+                elevationGainM = spElevationGainM,
+                curvatureIntensity = spCurvatureIntensity
+            )
+            "ROAD_TILE" -> NativeEngineBridge.generateModularRoadTileMesh(
+                tileType = roadTileType,
+                tileSizeM = rtTileSizeM,
+                roadWidthM = rtRoadWidthM,
+                cutFillHeightM = rtCutFillHeightM,
+                distressDepthM = rtDistressDepthM,
+                hasDrainageAndCurbs = rtHasDrainageAndCurbs
+            )
             else -> NativeEngineBridge.generateConnectedHighwayScene()
         }
     }
@@ -279,6 +334,9 @@ fun RoadProceduralScreen(
         // ─── 1. TOP COMPONENT SELECTION BAR ──────────────────────────────────────
         val categories = listOf(
             "CONNECTED_SCENE" to "Highway Scene",
+            "ROAD_NETWORK" to "Road Network",
+            "SPLINE_GRAPH" to "Spline Graph",
+            "ROAD_TILE" to "Surface & Tile",
             "BRIDGE" to "Bridge System",
             "FOOTBRIDGE" to "Footbridge",
             "EXPRESSWAY" to "Expressway",
@@ -317,6 +375,9 @@ fun RoadProceduralScreen(
                                 // Reset camera appropriate for component envelope
                                 when (catKey) {
                                     "CONNECTED_SCENE" -> { yaw = 0.78f; pitch = 0.38f; zoom = 0.95f }
+                                    "ROAD_NETWORK" -> { yaw = 0.78f; pitch = 0.62f; zoom = 1.0f }
+                                    "SPLINE_GRAPH" -> { yaw = 0.88f; pitch = 0.44f; zoom = 0.98f }
+                                    "ROAD_TILE" -> { yaw = 0.74f; pitch = 0.48f; zoom = 1.05f }
                                     "BRIDGE" -> { yaw = 0.65f; pitch = 0.32f; zoom = 1.0f }
                                     "FOOTBRIDGE" -> { yaw = 0.68f; pitch = 0.30f; zoom = 1.05f }
                                     "EXPRESSWAY" -> { yaw = 0.72f; pitch = 0.36f; zoom = 1.0f }
@@ -380,11 +441,18 @@ fun RoadProceduralScreen(
                 val cx = w * 0.5f + panX
                 val cy = h * 0.5f + panY
 
-                // Scale factor based on component envelope
+                val extentX = (activeMesh.boundingBoxMax[0] - activeMesh.boundingBoxMin[0]).coerceAtLeast(1f)
+                val extentY = (activeMesh.boundingBoxMax[1] - activeMesh.boundingBoxMin[1]).coerceAtLeast(1f)
+                val extentZ = (activeMesh.boundingBoxMax[2] - activeMesh.boundingBoxMin[2]).coerceAtLeast(1f)
+                val bridgeExtentM = maxOf(extentX, extentY * 1.4f, extentZ, 32f)
+
+                // Scale factor based on physical component AABB envelope (1:1 world meters)
                 val baseScale = when (selectedCategory) {
                     "CONNECTED_SCENE" -> (min(w, h) / 290f) * zoom
-                    "BRIDGE" -> (min(w, h) / 140f) * zoom
-                    "FOOTBRIDGE" -> (min(w, h) / 108f) * zoom
+                    "ROAD_NETWORK" -> (min(w, h) / 74f) * zoom
+                    "SPLINE_GRAPH" -> (min(w, h) / 118f) * zoom
+                    "ROAD_TILE" -> (min(w, h) / 60f) * zoom
+                    "BRIDGE", "FOOTBRIDGE" -> (min(w, h) / (bridgeExtentM * 0.92f)) * zoom
                     "EXPRESSWAY" -> (min(w, h) / 135f) * zoom
                     "SIGNPOST" -> (min(w, h) / 38f) * zoom
                     "BARRIER" -> (min(w, h) / 48f) * zoom
@@ -406,8 +474,10 @@ fun RoadProceduralScreen(
 
                 val cameraDist = when (selectedCategory) {
                     "CONNECTED_SCENE" -> 440.0f
-                    "BRIDGE" -> 210.0f
-                    "FOOTBRIDGE" -> 165.0f
+                    "ROAD_NETWORK" -> 98.0f
+                    "SPLINE_GRAPH" -> 162.0f
+                    "ROAD_TILE" -> 84.0f
+                    "BRIDGE", "FOOTBRIDGE" -> bridgeExtentM * 1.45f
                     "EXPRESSWAY" -> 200.0f
                     "SIGNPOST" -> 62.0f
                     "BARRIER" -> 76.0f
@@ -419,14 +489,20 @@ fun RoadProceduralScreen(
                     else -> 120.0f
                 }
 
-                // 1. Draw 3D Ground Grid
+                // 1. Draw 3D Ground Grid calibrated to exact 10m engineering survey squares for bridges
                 val gridHalfSize = when (selectedCategory) {
                     "SIGNPOST", "ROAD_BLOCK" -> 36.0f
-                    "BARRIER" -> 48.0f
-                    "FOOTBRIDGE" -> 95.0f
+                    "BARRIER", "ROAD_TILE" -> 48.0f
+                    "ROAD_NETWORK" -> 64.0f
+                    "SPLINE_GRAPH" -> 110.0f
+                    "BRIDGE", "FOOTBRIDGE" -> (kotlin.math.ceil((maxOf(extentX, extentZ) * 0.60f) / 10.0f) * 10.0f).coerceAtLeast(30.0f)
                     else -> 120.0f
                 }
-                val gridSteps = 16
+                val gridSteps = if (selectedCategory == "BRIDGE" || selectedCategory == "FOOTBRIDGE") {
+                    ((gridHalfSize * 2.0f) / 10.0f).toInt().coerceIn(8, 36)
+                } else {
+                    16
+                }
                 val stepM = (gridHalfSize * 2.0f) / gridSteps
                 for (g in 0..gridSteps) {
                     val coord = -gridHalfSize + g * stepM
@@ -572,6 +648,9 @@ fun RoadProceduralScreen(
                     }
                     Text(
                         text = when (selectedCategory) {
+                            "ROAD_NETWORK" -> "MUTCD Ch. 4D Signalized Junctions & NACTO Urban Street Grids"
+                            "SPLINE_GRAPH" -> "AASHTO Clothoid / Catmull-Rom Banking θ = arctan(v²/gR)"
+                            "ROAD_TILE" -> "Quadtree Road Tiles, Hillside Cut/Fill & ASTM Surface States"
                             "BRIDGE" -> "AASHTO LRFD / Eurocode EN 1991-2 Bridge Specification"
                             "FOOTBRIDGE" -> "Pedestrian Overpass / AASHTO LRFD Guide for Pedestrian Bridges"
                             "EXPRESSWAY" -> "AASHTO Divided Multi-Lane Freeway & EV Smart Corridor"
@@ -638,6 +717,9 @@ fun RoadProceduralScreen(
                         onClick = {
                             when (selectedCategory) {
                                 "CONNECTED_SCENE" -> { yaw = 0.78f; pitch = 0.38f; zoom = 0.95f }
+                                "ROAD_NETWORK" -> { yaw = 0.78f; pitch = 0.62f; zoom = 1.0f }
+                                "SPLINE_GRAPH" -> { yaw = 0.88f; pitch = 0.44f; zoom = 0.98f }
+                                "ROAD_TILE" -> { yaw = 0.74f; pitch = 0.48f; zoom = 1.05f }
                                 "BRIDGE" -> { yaw = 0.65f; pitch = 0.32f; zoom = 1.0f }
                                 "FOOTBRIDGE" -> { yaw = 0.68f; pitch = 0.30f; zoom = 1.05f }
                                 "EXPRESSWAY" -> { yaw = 0.72f; pitch = 0.36f; zoom = 1.0f }
@@ -1158,6 +1240,134 @@ fun RoadProceduralScreen(
                                     ParamSlider(label = "Inward Batter Lean Angle", value = wallBatterDeg, range = 0f..10f, unit = "°", onValueChange = { wallBatterDeg = it })
                                 }
                             }
+                            "ROAD_NETWORK" -> {
+                                item {
+                                    Text("MODULAR ROAD NETWORK & INTERSECTION TOPOLOGY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) {
+                                        val networkOptions = listOf(
+                                            "SIGNALIZED_4WAY" to "4-Way Signalized",
+                                            "T_JUNCTION_ARTERIAL" to "Arterial T-Junction",
+                                            "Y_FORK_BIFURCATION" to "Y-Fork Gore",
+                                            "DISTRICT_STREET_GRID" to "2×2 District Grid"
+                                        )
+                                        items(networkOptions) { (typeKey, typeLabel) ->
+                                            val isSel = roadNetworkType == typeKey
+                                            FilterChip(
+                                                selected = isSel,
+                                                onClick = { roadNetworkType = typeKey },
+                                                label = { Text(typeLabel, fontSize = 10.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = CyberCyan.copy(alpha = 0.25f),
+                                                    selectedLabelColor = CyberCyan
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    ParamSlider(label = "Carriageway Road Width", value = rnRoadWidthM, range = 8.0f..18.0f, unit = "m", onValueChange = { rnRoadWidthM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Network Arm Span", value = rnArmSpanM, range = 36.0f..100.0f, unit = "m", onValueChange = { rnArmSpanM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Corner Fillet Curb Radius", value = rnCornerRadiusM, range = 4.0f..16.0f, unit = "m", onValueChange = { rnCornerRadiusM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Total Lanes Across Deck", value = rnLaneCount.toFloat(), range = 2f..4f, unit = " lanes", onValueChange = { rnLaneCount = it.toInt() })
+                                }
+                                item {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Cantilever Traffic Signal Masts (R/Y/G LED)", fontSize = 11.sp, color = TextPrimary)
+                                        Switch(checked = rnHasSignalMasts, onCheckedChange = { rnHasSignalMasts = it })
+                                    }
+                                }
+                            }
+                            "SPLINE_GRAPH" -> {
+                                item {
+                                    Text("CLOTHOID SPLINE & SUPERELEVATION BANKING", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = ElectricViolet)
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) {
+                                        val splineOptions = listOf(
+                                            "CLOTHOID_S_CURVE" to "Clothoid S-Curve",
+                                            "HAIRPIN_SWITCHBACK" to "180° Hairpin",
+                                            "CATMULL_ROM_CORRIDOR" to "Catmull-Rom",
+                                            "BANKED_SPIRAL_HELIX" to "Banked Helix"
+                                        )
+                                        items(splineOptions) { (typeKey, typeLabel) ->
+                                            val isSel = splineType == typeKey
+                                            FilterChip(
+                                                selected = isSel,
+                                                onClick = { splineType = typeKey },
+                                                label = { Text(typeLabel, fontSize = 10.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = ElectricViolet.copy(alpha = 0.25f),
+                                                    selectedLabelColor = ElectricViolet
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    ParamSlider(label = "Corridor Alignment Length", value = spLengthM, range = 60f..180f, unit = "m", onValueChange = { spLengthM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Carriageway Surface Width", value = spWidthM, range = 7.0f..16.0f, unit = "m", onValueChange = { spWidthM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "AASHTO Design Speed", value = spDesignSpeedKmh, range = 35f..130f, unit = " km/h", onValueChange = { spDesignSpeedKmh = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Vertical Elevation Climb", value = spElevationGainM, range = 0f..22f, unit = "m", onValueChange = { spElevationGainM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Curvature Lateral Intensity", value = spCurvatureIntensity, range = 0.3f..1.8f, unit = "x", onValueChange = { spCurvatureIntensity = it })
+                                }
+                            }
+                            "ROAD_TILE" -> {
+                                item {
+                                    Text("TERRAIN-CONFORMING TILE & SURFACE STATES", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = LaserOrange)
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) {
+                                        val tileOptions = listOf(
+                                            "CUT_FILL_HILLSIDE" to "Cut/Fill Hillside",
+                                            "QUADTREE_URBAN_TILE" to "Quadtree Urban",
+                                            "WET_PUDDLE_STATE" to "Wet Puddles",
+                                            "MUDDY_GRAVEL_RUT" to "Muddy Gravel",
+                                            "POTHOLED_CRACKED_TILE" to "Potholed/Cracked",
+                                            "SNOWY_ICY_CORRIDOR" to "Snow/Black-Ice"
+                                        )
+                                        items(tileOptions) { (typeKey, typeLabel) ->
+                                            val isSel = roadTileType == typeKey
+                                            FilterChip(
+                                                selected = isSel,
+                                                onClick = { roadTileType = typeKey },
+                                                label = { Text(typeLabel, fontSize = 10.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = LaserOrange.copy(alpha = 0.25f),
+                                                    selectedLabelColor = LaserOrange
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    ParamSlider(label = "Tile Footprint Span", value = rtTileSizeM, range = 24f..72f, unit = "m", onValueChange = { rtTileSizeM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Roadway Bench Width", value = rtRoadWidthM, range = 8.0f..16.0f, unit = "m", onValueChange = { rtRoadWidthM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Cut/Fill Bench Relief Height", value = rtCutFillHeightM, range = 0.0f..10.0f, unit = "m", onValueChange = { rtCutFillHeightM = it })
+                                }
+                                item {
+                                    ParamSlider(label = "Distress / Rut / Pothole Depth", value = rtDistressDepthM, range = 0.0f..0.15f, unit = "m", onValueChange = { rtDistressDepthM = it })
+                                }
+                                item {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Concrete V-Ditch, Kerbs & Storm Grates", fontSize = 11.sp, color = TextPrimary)
+                                        Switch(checked = rtHasDrainageAndCurbs, onCheckedChange = { rtHasDrainageAndCurbs = it })
+                                    }
+                                }
+                            }
                             else -> {
                                 // CONNECTED_SCENE
                                 item {
@@ -1212,10 +1422,44 @@ fun RoadProceduralScreen(
                     }
                 }
                 "CODE" -> {
+                    val filteredFiles = remember(codeFilter) {
+                        when (codeFilter) {
+                            "CPP" -> NativeSourceCatalog.roadFiles.filter { it.name.endsWith(".h") || it.name.endsWith(".cpp") }
+                            "GLSL" -> NativeSourceCatalog.roadFiles.filter { it.name.endsWith(".glsl") || it.name.endsWith(".vert") || it.name.endsWith(".frag") }
+                            "COMP" -> NativeSourceCatalog.roadFiles.filter { it.name.endsWith(".comp") }
+                            else -> NativeSourceCatalog.roadFiles
+                        }
+                    }
+                    LaunchedEffect(filteredFiles) {
+                        if (filteredFiles.isNotEmpty() && filteredFiles.none { it.path == selectedFile.path }) {
+                            selectedFile = filteredFiles.first()
+                        }
+                    }
+
                     Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+                        // Source type filter row (ALL, C++, GLSL, .comp)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            val filterTabs = listOf("ALL" to "ALL (${NativeSourceCatalog.roadFiles.size})", "CPP" to "C++ (.h)", "GLSL" to "GLSL (.vert/.frag)", "COMP" to "Compute (.comp)")
+                            items(filterTabs) { (fKey, fLabel) ->
+                                val isFilterSel = codeFilter == fKey
+                                FilterChip(
+                                    selected = isFilterSel,
+                                    onClick = { codeFilter = fKey },
+                                    label = { Text(fLabel, fontSize = 9.5.sp, fontFamily = FontFamily.Monospace) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = CyberCyan.copy(alpha = 0.25f),
+                                        selectedLabelColor = CyberCyan
+                                    ),
+                                    modifier = Modifier.height(28.dp).testTag("code_filter_$fKey")
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
                         // File Selector
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(NativeSourceCatalog.roadFiles) { file ->
+                            items(filteredFiles) { file ->
                                 val isSel = file.path == selectedFile.path
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
@@ -1236,7 +1480,7 @@ fun RoadProceduralScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Code Box
+                        // Code Box with vertical + horizontal scroll
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = Color(0xFF070B12),
@@ -1249,16 +1493,16 @@ fun RoadProceduralScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(selectedFile.path, fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = CyberCyan)
-                                        Text(selectedFile.description, fontSize = 9.sp, color = TextSecondary, maxLines = 1)
+                                        Text(selectedFile.description, fontSize = 9.sp, color = TextSecondary, maxLines = 2)
                                     }
                                     IconButton(
                                         onClick = {
                                             clipboardManager.setText(AnnotatedString(selectedFile.codeSnippet))
                                             copyNotice = "Copied to clipboard!"
                                         },
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(32.dp)
                                     ) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy Code", tint = CyberCyan, modifier = Modifier.size(16.dp))
                                     }
@@ -1267,7 +1511,16 @@ fun RoadProceduralScreen(
                                     Text(copyNotice, fontSize = 9.sp, color = NeonLime, fontFamily = FontFamily.Monospace)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Box(modifier = Modifier.fillMaxSize().background(Color(0xFF05080E)).padding(6.dp)) {
+                                val vScroll = rememberScrollState()
+                                val hScroll = rememberScrollState()
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color(0xFF05080E))
+                                        .verticalScroll(vScroll)
+                                        .horizontalScroll(hScroll)
+                                        .padding(6.dp)
+                                ) {
                                     Text(
                                         text = selectedFile.codeSnippet,
                                         fontSize = 9.sp,
@@ -1283,10 +1536,19 @@ fun RoadProceduralScreen(
                 "CROSS_SECTION" -> {
                     // Civil Engineering Cross Section & Telemetry
                     val isPed = selectedCategory == "FOOTBRIDGE"
+                    val isNetwork = selectedCategory == "ROAD_NETWORK"
+                    val isSpline = selectedCategory == "SPLINE_GRAPH"
+                    val isTile = selectedCategory == "ROAD_TILE"
                     LazyColumn(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         item {
                             Text(
-                                text = if (isPed) "AASHTO PEDESTRIAN FOOTBRIDGE DECK SECTION" else "AASHTO / EUROCODE HIGHWAY LAYER STRUCTURE",
+                                text = when {
+                                    isPed -> "AASHTO PEDESTRIAN FOOTBRIDGE DECK SECTION"
+                                    isNetwork -> "MUTCD INTERSECTION CHANNELIZATION & SIGNAL LAYOUT"
+                                    isSpline -> "CLOTHOID SPIRAL SUPERELEVATION CROSS SECTION"
+                                    isTile -> "CUT/FILL HILLSIDE BENCH & SURFACE STATE PROFILE"
+                                    else -> "AASHTO / EUROCODE HIGHWAY LAYER STRUCTURE"
+                                },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = CyberCyan
@@ -1304,33 +1566,33 @@ fun RoadProceduralScreen(
                                     val ch = size.height
 
                                     if (isPed) {
-                                        // Pedestrian Footbridge Section:
-                                        // 1. Stainless Steel / Timber Balustrade Posts & Rails
                                         drawRect(Color(0xFF90A4AE), Offset(cw * 0.14f, ch * 0.08f), androidx.compose.ui.geometry.Size(10f, ch * 0.48f))
                                         drawRect(Color(0xFF90A4AE), Offset(cw * 0.86f - 10f, ch * 0.08f), androidx.compose.ui.geometry.Size(10f, ch * 0.48f))
                                         drawRect(Color(0xFF26C6DA).copy(alpha = 0.45f), Offset(cw * 0.15f, ch * 0.16f), androidx.compose.ui.geometry.Size(4f, ch * 0.38f))
                                         drawRect(Color(0xFF26C6DA).copy(alpha = 0.45f), Offset(cw * 0.85f - 4f, ch * 0.16f), androidx.compose.ui.geometry.Size(4f, ch * 0.38f))
-                                        // 2. Non-Slip Teak / Granite Wearing Course
                                         drawRect(Color(0xFF8D6E63), Offset(cw * 0.14f, ch * 0.56f), androidx.compose.ui.geometry.Size(cw * 0.72f, ch * 0.12f))
-                                        // 3. Structural Steel / Glulam Edge Stringers & Transverse Floorbeam
                                         drawRect(Color(0xFF607D8B), Offset(cw * 0.12f, ch * 0.68f), androidx.compose.ui.geometry.Size(cw * 0.76f, ch * 0.16f))
                                         drawRect(Color(0xFF455A64), Offset(cw * 0.38f, ch * 0.84f), androidx.compose.ui.geometry.Size(cw * 0.24f, ch * 0.14f))
+                                    } else if (isSpline) {
+                                        // Superelevated tilted roadway prism & outer guardrail
+                                        val bankTilt = (spCurvatureIntensity / 1.8f) * ch * 0.22f
+                                        val p = Path().apply {
+                                            moveTo(cw * 0.14f, ch * 0.46f + bankTilt)
+                                            lineTo(cw * 0.86f, ch * 0.46f - bankTilt)
+                                            lineTo(cw * 0.88f, ch * 0.70f - bankTilt)
+                                            lineTo(cw * 0.12f, ch * 0.70f + bankTilt)
+                                            close()
+                                        }
+                                        drawPath(p, Color(0xFF37474F))
+                                        drawLine(Color(0xFFFFD54F), Offset(cw * 0.49f, ch * 0.45f), Offset(cw * 0.51f, ch * 0.45f), strokeWidth = 5f)
+                                        drawLine(Color(0xFF00E5FF), Offset(cw * 0.14f, ch * 0.46f + bankTilt), Offset(cw * 0.86f, ch * 0.46f - bankTilt), strokeWidth = 3f)
                                     } else {
-                                        // Pavement Structural Stack:
-                                        // 1. Asphalt Wearing Course (SMA 40mm)
                                         drawRect(Color(0xFF263238), Offset(cw * 0.1f, ch * 0.15f), androidx.compose.ui.geometry.Size(cw * 0.8f, ch * 0.16f))
-                                        // 2. Asphalt Binder Course (AC 60mm)
                                         drawRect(Color(0xFF37474F), Offset(cw * 0.08f, ch * 0.31f), androidx.compose.ui.geometry.Size(cw * 0.84f, ch * 0.20f))
-                                        // 3. Crushed Rock Road Base (CBR >80% 150mm)
                                         drawRect(Color(0xFF607D8B), Offset(cw * 0.05f, ch * 0.51f), androidx.compose.ui.geometry.Size(cw * 0.90f, ch * 0.24f))
-                                        // 4. Granular Sub-base (CBR >30% 200mm)
                                         drawRect(Color(0xFF795548), Offset(0f, ch * 0.75f), androidx.compose.ui.geometry.Size(cw, ch * 0.25f))
-
-                                        // Jersey Barriers on flanks
                                         drawRect(Color(0xFFB0BEC5), Offset(cw * 0.08f - 14f, ch * 0.05f), androidx.compose.ui.geometry.Size(14f, ch * 0.26f))
                                         drawRect(Color(0xFFB0BEC5), Offset(cw * 0.92f, ch * 0.05f), androidx.compose.ui.geometry.Size(14f, ch * 0.26f))
-
-                                        // Centerline Marking
                                         drawLine(Color(0xFFFFD54F), Offset(cw * 0.5f, ch * 0.15f), Offset(cw * 0.5f, ch * 0.31f), strokeWidth = 3f)
                                     }
                                 }
@@ -1344,23 +1606,59 @@ fun RoadProceduralScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    if (isPed) {
-                                        Text("PEDESTRIAN FOOTBRIDGE SPECS & SURFACE ACCESS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = NeonLime)
-                                        MetricRow("Design Live Load", "4.3 kPa (90 psf AASHTO Pedestrian)")
-                                        MetricRow("Walkway Clear Width", "${(footbridgeDeckWidth * 10).roundToInt() / 10.0} m (Human-Scale Promenade)")
-                                        MetricRow("Overpass Deck Elevation", "7.2 m (Min 5.8 m Underpass Clearance)")
-                                        MetricRow("Balustrade Handrail Height", "1.15 m (Stainless Cable & Glass Infill)")
-                                        MetricRow("Surface Stair Connections", "2-Flight Stepped Stairs + Mid Landing")
-                                        MetricRow("Accessible Surface Ramp", "Flanking Switchback ADA Ramp -> Y=0")
-                                    } else {
-                                        Text("CIVIL ENGINEERING SPECS & METRICS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = NeonLime)
-                                        MetricRow("Design Speed Limit", "120 km/h (Expressway Tier 1)")
-                                        MetricRow("Max Superelevation (e_max)", "${bridgeSuperelevationDeg}° (AASHTO Table 3-7)")
-                                        MetricRow("Freight Height Clearance", "${tollCanopyClearance}m (Standard 5.2m + 0.3m buffer)")
-                                        MetricRow("Tunnel Fire Safety Standard", "NFPA 502 / PIARC Category A")
-                                        MetricRow("Longitudinal Ventilation", "${(tunnelLength / tunnelJetFanSpacing).toInt()} Jet Fans (reversible 35 m³/s)")
-                                        MetricRow("Seismic Design Category", "SDC D (Soil Profile Type C)")
-                                        MetricRow("Earth Retention", "MSE Precast Panels with Geogrid Straps")
+                                    when {
+                                        isPed -> {
+                                            Text("PEDESTRIAN FOOTBRIDGE SPECS & SURFACE ACCESS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = NeonLime)
+                                            MetricRow("Design Live Load", "4.3 kPa (90 psf AASHTO Pedestrian)")
+                                            MetricRow("Walkway Clear Width", "${(footbridgeDeckWidth * 10).roundToInt() / 10.0} m (Human-Scale Promenade)")
+                                            MetricRow("Overpass Deck Elevation", "7.2 m (Min 5.8 m Underpass Clearance)")
+                                            MetricRow("Balustrade Handrail Height", "1.15 m (Stainless Cable & Glass Infill)")
+                                            MetricRow("Surface Stair Connections", "2-Flight Stepped Stairs + Mid Landing")
+                                            MetricRow("Accessible Surface Ramp", "Flanking Switchback ADA Ramp -> Y=0")
+                                        }
+                                        isNetwork -> {
+                                            Text("SIGNALIZED ROAD NETWORK & JUNCTION SPECS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                                            MetricRow("Junction Topology", roadNetworkType)
+                                            MetricRow("Carriageway Width", "${(rnRoadWidthM * 10).roundToInt() / 10.0} m (${rnLaneCount} lanes)")
+                                            MetricRow("Corner Curb Radius", "${(rnCornerRadiusM * 10).roundToInt() / 10.0} m (WB-20 Truck Turning Envelope)")
+                                            MetricRow("Network Arm Span", "${rnArmSpanM.roundToInt()} m")
+                                            MetricRow("Traffic Signal Masts", if (rnHasSignalMasts) "MUTCD R/Y/G Cantilever + Luminaire" else "Unsignalized")
+                                        }
+                                        isSpline -> {
+                                            val vMs = spDesignSpeedKmh / 3.6f
+                                            val calcBankDeg = (atan((vMs * vMs) / (9.81f * (28f / spCurvatureIntensity.coerceAtLeast(0.3f)))) * 180f / PI.toFloat()).coerceAtMost(8.5f)
+                                            Text("CLOTHOID SPLINE & BANKING PHYSICS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = ElectricViolet)
+                                            MetricRow("Spline Formulation", splineType)
+                                            MetricRow("Design Speed (V_d)", "${spDesignSpeedKmh.roundToInt()} km/h (${(vMs * 10).roundToInt() / 10.0} m/s)")
+                                            MetricRow("Applied Banking (θ)", "${(calcBankDeg * 10).roundToInt() / 10.0}° (Climb ${spElevationGainM}m)")
+                                            MetricRow("Corridor Length", "${spLengthM.roundToInt()} m / Width ${spWidthM} m")
+                                            MetricRow("Compute Kernel", "road_spline.comp (VK_BUFFER_USAGE_STORAGE)")
+                                        }
+                                        isTile -> {
+                                            val mu = when (roadTileType) {
+                                                "WET_PUDDLE_STATE" -> 0.62f
+                                                "MUDDY_GRAVEL_RUT" -> 0.34f
+                                                "POTHOLED_CRACKED_TILE" -> 0.55f
+                                                "SNOWY_ICY_CORRIDOR" -> 0.18f
+                                                else -> 0.82f
+                                            }
+                                            Text("TERRAIN TILE & SURFACE STATE PHYSICS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = LaserOrange)
+                                            MetricRow("Tile State Mode", roadTileType)
+                                            MetricRow("Tire Friction Coefficient (μ)", "%.2f (Rolling Res: %.3f)".format(mu, if (roadTileType == "MUDDY_GRAVEL_RUT") 0.048f else 0.015f))
+                                            MetricRow("Cut/Fill Bench Height", "${(rtCutFillHeightM * 10).roundToInt() / 10.0} m (Drainage: ${if (rtHasDrainageAndCurbs) "Active" else "Off"})")
+                                            MetricRow("Distress Depth", "${(rtDistressDepthM * 100).roundToInt()} cm")
+                                            MetricRow("Compute Texture Shader", "road_surface_state_tex.comp (RGBA8 Albedo/Normal)")
+                                        }
+                                        else -> {
+                                            Text("CIVIL ENGINEERING SPECS & METRICS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = NeonLime)
+                                            MetricRow("Design Speed Limit", "120 km/h (Expressway Tier 1)")
+                                            MetricRow("Max Superelevation (e_max)", "${bridgeSuperelevationDeg}° (AASHTO Table 3-7)")
+                                            MetricRow("Freight Height Clearance", "${tollCanopyClearance}m (Standard 5.2m + 0.3m buffer)")
+                                            MetricRow("Tunnel Fire Safety Standard", "NFPA 502 / PIARC Category A")
+                                            MetricRow("Longitudinal Ventilation", "${(tunnelLength / tunnelJetFanSpacing).toInt()} Jet Fans (reversible 35 m³/s)")
+                                            MetricRow("Seismic Design Category", "SDC D (Soil Profile Type C)")
+                                            MetricRow("Earth Retention", "MSE Precast Panels with Geogrid Straps")
+                                        }
                                     }
                                 }
                             }

@@ -221,6 +221,12 @@ fun C58CorridorDataPanel(
                     sideOk && (q.isEmpty() || h.name.lowercase().contains(q) ||
                         h.buildingType.lowercase().contains(q) ||
                         h.amenity.lowercase().contains(q) ||
+                        h.shapeType.lowercase().contains(q) ||
+                        h.roofType.lowercase().contains(q) ||
+                        h.wallType.lowercase().contains(q) ||
+                        h.parentCompoundName.lowercase().contains(q) ||
+                        h.fenceType.lowercase().contains(q) ||
+                        h.gateType.lowercase().contains(q) ||
                         h.osmId.toString().contains(q))
                 }
                 if (filtered.isEmpty()) {
@@ -294,6 +300,12 @@ private fun C58MetadataSummaryList(
                 C58KeyVal("Corridor POIs", "${meta.poiCount} named landmarks")
                 C58KeyVal("Elevation ASL", "${"%.1f".format(meta.elevMinM)}m .. ${"%.1f".format(meta.elevMaxM)}m (Mean ${"%.1f".format(meta.elevMeanM)}m)")
                 C58KeyVal("DEM Native Res", "${"%.1f".format(meta.demResolutionM)} m/px -> 1m C++ Bicubic")
+                val v2Houses = bundle.houses
+                val fencedCount = v2Houses.count { it.hasFence }
+                val gatedCount = v2Houses.count { it.hasGate }
+                val compoundChildren = v2Houses.count { it.parentCompoundId != 0L }
+                val multiStorey = v2Houses.count { it.levels > 1 }
+                C58KeyVal("v2 Arch & Fences", "$compoundChildren compound inner • $multiStorey multi-storey • $fencedCount fenced / $gatedCount gated")
                 C58KeyVal("Extracted At", meta.extractedAtIso.ifBlank { "Pending live fetch" })
             }
         }
@@ -358,11 +370,39 @@ private fun C58HouseCard(
                 Text(house.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = sideColor, modifier = Modifier.weight(1f))
                 Text("S${house.sectorIndex} • #${house.osmId}", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = TextSecondary)
             }
+            if (house.parentCompoundName.isNotBlank()) {
+                val sharedNote = if (!house.hasFence) " • Shares compound fence & gate" else ""
+                Text(
+                    "COMPOUND: ${house.parentCompoundName}$sharedNote",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = LaserOrange
+                )
+            }
             Text(
-                "Type: ${house.buildingType}${if (house.amenity.isNotBlank()) " (${house.amenity})" else ""} • ${house.levels} lvl (${"%.1f".format(house.heightM)}m) • ${"%.1f".format(house.footprintAreaM2)} m²",
+                "Type: ${house.buildingType}${if (house.amenity.isNotBlank()) " (${house.amenity})" else ""} • Shape: ${house.shapeType} • ${house.levels}F × ${"%.2f".format(house.floorHeightM)}m = ${"%.1f".format(house.heightM)}m • ${"%.1f".format(house.footprintAreaM2)} m²",
                 fontSize = 11.sp,
                 color = TextPrimary
             )
+            Text(
+                "Envelope: Roof ${house.roofType} (${house.roofPitchDeg.toInt()}°, ${house.roofMaterial}) • Wall: ${house.wallType} • Win: ${house.windowType} (${(house.windowToWallRatio * 100).toInt()}%)",
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+                color = TextSecondary
+            )
+            if (house.hasFence || house.hasGate) {
+                val gc = house.gateCoord
+                val gatePosTxt = if (gc != null) {
+                    " @ ${"%.5f".format(gc.lat)}, ${"%.5f".format(gc.lon)} (${gc.utmEast.toInt()}E, ${gc.utmNorth.toInt()}N)"
+                } else ""
+                Text(
+                    "Perimeter: ${house.fenceType} (${"%.1f".format(house.fenceHeightM)}m) • Gate: ${house.gateType} (${"%.1f".format(house.gateWidthM)}m)$gatePosTxt",
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = CyberCyan
+                )
+            }
             Text(
                 "KM ${"%.2f".format(c.chainageKm)} • ${abs(c.lateralOffsetM).toInt()}m ${if (isLeft) "LEFT (-1.5km)" else "RIGHT (+1.5km)"} • ASL ${"%.1f".format(house.elevM)}m",
                 fontSize = 10.sp,

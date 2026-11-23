@@ -79,11 +79,11 @@ fun C58CorridorMap2D(
     var canvasWidthPx by remember { mutableFloatStateOf(1f) }
     var canvasHeightPx by remember { mutableFloatStateOf(1f) }
 
-    val labelPaint = remember {
+    val waterLabelPaint = remember {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#E5E7EB")
-            textSize = 23f
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            color = android.graphics.Color.parseColor("#80F8FF")
+            textSize = 20f
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD_ITALIC)
         }
     }
     val subLabelPaint = remember {
@@ -105,11 +105,37 @@ fun C58CorridorMap2D(
     val currentOnZoom by rememberUpdatedState(onZoom)
     val currentOnTapInspect by rememberUpdatedState(onTapInspect)
 
+    data class C58HouseRenderItem(
+        val house: C58ExtractedHouse,
+        val style: GisLandmarkStyle,
+        val isCompound: Boolean
+    )
+
+    data class C58LandmarkCandidate(
+        val utmE: Double,
+        val utmN: Double,
+        val label: String,
+        val style: GisLandmarkStyle,
+        val isFromPoi: Boolean
+    )
+
+    val orderedHouses = remember(bundle.houses) {
+        bundle.houses.map { h ->
+            val style = classifyGisLandmark(h.buildingType, h.amenity, h.name)
+            val isCompound = h.footprintAreaM2 > 18_000f
+            C58HouseRenderItem(h, style, isCompound)
+        }.sortedWith(
+            compareByDescending<C58HouseRenderItem> { it.isCompound }
+                .thenBy { it.style.kind != GisLandmarkKind.GENERIC }
+                .thenBy { it.house.footprintAreaM2 }
+        )
+    }
+
     // Precompute AABBs once per loaded binary pack for zero-allocation 60 FPS culling
-    val houseBounds = remember(bundle.houses) {
-        DoubleArray(bundle.houses.size * 4).also { arr ->
-            for (i in bundle.houses.indices) {
-                val poly = bundle.houses[i].polygon
+    val houseBounds = remember(orderedHouses) {
+        DoubleArray(orderedHouses.size * 4).also { arr ->
+            for (i in orderedHouses.indices) {
+                val poly = orderedHouses[i].house.polygon
                 var minHe = Double.MAX_VALUE
                 var maxHe = -Double.MAX_VALUE
                 var minHn = Double.MAX_VALUE
@@ -151,45 +177,91 @@ fun C58CorridorMap2D(
         }
     }
 
-    val (landmarkPois, infraPois) = remember(bundle.pois) {
+    val (landmarkCandidates, infraPois) = remember(bundle.pois, orderedHouses) {
         val infraCats = setOf(
             "gate", "bollard", "lift_gate", "toll_booth",
             "crossing", "bus_stop", "traffic_signals", "turning_circle", "mini_roundabout"
         )
-        val placeCats = setOf(
-            "city", "town", "suburb", "quarter", "village", "neighbourhood", "hamlet", "locality"
-        )
-        val majorCats = setOf(
-            "fuel", "hospital", "clinic", "school", "college", "university",
-            "mall", "supermarket", "marketplace", "police", "bank", "bus_station", "station"
-        )
         val infra = ArrayList<C58ExtractedPoi>(bundle.pois.size / 2)
-        val landmarks = ArrayList<C58ExtractedPoi>(bundle.pois.size)
+        val landmarks = ArrayList<C58LandmarkCandidate>(bundle.pois.size + 128)
+        val seenNames = ArrayList<Triple<String, Double, Double>>()
+
+        fun isDupNearby(name: String, e: Double, n: Double): Boolean {
+            val nl = name.trim().lowercase()
+            if (nl.isEmpty()) return false
+            return seenNames.any { (sn, se, snn) -> sn == nl && hypot(se - e, snn - n) <= 180.0 }
+        }
+
         for (p in bundle.pois) {
             if (p.category in infraCats) {
                 infra.add(p)
             } else {
-                landmarks.add(p)
+                val style = classifyGisLandmark(p.category, "", p.name)
+                landmarks.add(
+                    C58LandmarkCandidate(
+                        utmE = p.coord.utmEast,
+                        utmN = p.coord.utmNorth,
+                        label = p.name,
+                        style = style,
+                        isFromPoi = true
+                    )
+                )
+                if (p.name.isNotBlank()) {
+                    seenNames.add(Triple(p.name.trim().lowercase(), p.coord.utmEast, p.coord.utmNorth))
+                }
             }
         }
-        fun landmarkRank(p: C58ExtractedPoi): Int {
-            var score = when (p.category) {
-                in placeCats -> 300
-                in majorCats -> 200
-                else -> 100
+
+        for (item in orderedHouses) {
+            val h = item.house
+            val hasMeaningfulName = h.name.isNotBlank() && !h.name.contains('#') && !h.name.startsWith("Unnamed ")
+            if (item.style.kind != GisLandmarkKind.GENERIC || hasMeaningfulName) {
+                val label = h.name.trim()
+                if (!isDupNearby(label, h.centroid.utmEast, h.centroid.utmNorth)) {
+                    landmarks.add(
+                        C58LandmarkCandidate(
+                            utmE = h.centroid.utmEast,
+                            utmN = h.centroid.utmNorth,
+                            label = label,
+                            style = item.style,
+                            isFromPoi = false
+                        )
+                    )
+                    if (label.isNotEmpty()) {
+                        seenNames.add(Triple(label.lowercase(), h.centroid.utmEast, h.centroid.utmNorth))
+                    }
+                }
             }
-            val n = p.name.lowercase()
-            if (n.contains("bomas") || n.contains("galleria") || n.contains("maasai") ||
-                n.contains("hardy") || n.contains("rongai") || n.contains("kiserian") ||
-                n.contains("olorgesailie") || n.contains("magadi")
-            ) {
-                score += 60
-            }
-            if (p.name.isBlank()) score -= 80
-            return score
         }
-        landmarks.sortByDescending { landmarkRank(it) }
+
+        landmarks.sortWith(
+            compareByDescending<C58LandmarkCandidate> { it.style.priority }
+                .thenByDescending { it.isFromPoi }
+                .thenByDescending { it.label.isNotBlank() && !it.label.contains('#') }
+        )
         landmarks to infra
+    }
+
+    val terminusPlaceNames = remember(bundle.pois, bundle.ribbon) {
+        val placeCats = setOf("city", "town", "suburb", "quarter", "village", "neighbourhood", "hamlet", "locality")
+        val places = bundle.pois.filter { it.category in placeCats && it.name.isNotBlank() }
+        fun nearestPlaceTo(targetE: Double, targetN: Double): String? {
+            var bestName: String? = null
+            var bestDist = 3500.0
+            for (p in places) {
+                val d = hypot(p.coord.utmEast - targetE, p.coord.utmNorth - targetN)
+                if (d < bestDist) {
+                    bestDist = d
+                    bestName = p.name.trim()
+                }
+            }
+            return bestName
+        }
+        val firstV = bundle.ribbon.firstOrNull()
+        val lastV = bundle.ribbon.lastOrNull()
+        val startName = if (firstV != null) nearestPlaceTo(firstV.centerE, firstV.centerN) else null
+        val endName = if (lastV != null) nearestPlaceTo(lastV.centerE, lastV.centerN) else null
+        startName to endName
     }
 
     Box(
@@ -333,6 +405,7 @@ fun C58CorridorMap2D(
             }
 
             // 2. Extracted Water Polygons inside C58 Ribbon
+            val waterLabelTargets = ArrayList<Triple<String, Double, Double>>()
             if (showWater && bundle.waterPolygons.isNotEmpty()) {
                 val wPath = Path()
                 for (wp in bundle.waterPolygons) {
@@ -352,6 +425,12 @@ fun C58CorridorMap2D(
                     val isSalt = wp.waterType.contains("salt") || wp.waterType.contains("mud")
                     drawPath(wPath, if (isSalt) Color(0xFF26C6DA).copy(alpha = 0.28f) else Color(0xFF0288D1).copy(alpha = 0.34f))
                     drawPath(wPath, Color(0xFF00E5FF).copy(alpha = 0.78f), style = Stroke(width = 1.8f))
+
+                    if (!hideAllText && wp.name.isNotBlank() && !wp.name.startsWith("Unnamed") && !wp.name.contains('#')) {
+                        val visCe = (max(minWe, minE) + min(maxWe, maxE)) * 0.5
+                        val visCn = (max(minWn, minN) + min(maxWn, maxN)) * 0.5
+                        waterLabelTargets.add(Triple(wp.name, visCe, visCn))
+                    }
                 }
             }
 
@@ -472,12 +551,12 @@ fun C58CorridorMap2D(
                 )
             }
 
-            // 6. Extracted OSM Houses / Buildings inside ±1.5 km Non-Box Corridor (Scale-Adaptive & 60 FPS Culled)
-            if (showHouses && bundle.houses.isNotEmpty()) {
+            // 6. Extracted OSM Compounds & Houses inside ±1.5 km Non-Box Corridor (Scale-Adaptive & 60 FPS Culled)
+            if (showHouses && orderedHouses.isNotEmpty()) {
                 val hPath = Path()
                 val visibleHouseIdx = ArrayList<Int>(512)
-                for (i in bundle.houses.indices) {
-                    val h = bundle.houses[i]
+                for (i in orderedHouses.indices) {
+                    val h = orderedHouses[i].house
                     if (h.polygon.size < 3) continue
                     val b = i * 4
                     val minHe = houseBounds[b]
@@ -488,25 +567,29 @@ fun C58CorridorMap2D(
                     visibleHouseIdx.add(i)
                 }
 
-                // Stride only in ultra-dense wide urban overviews (>2200 visible houses above 5km); draw 100% below 5km!
+                // Stride only generic houses in ultra-dense wide urban overviews; always draw landmarks & compounds!
                 val houseStride = if (viewWidthM > 5000f && visibleHouseIdx.size > 2200) {
                     (visibleHouseIdx.size / 1800).coerceAtLeast(2)
                 } else 1
 
                 for (vi in visibleHouseIdx.indices) {
                     val i = visibleHouseIdx[vi]
-                    val h = bundle.houses[i]
+                    val item = orderedHouses[i]
+                    val h = item.house
                     val isSel = selectedHouse?.osmId == h.osmId
-                    if (houseStride > 1 && (vi % houseStride != 0) && !isSel) continue
+                    val isLandmark = item.style.kind != GisLandmarkKind.GENERIC
+                    if (houseStride > 1 && (vi % houseStride != 0) && !isSel && !isLandmark && !item.isCompound) continue
 
                     val isLeft = h.centroid.lateralOffsetM < 0f
                     val fillColor = when {
                         isSel -> NeonLime.copy(alpha = 0.85f)
+                        isLandmark -> item.style.fillColor
                         isLeft -> CyberCyan.copy(alpha = 0.64f)
                         else -> LaserOrange.copy(alpha = 0.66f)
                     }
                     val strokeColor = when {
                         isSel -> Color.White
+                        isLandmark -> item.style.strokeColor
                         isLeft -> Color(0xFF80F8FF)
                         else -> Color(0xFFFFD180)
                     }
@@ -522,25 +605,38 @@ fun C58CorridorMap2D(
                         strokeColor = strokeColor,
                         isSelected = isSel,
                         viewWidthM = viewWidthM,
-                        pathBuffer = hPath
+                        pathBuffer = hPath,
+                        isCompoundPerimeter = item.isCompound,
+                        roofType = h.roofType,
+                        levels = h.levels
                     )
 
-                    if (!hideAllText && viewWidthM <= 280f) {
-                        val hLabel = h.name.take(18)
-                        symbologyPaints.labelTextPaint.textSize = if (viewWidthM <= 90f) 23f else 18f
-                        symbologyPaints.labelHaloPaint.textSize = symbologyPaints.labelTextPaint.textSize
-                        drawContext.canvas.nativeCanvas.drawText(
-                            hLabel,
-                            centerScreen.x - 24f,
-                            centerScreen.y,
-                            symbologyPaints.labelHaloPaint
+                    if (viewWidthM <= 650f && h.hasFence && h.fencePolygon.size >= 3) {
+                        val fPoly = ArrayList<Offset>(h.fencePolygon.size)
+                        for (fpt in h.fencePolygon) {
+                            fPoly.add(Offset(toScreenX(fpt.utmEast), toScreenY(fpt.utmNorth)))
+                        }
+                        val gScreen = if (h.hasGate && h.gateCoord != null) {
+                            Offset(toScreenX(h.gateCoord.utmEast), toScreenY(h.gateCoord.utmNorth))
+                        } else null
+                        val gWidthPx = (h.gateWidthM * pxPerMeter).coerceAtLeast(5f)
+                        drawPerimeterFence2D(
+                            fenceScreenPoly = fPoly,
+                            fenceType = h.fenceType,
+                            isSelected = isSel,
+                            gateScreenPos = gScreen,
+                            gateWidthPx = gWidthPx,
+                            showPosts = (viewWidthM <= 260f)
                         )
-                        drawContext.canvas.nativeCanvas.drawText(
-                            hLabel,
-                            centerScreen.x - 24f,
-                            centerScreen.y,
-                            symbologyPaints.labelTextPaint
-                        )
+                        if (gScreen != null) {
+                            drawPropertyGate2D(
+                                gateCenter = gScreen,
+                                gateAngleRad = h.gateAngleRad,
+                                gateWidthPx = gWidthPx,
+                                gateType = h.gateType,
+                                isSelected = isSel
+                            )
+                        }
                     }
                 }
             }
@@ -564,7 +660,7 @@ fun C58CorridorMap2D(
                         "trunk", "trunk_link", "primary", "primary_link",
                         "secondary", "secondary_link", "tertiary", "tertiary_link"
                     )
-                    // Keep all major arterials + bridges/refs across all scales; only filter tiny minor alleys at full 78km corridor view
+                    // Keep all major arterials + bridges/refs across all scales; only filter tiny minor alleys at full corridor view
                     if (viewWidthM > 36_000f && !isMajorRoad && !road.isBridge && !road.isRoundabout && road.ref.isBlank() && !isSel && road.lengthM < 180f) continue
 
                     val strokePx = max(2.0f, road.widthM * pxPerMeter * 0.78f).coerceAtMost(46f)
@@ -588,18 +684,21 @@ fun C58CorridorMap2D(
                         paints = symbologyPaints,
                         placedBoxes = placedLabelBoxes,
                         pathBuffer = rPath,
-                        showTextLabels = !hideAllText
+                        showTextLabels = !hideAllText,
+                        pxPerMeter = pxPerMeter,
+                        roadWidthM = road.widthM,
+                        roadLengthM = road.lengthM
                     )
                 }
             }
 
-            // 7b. KM Chainage Badges & Corridor Terminus Markers on Top so Always Legible
+            // 7b. KM Chainage Badges & Corridor Terminus Markers (.bin place-derived, zero hardcoded names)
             if (!hideAllText && showCorridorBounds && ribbon.size >= 2) {
                 fun tryDrawKmBadge(v: C58RibbonVertex, badge: String, dotColor: Color) {
                     val sx = toScreenX(v.centerE)
                     val sy = toScreenY(v.centerN)
                     if (sx !in 8f..(cw - 8f) || sy !in 14f..(ch - 8f)) return
-                    val estW = badge.length * 13.5f
+                    val estW = kmBadgePaint.measureText(badge)
                     val tx = if (sx + estW + 14f > cw - 8f) (sx - estW - 10f).coerceAtLeast(8f) else sx + 8f
                     val ty = (sy - 6f).coerceIn(26f, ch - 10f)
                     val rect = RectF(tx - 6f, ty - 22f, tx + estW + 6f, ty + 6f)
@@ -612,8 +711,12 @@ fun C58CorridorMap2D(
                 }
 
                 val totalKm = ribbon.last().chainageM / 1000.0
-                tryDrawKmBadge(ribbon.first(), "KM 0 MAGADI", NeonLime)
-                tryDrawKmBadge(ribbon.last(), "KM ${"%.1f".format(totalKm)} BOMAS", CyberCyan)
+                val startPlace = terminusPlaceNames.first?.uppercase()?.take(12)
+                val endPlace = terminusPlaceNames.second?.uppercase()?.take(12)
+                val startBadge = if (!startPlace.isNullOrBlank()) "KM 0 $startPlace" else "KM 0"
+                val endBadge = if (!endPlace.isNullOrBlank()) "KM ${"%.1f".format(totalKm)} $endPlace" else "KM ${"%.1f".format(totalKm)}"
+                tryDrawKmBadge(ribbon.first(), startBadge, NeonLime)
+                tryDrawKmBadge(ribbon.last(), endBadge, CyberCyan)
 
                 val kmStep = when {
                     viewWidthM > 28_000f -> 20
@@ -631,7 +734,7 @@ fun C58CorridorMap2D(
                 }
             }
 
-            // 8. POIs & Road Infrastructure Nodes inside ±1.5 km corridor (priority-sorted + collision-free)
+            // 8. POIs, Categorized Landmarks & Road Infrastructure Nodes (priority-sorted + collision-free)
             if (showRoadSymbols && viewWidthM <= 4500f && infraPois.isNotEmpty()) {
                 var infraDrawn = 0
                 val maxInfraLabels = if (viewWidthM <= 1200f) 24 else 0
@@ -641,18 +744,18 @@ fun C58CorridorMap2D(
                     val px = toScreenX(poi.coord.utmEast)
                     val py = toScreenY(poi.coord.utmNorth)
                     if (px < 10f || px > cw - 10f || py < 20f || py > ch - 10f) continue
-                    if (drawRoadInfraNodeSymbol(Offset(px, py), poi.category, symbologyPaints)) {
+                    if (drawRoadInfraNodeSymbol(Offset(px, py), poi.category, symbologyPaints, showTextLabels = !hideAllText)) {
                         infraDrawn++
                         if (!hideAllText && showPois && infraLabeled < maxInfraLabels && poi.name.isNotBlank()) {
                             val cleanName = poi.name.take(20)
-                            val estW = cleanName.length * 10.5f
+                            symbologyPaints.labelTextPaint.textSize = 18f
+                            symbologyPaints.labelHaloPaint.textSize = 18f
+                            val estW = symbologyPaints.labelTextPaint.measureText(cleanName)
                             val tx = (px + 9f).coerceAtMost((cw - estW - 8f).coerceAtLeast(8f))
                             val ty = (py + 5f).coerceIn(24f, ch - 8f)
                             val rect = RectF(tx - 6f, ty - 18f, tx + estW + 6f, ty + 6f)
                             if (placedLabelBoxes.none { RectF.intersects(it, rect) }) {
                                 placedLabelBoxes.add(rect)
-                                symbologyPaints.labelTextPaint.textSize = 18f
-                                symbologyPaints.labelHaloPaint.textSize = 18f
                                 drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, symbologyPaints.labelHaloPaint)
                                 drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, symbologyPaints.labelTextPaint)
                                 infraLabeled++
@@ -662,38 +765,111 @@ fun C58CorridorMap2D(
                 }
             }
 
-            if (showPois && landmarkPois.isNotEmpty()) {
-                val maxLabels = if (viewWidthM > 4000f) 55 else 85
+            if ((showPois || showHouses) && landmarkCandidates.isNotEmpty()) {
+                val maxLabels = if (viewWidthM > 4000f) 55 else 90
                 var drawnLabels = 0
-                labelPaint.textSize = 21f
-                for (poi in landmarkPois) {
-                    val px = toScreenX(poi.coord.utmEast)
-                    val py = toScreenY(poi.coord.utmNorth)
-                    if (px < 10f || px > cw - 10f || py < 20f || py > ch - 10f) continue
+                val textSz = if (viewWidthM <= 500f) 21f else 19.5f
+                for (cand in landmarkCandidates) {
+                    if (!cand.isFromPoi && !showHouses) continue
+                    if (cand.isFromPoi && !showPois && cand.style.kind == GisLandmarkKind.GENERIC) continue
+                    val px = toScreenX(cand.utmE)
+                    val py = toScreenY(cand.utmN)
+                    if (px < 8f || px > cw - 8f || py < 14f || py > ch - 8f) continue
 
-                    if (hideAllText) {
-                        drawCircle(NeonLime.copy(alpha = 0.80f), radius = 3.6f, center = Offset(px, py))
-                        continue
+                    val isMajorLandmark = cand.style.kind != GisLandmarkKind.GENERIC
+                    val canTryLabel = !hideAllText && drawnLabels < maxLabels &&
+                        (isMajorLandmark || cand.isFromPoi || viewWidthM <= 450f)
+
+                    if (canTryLabel) {
+                        val placed = drawLandmarkPinAndLabel(
+                            center = Offset(px, py),
+                            label = cand.label,
+                            style = cand.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = true,
+                            textSizePx = textSz,
+                            drawPinAlways = cand.isFromPoi || isMajorLandmark || viewWidthM <= 4500f
+                        )
+                        if (placed) drawnLabels++
+                    } else if (cand.isFromPoi || isMajorLandmark) {
+                        drawLandmarkPinAndLabel(
+                            center = Offset(px, py),
+                            label = cand.label,
+                            style = cand.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = false,
+                            drawPinAlways = viewWidthM <= 4500f || cand.style.priority >= 240
+                        )
                     }
+                }
+            }
 
-                    val cleanName = poi.name.take(22)
-                    val estW = cleanName.length * 12.0f
-                    val tx = if (px + estW + 12f > cw - 8f) (px - estW - 8f).coerceAtLeast(8f) else px + 8f
-                    val ty = (py + 6f).coerceIn(26f, ch - 8f)
-                    val rect = RectF(tx - 10f, ty - 22f, tx + estW + 10f, ty + 8f)
-                    val canPlaceLabel = cleanName.isNotBlank() && drawnLabels < maxLabels && placedLabelBoxes.none { RectF.intersects(it, rect) }
+            // Zoomed-in inner-compound structure roles & individual house labels (<= 340m, collision-free)
+            if (!hideAllText && showHouses && viewWidthM <= 340f) {
+                var genericLabeled = 0
+                for (i in orderedHouses.indices) {
+                    if (genericLabeled >= 32) break
+                    val item = orderedHouses[i]
+                    val h = item.house
+                    val isInnerChild = h.parentCompoundName.isNotBlank() && !item.isCompound
+                    if (!isInnerChild && item.style.kind != GisLandmarkKind.GENERIC) continue
+                    val roleLabel = when {
+                        isInnerChild -> {
+                            val afterBullet = h.name.substringAfter("• ", "").substringBefore(" #").trim()
+                            val role = afterBullet.ifBlank { h.buildingType.replace('_', ' ') }
+                            if (h.levels > 1) "$role (${h.levels}F)" else role
+                        }
+                        !h.name.contains('#') && !h.name.startsWith("Unnamed ") -> h.name
+                        viewWidthM <= 140f -> {
+                            val tLabel = h.buildingType.replace('_', ' ').replaceFirstChar { it.uppercase() }
+                            if (h.levels > 1) "$tLabel ${h.levels}F" else tLabel
+                        }
+                        else -> continue
+                    }
+                    val px = toScreenX(h.centroid.utmEast)
+                    val py = toScreenY(h.centroid.utmNorth)
+                    if (drawLandmarkPinAndLabel(
+                            center = Offset(px, py),
+                            label = roleLabel,
+                            style = item.style,
+                            paints = symbologyPaints,
+                            placedBoxes = placedLabelBoxes,
+                            canvasW = cw,
+                            canvasH = ch,
+                            showTextLabels = true,
+                            textSizePx = 17.5f,
+                            drawPinAlways = isInnerChild
+                        )
+                    ) {
+                        genericLabeled++
+                    }
+                }
+            }
 
-                    if (canPlaceLabel) {
+            // Named Water Polygons from .bin (e.g. Lake Magadi, Salt Pans)
+            if (!hideAllText && showWater && waterLabelTargets.isNotEmpty()) {
+                val drawnWaterNames = HashSet<String>()
+                for ((wName, we, wn) in waterLabelTargets) {
+                    if (!drawnWaterNames.add(wName.lowercase())) continue
+                    val sx = toScreenX(we)
+                    val sy = toScreenY(wn)
+                    if (sx !in 24f..(cw - 24f) || sy !in 24f..(ch - 24f)) continue
+                    val clean = wName.take(24)
+                    val estW = waterLabelPaint.measureText(clean)
+                    val tx = (sx - estW * 0.5f).coerceIn(10f, (cw - estW - 10f).coerceAtLeast(10f))
+                    val ty = sy.coerceIn(26f, ch - 12f)
+                    val rect = RectF(tx - 8f, ty - 22f, tx + estW + 8f, ty + 6f)
+                    if (placedLabelBoxes.none { RectF.intersects(it, rect) }) {
                         placedLabelBoxes.add(rect)
-                        drawCircle(NeonLime, radius = 4.8f, center = Offset(px, py))
-                        drawCircle(DarkBackground, radius = 2.0f, center = Offset(px, py))
-                        symbologyPaints.labelTextPaint.textSize = 20f
                         symbologyPaints.labelHaloPaint.textSize = 20f
-                        drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, symbologyPaints.labelHaloPaint)
-                        drawContext.canvas.nativeCanvas.drawText(cleanName, tx, ty, labelPaint)
-                        drawnLabels++
-                    } else if (viewWidthM <= 4500f) {
-                        drawCircle(NeonLime.copy(alpha = 0.72f), radius = 3.2f, center = Offset(px, py))
+                        drawContext.canvas.nativeCanvas.drawText(clean, tx, ty, symbologyPaints.labelHaloPaint)
+                        drawContext.canvas.nativeCanvas.drawText(clean, tx, ty, waterLabelPaint)
                     }
                 }
             }

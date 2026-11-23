@@ -1,0 +1,74 @@
+// ==============================================================================
+// Procedural Thermoplastic Road Markings & Crosswalk Texture Generator (.comp)
+// Path: src/road/shaders/road_markings_tex.comp
+// Outputs: Albedo RGBA8 (Paint + Retroreflective Glass Bead Wear) & Stencil Mask
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "include/road_common.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outMarkingsAlbedo;
+layout(set = 0, binding = 1, r8)    uniform writeonly image2D outRetroMask;
+
+layout(push_constant) uniform MarkingsPC {
+    uint texSize;
+    uint laneCount;
+    uint isCrosswalkTile;
+    uint isGoreChevronTile;
+    float wearFactor;
+} pc;
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.texSize) || px.y >= int(pc.texSize)) {
+        return;
+    }
+
+    vec2 uv = vec2(px) / float(max(pc.texSize - 1u, 1u));
+    float wearNoise = roadFbm(uv * 28.0);
+    float paintSurvival = smoothstep(pc.wearFactor * 0.55 - 0.15, pc.wearFactor * 0.55 + 0.15, wearNoise);
+
+    // Double yellow median line at center u = 0.50
+    float medL = evaluateDashedLineMask(uv, 0.488, 0.006, 1.0, 1.0);
+    float medR = evaluateDashedLineMask(uv, 0.512, 0.006, 1.0, 1.0);
+    float yellowMask = max(medL, medR);
+
+    // Solid white shoulder edge lines at u = 0.07 & u = 0.93
+    float edgeL = evaluateDashedLineMask(uv, 0.07, 0.008, 1.0, 1.0);
+    float edgeR = evaluateDashedLineMask(uv, 0.93, 0.008, 1.0, 1.0);
+    float whiteMask = max(edgeL, edgeR);
+
+    // Dashed lane dividers for multi-lane expressways
+    if (pc.laneCount >= 2u) {
+        whiteMask = max(whiteMask, evaluateDashedLineMask(uv, 0.285, 0.006, 4.0, 0.36));
+        whiteMask = max(whiteMask, evaluateDashedLineMask(uv, 0.715, 0.006, 4.0, 0.36));
+    }
+
+    // Optional Zebra Crosswalk stripes across top band
+    if (pc.isCrosswalkTile != 0u && uv.y > 0.72 && uv.y < 0.92) {
+        float stripe = step(fract(uv.x * 12.0), 0.52);
+        float margin = step(0.10, uv.x) * step(uv.x, 0.90);
+        whiteMask = max(whiteMask, stripe * margin);
+    }
+
+    // Optional Chevron Gore diagonal markings
+    if (pc.isGoreChevronTile != 0u) {
+        float diag = fract((abs(uv.x - 0.5) * 6.0) - uv.y * 4.0);
+        float vCone = step(abs(uv.x - 0.5), uv.y * 0.42);
+        yellowMask = max(yellowMask, step(diag, 0.28) * vCone);
+    }
+
+    whiteMask *= paintSurvival;
+    yellowMask *= paintSurvival;
+
+    vec3 whitePaint  = vec3(0.94, 0.95, 0.97);
+    vec3 yellowPaint = vec3(0.96, 0.76, 0.12);
+    vec3 col = yellowPaint * yellowMask + whitePaint * whiteMask * (1.0 - yellowMask);
+    float alpha = clamp(max(whiteMask, yellowMask), 0.0, 1.0);
+
+    imageStore(outMarkingsAlbedo, px, vec4(col, alpha));
+    imageStore(outRetroMask, px, vec4(alpha * 0.92, 0.0, 0.0, 1.0));
+}

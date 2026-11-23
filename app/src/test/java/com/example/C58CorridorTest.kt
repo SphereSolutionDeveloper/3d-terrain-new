@@ -257,5 +257,70 @@ class C58CorridorTest {
             bundle.roads.any { it.name.contains("Magadi Road", ignoreCase = true) } &&
                 bundle.roads.any { !it.name.contains("C58", ignoreCase = true) && !it.name.startsWith("Unnamed ") && !it.name.contains('#') }
         )
+
+        // Verify landmarks & compounds (factories, police, schools, hospitals) parsed directly from .bin
+        assertTrue(
+            "C58B must contain Magadi Soda Factory compound/landmark in Sector 1",
+            bundle.houses.any {
+                it.name.contains("Magadi Soda Factory", ignoreCase = true) &&
+                    (it.buildingType == "factory" || it.amenity.contains("industrial", ignoreCase = true))
+            }
+        )
+        assertTrue(
+            "C58B must include factory/industrial, school, hospital, and police landmarks from OSM",
+            bundle.houses.any { it.buildingType == "school" || it.amenity.contains("school", ignoreCase = true) } &&
+                bundle.houses.any { it.buildingType == "hospital" || it.amenity.contains("hospital", ignoreCase = true) } &&
+                (bundle.pois.any { it.category.contains("police", ignoreCase = true) } ||
+                    bundle.houses.any { it.buildingType.contains("police", ignoreCase = true) || it.amenity.contains("police", ignoreCase = true) })
+        )
+
+        // Verify real .bin bridge B19 + physical geometry proportions
+        val c58Bridge = bundle.roads.firstOrNull { it.isBridge && it.lengthM >= 40f }
+        assertTrue("Expected real C58 bridge in binary bundle", c58Bridge != null)
+        val bSpec = computePhysicalBridgeSpec(
+            lengthM = c58Bridge!!.lengthM,
+            widthM = c58Bridge.widthM,
+            lanes = c58Bridge.lanes,
+            highwayType = c58Bridge.highwayType
+        )
+        assertTrue("Highway bay span (${bSpec.baySpanM}m) must stay <= 28m", bSpec.baySpanM <= 28.01f)
+        assertEquals(bSpec.lengthM / bSpec.spanCount.toFloat(), bSpec.baySpanM, 0.01f)
+        assertTrue("Bridge must have >= 3 steel girders across full deck width", bSpec.girderCount >= 3)
+        assertTrue("Girder web depth (${bSpec.girderDepthM}m) must scale realistically", bSpec.girderDepthM in 0.75f..2.25f)
+
+        val footSpec = computePhysicalBridgeSpec(lengthM = 48f, widthM = 3.2f, lanes = 1, highwayType = "footway")
+        assertTrue("Footbridge bay span (${footSpec.baySpanM}m) must stay <= 16m", footSpec.baySpanM <= 16.01f)
+        assertEquals(3, footSpec.spanCount)
+        assertEquals(1, footSpec.columnCountPerBent)
+        assertTrue(footSpec.isFootbridge)
+
+        // Verify scaled TerrainBridge3D matches scene meters & keeps every pier grounded below bearing seat
+        val scaleXZ = 0.025f
+        val scaleY = 0.03f
+        val ptsXZ = c58Bridge.nodes.mapIndexed { idx, _ -> (idx * 2f) to (idx * 1f) }
+        val elevsM = c58Bridge.nodes.mapIndexed { idx, _ -> 620f - if (idx in 1 until c58Bridge.nodes.lastIndex) 3.5f else 0f }
+        val bridge3D = buildScaledTerrainBridge3D(
+            osmId = c58Bridge.osmId,
+            name = c58Bridge.name,
+            highwayType = c58Bridge.highwayType,
+            lanes = c58Bridge.lanes,
+            widthM = c58Bridge.widthM,
+            lengthM = c58Bridge.lengthM,
+            isSelected = false,
+            scenePointsXZ = ptsXZ,
+            groundElevationsM = elevsM,
+            baseDatumElevM = 600f,
+            scaleXZ = scaleXZ,
+            scaleYPerM = scaleY
+        )
+        assertTrue("buildScaledTerrainBridge3D must construct valid geometry", bridge3D != null)
+        assertEquals(bSpec.deckWidthM * 0.5f * scaleXZ, bridge3D!!.halfWidthScene, 0.001f)
+        assertEquals(bSpec.girderDepthM * scaleY, bridge3D.girderDepthScene, 0.001f)
+        assertEquals(bSpec.spanCount + 1, bridge3D.piers.size)
+        assertEquals(bSpec.spanCount + 1, bridge3D.expansionFractions.size)
+        assertTrue(
+            "Every abutment/pier bearing seat must remain above terrain groundY",
+            bridge3D.piers.all { it.seatY > it.groundY }
+        )
     }
 }

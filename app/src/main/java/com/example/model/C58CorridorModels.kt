@@ -88,7 +88,28 @@ data class C58ExtractedHouse(
     val perimeterM: Float,
     val sectorIndex: Int,
     val polygon: List<C58Coord>,
-    val tags: Map<String, String> = emptyMap()
+    val tags: Map<String, String> = emptyMap(),
+    // v2 Architectural Envelope & Compound Containment
+    val floorHeightM: Float = if (levels > 0) heightM / levels else heightM,
+    val shapeType: String = "RECTANGULAR",
+    val roofType: String = "GABLED",
+    val roofPitchDeg: Float = 20f,
+    val roofMaterial: String = "CORRUGATED_IRON_MABATI",
+    val wallType: String = "CONCRETE_BLOCK_PLASTER",
+    val windowType: String = "SLIDING_ALUMINUM",
+    val windowToWallRatio: Float = 0.20f,
+    val parentCompoundId: Long = 0L,
+    val parentCompoundName: String = "",
+    // v2 Road-Collision-Free Perimeter Fence & Gate Coordinates
+    val hasFence: Boolean = false,
+    val fenceType: String = "NONE",
+    val fenceHeightM: Float = 0f,
+    val fencePolygon: List<C58Coord> = emptyList(),
+    val hasGate: Boolean = false,
+    val gateType: String = "NONE",
+    val gateWidthM: Float = 0f,
+    val gateAngleRad: Float = 0f,
+    val gateCoord: C58Coord? = null
 )
 
 data class C58ExtractedPoi(

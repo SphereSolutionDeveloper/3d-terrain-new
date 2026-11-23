@@ -108,10 +108,25 @@ private:
         const BridgeParams& params
     );
 
+    static void ExtrudeSteelCompositeSlabSegment(
+        BridgeMeshBuffer& buffer,
+        float t0, float t1,
+        const BridgeParams& params
+    );
+
     static void AddIntermediateSupportPier(
         BridgeMeshBuffer& buffer,
         float t,
         const BridgeParams& params,
+        bool isPedestrian,
+        float customDepthM = -1.0f,
+        float customSagM = 0.0f
+    );
+
+    static void BuildEndAbutmentsAndExpansionJoints(
+        BridgeMeshBuffer& buffer,
+        const BridgeParams& params,
+        float structuralDepthM,
         bool isPedestrian
     );
 

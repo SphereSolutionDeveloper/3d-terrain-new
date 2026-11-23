@@ -80,6 +80,7 @@ fun MagadiTownScreen(
     val buildings3d by magadiViewModel.overlayBuildings3D.collectAsStateWithLifecycle()
     val roads3d by magadiViewModel.overlayRoads3D.collectAsStateWithLifecycle()
     val symbols3d by magadiViewModel.overlayRoadSymbols3D.collectAsStateWithLifecycle()
+    val bridges3d by magadiViewModel.overlayBridges3D.collectAsStateWithLifecycle()
 
     val dataTabIndex by magadiViewModel.dataTabIndex.collectAsStateWithLifecycle()
     val searchQuery by magadiViewModel.searchQuery.collectAsStateWithLifecycle()
@@ -340,6 +341,7 @@ fun MagadiTownScreen(
                         overlayBuildings3D = buildings3d,
                         overlayRoadSegments3D = roads3d,
                         overlayRoadSymbols3D = symbols3d,
+                        overlayBridges3D = bridges3d,
                         onRotateDrag = { dx, dy ->
                             magadiViewModel.yaw3d.value += dx * 0.007f
                             magadiViewModel.pitch3d.value = (magadiViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -410,6 +412,7 @@ fun MagadiTownScreen(
                         overlayBuildings3D = buildings3d,
                         overlayRoadSegments3D = roads3d,
                         overlayRoadSymbols3D = symbols3d,
+                        overlayBridges3D = bridges3d,
                         onRotateDrag = { dx, dy ->
                             magadiViewModel.yaw3d.value += dx * 0.007f
                             magadiViewModel.pitch3d.value = (magadiViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -825,7 +828,11 @@ private fun MagadiCellTelemetryCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 val secondLine = when {
-                    selectedBuilding != null -> "BLDG: ${selectedBuilding.name} (${"%.0f".format(selectedBuilding.footprintAreaM2)}m²)"
+                    selectedBuilding != null -> {
+                        val b = selectedBuilding
+                        val comp = if (b.parentCompoundName.isNotBlank()) " [${b.parentCompoundName.take(18)}]" else ""
+                        "${b.name}$comp • ${b.shapeType} • ${b.levels}F (${"%.1f".format(b.heightM)}m) • ${b.roofType}/${b.wallType}"
+                    }
                     selectedRoad != null -> "ROAD: ${selectedRoad.name} (${selectedRoad.highwayType})"
                     else -> "${"%.5f".format(inspectedCell.lat)}, ${"%.5f".format(inspectedCell.lon)} • ${inspectedCell.utmEast.roundToInt()}E, ${inspectedCell.utmNorth.roundToInt()}N"
                 }
@@ -837,6 +844,18 @@ private fun MagadiCellTelemetryCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (selectedBuilding != null && (selectedBuilding.hasFence || selectedBuilding.hasGate)) {
+                    val gc = selectedBuilding.gateCoord
+                    val gTxt = if (gc != null) " @ ${"%.5f".format(gc.lat)}, ${"%.5f".format(gc.lon)}" else ""
+                    Text(
+                        text = "FENCE: ${selectedBuilding.fenceType} (${"%.1f".format(selectedBuilding.fenceHeightM)}m) • GATE: ${selectedBuilding.gateType}$gTxt",
+                        fontSize = 8.5.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(6.dp))
             Button(

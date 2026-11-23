@@ -1061,45 +1061,116 @@ struct RetainingWallParams {
         NativeFileTreeItem(
             path = "src/road/RoadNetwork.h",
             name = "RoadNetwork.h",
-            category = "Road Graph",
+            category = "Road Graph & Intersections",
             lines = 72,
-            description = "Road topological network containing intersections, directed lanes, priority rules, and connection nodes.",
-            codeSnippet = """// Procedural Vulkan Asset Suite
-// Path: src/road/RoadNetwork.h
+            description = "Road topological network & 3D junction mesh generator: Signalized 4-Way Crossroad, Arterial T-Junction, Y-Fork Gore, and 2x2 District Street Grid.",
+            codeSnippet = """// Modular Road Component: Road Network & Signalized Intersection 3D Generator
+// Path: native-assets/src/road/RoadNetwork.h
 #pragma once
+#include <cstdint>
 #include <vector>
-#include <glm/glm.hpp>
 
+namespace ApexAssets {
 namespace Road {
-struct RoadSegment {
-    uint32_t id;
-    uint32_t nodeA;
-    uint32_t nodeB;
-    uint32_t laneCount = 2;
-    float laneWidth = 3.5f;
-    float speedLimitKmH = 60.0f;
+
+enum class RoadNetworkType : uint32_t {
+    Signalized4WayIntersection = 0,
+    TJunctionArterial,
+    YForkBifurcation,
+    DistrictStreetGrid
 };
-}"""
+
+struct RoadNetworkParams {
+    RoadNetworkType type = RoadNetworkType::Signalized4WayIntersection;
+    float roadWidthM = 12.0f;       // Carriageway width curb-to-curb (8.0m to 18.0m)
+    float armSpanM = 56.0f;         // Total network arm footprint width/length (36.0m to 100.0m)
+    uint32_t laneCount = 3;         // Lanes across main roadway (2 to 4)
+    float cornerRadiusM = 8.0f;     // Fillet curb radius at corners (4.0m to 16.0m)
+    bool hasTrafficSignals = true;  // Cantilever traffic signal masts, LED heads & street lamps
+};
+
+class RoadNetworkGenerator {
+public:
+    static RoadNetworkMeshBuffer GenerateNetworkMesh(const RoadNetworkParams& params);
+};
+}}"""
         ),
         NativeFileTreeItem(
             path = "src/road/RoadSplineGraph.h",
             name = "RoadSplineGraph.h",
-            category = "Spline Curves",
-            lines = 58,
-            description = "Hermite & Catmull-Rom spline evaluator for smooth highway banking, curvature calculation, and tangents.",
-            codeSnippet = """// Procedural Vulkan Asset Suite
-// Path: src/road/RoadSplineGraph.h
+            category = "Spline Curves & Banking",
+            lines = 78,
+            description = "Catmull-Rom & Euler clothoid spline evaluator with physics superelevation θ = arctan(v² / gR), dashed median, F-kerbs, and RC viaduct piers.",
+            codeSnippet = """// Modular Road Component: Hermite & Catmull-Rom Spline Alignment 3D Generator
+// Path: native-assets/src/road/RoadSplineGraph.h
 #pragma once
+#include <cstdint>
 #include <vector>
-#include <glm/glm.hpp>
 
+namespace ApexAssets {
 namespace Road {
+
+enum class SplineCurveType : uint32_t {
+    ClothoidSCurve = 0,
+    HairpinSwitchback,
+    CatmullRomCorridor,
+    BankedSpiralHelix
+};
+
+struct RoadSplineParams {
+    SplineCurveType type = SplineCurveType::ClothoidSCurve;
+    float splineLengthM = 110.0f;      // Path extent / corridor span (60.0m to 180.0m)
+    float roadWidthM = 10.5f;          // Asphalt pavement width (7.0m to 16.0m)
+    float designSpeedKmH = 80.0f;      // Used to compute physics banking angle theta = atan(v^2 / (g*R))
+    float elevationGainM = 8.0f;       // Vertical climb across spline length (0.0m to 22.0m)
+    float curvatureIntensity = 1.0f;   // Control-point lateral amplitude multiplier (0.3 to 1.8)
+};
+
 class RoadSplineGraph {
 public:
-    static glm::vec3 evaluatePosition(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t);
-    static glm::vec3 evaluateTangent(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, float t);
+    static float ComputeSuperelevationRad(float designSpeedKmH, float radiusM);
+    static RoadSplineMeshBuffer GenerateSplineMesh(const RoadSplineParams& params);
 };
-}"""
+}}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/RoadTileGen.h",
+            name = "RoadTileGen.h",
+            category = "Road Tiles & Surface States",
+            lines = 65,
+            description = "Terrain-conforming road tile generator & surface weather/distress simulator: Cut & Fill Hillside, Quadtree Urban Tile, Wet Puddles, Muddy Ruts, Potholes, and Black-Ice.",
+            codeSnippet = """// Modular Road Component: Streaming LOD Road Tile & Surface State Generator
+// Path: native-assets/src/road/RoadTileGen.h
+#pragma once
+#include <cstdint>
+#include <vector>
+
+namespace ApexAssets {
+namespace Road {
+
+enum class RoadTileType : uint32_t {
+    CutFillHillsideTile = 0,
+    QuadtreeUrbanTile,
+    WetPuddleStateTile,
+    MuddyGravelRutTile,
+    PotholedCrackedTile,
+    SnowyIcyCorridorTile
+};
+
+struct RoadTileParams {
+    RoadTileType type = RoadTileType::CutFillHillsideTile;
+    float tileSizeM = 36.0f;          // Square/longitudinal tile span (24.0m to 72.0m)
+    float roadWidthM = 11.0f;         // Active roadway width (8.0m to 16.0m)
+    float cutFillHeightM = 4.5f;      // Hillside cut wall / fill embankment height (0.0m to 10.0m)
+    float distressDepthM = 0.06f;     // Wheel rut / pothole / washboard depth (0.0m to 0.15m)
+    bool hasDrainageAndCurbs = true;  // Concrete V-ditches, storm catch basins, kerbs or snow poles
+};
+
+class RoadTileGen {
+public:
+    static RoadTileMeshBuffer GenerateRoadTileMesh(const RoadTileParams& params);
+};
+}}"""
         ),
         NativeFileTreeItem(
             path = "src/road/signage/SignpostParams.h",
@@ -1207,6 +1278,350 @@ struct RoadBlockParams {
     bool hasWarningBeacons = true;
 };
 }}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/include/road_common.glsl",
+            name = "road_common.glsl",
+            category = "GLSL 4.60 Common & BRDF",
+            lines = 121,
+            description = "Shared Vulkan 1.3 GLSL noise (Hash, FBM, Voronoi crack distance), SDF road marking evaluator, and Cook-Torrance GGX PBR BRDF.",
+            codeSnippet = """// Shared Road Network Vulkan 1.3 GLSL Common Functions & PBR Lighting
+// Path: src/road/shaders/include/road_common.glsl
+#ifndef APEX_ROAD_COMMON_GLSL
+#define APEX_ROAD_COMMON_GLSL
+
+float roadFbm(vec2 p);
+float roadVoronoiEdgeDist(vec2 uv, out vec2 cellId);
+float evaluateDashedLineMask(vec2 uv, float centerU, float halfW, float dashPeriod, float duty);
+vec3 evaluateRoadPBR(vec3 N, vec3 V, vec3 L, vec3 albedo, float roughness, float metallic, vec3 lightRadiance);
+
+#endif"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/include/road_types.glsl",
+            name = "road_types.glsl",
+            category = "GLSL 4.60 SSBO Buffers",
+            lines = 54,
+            description = "GPU buffer layouts matching C++ 48-byte RoadGpuVertex, Catmull-Rom control points, and Quadtree tile descriptors.",
+            codeSnippet = """// Shared Vulkan 1.3 Road SSBO & Push Constant Structs
+// Path: src/road/shaders/include/road_types.glsl
+struct RoadGpuVertex {
+    vec4 posAndNx;   // xyz + normal.x
+    vec4 nyNzUv;     // normal.yz + uv.xy
+    vec4 color;      // rgba linear
+};
+struct RoadSplineControlPoint {
+    vec4 posAndWidth;
+    vec4 bankAndFlags;
+};"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_network.vert",
+            name = "road_network.vert",
+            category = "GLSL Vertex Shader",
+            lines = 56,
+            description = "Vulkan 1.3 vertex shader supporting horizontal alignment bend radius, superelevation banking roll, and dynamic UBO transforms.",
+            codeSnippet = """#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inUV;
+layout(location = 3) in vec4 inColor;
+
+layout(push_constant) uniform RoadPushConstants {
+    mat4 model;
+    float curveBendRad;
+    float superelevationRad;
+    float timeSec;
+    uint materialFlags;
+} pc;
+
+void main() {
+    vec3 p = inPosition;
+    float cB = cos(pc.superelevationRad), sB = sin(pc.superelevationRad);
+    p.xy = mat2(cB, -sB, sB, cB) * p.xy;
+    gl_Position = ubo.viewProj * (pc.model * vec4(p, 1.0));
+}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_network.frag",
+            name = "road_network.frag",
+            category = "GLSL Fragment Shader",
+            lines = 104,
+            description = "GGX PBR fragment shader for modular road surfaces with procedural asphalt albedo, standing puddle mirror reflection, retroreflective paint, and LED pulse.",
+            codeSnippet = """#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#include "include/road_common.glsl"
+
+layout(location = 0) out vec4 outFragColor;
+
+void main() {
+    vec3 N = normalize(inWorldNormal);
+    vec3 V = normalize(ubo.cameraPos.xyz - inWorldPos);
+    vec3 L = normalize(ubo.sunDirIntensity.xyz);
+    vec3 direct = evaluateRoadPBR(N, V, L, albedo, roughness, metallic, ubo.sunDirIntensity.www);
+    vec3 hdr = direct + ambient + retroGlow + emissive;
+    outFragColor = vec4(pow(hdr / (hdr + 1.0), vec3(1.0 / 2.2)), inColor.a);
+}"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_network.comp",
+            name = "road_network.comp",
+            category = "Vulkan Compute Geometry",
+            lines = 78,
+            description = "Compute shader extruding topological RoadNetwork segments into dual-triangle indexed GPU geometry in SSBO.",
+            codeSnippet = """#version 460
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+// Evaluates intersection segment ribbons and emits 48-byte RoadGpuVertex pairs."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_spline.comp",
+            name = "road_spline.comp",
+            category = "Vulkan Compute Geometry",
+            lines = 88,
+            description = "Compute shader sampling Catmull-Rom centerlines and computing θ = arctan(v²/(gR)) superelevated road prisms.",
+            codeSnippet = """#version 460
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+// Samples Catmull-Rom splines & extrudes superelevated Frenet-Serret road prisms."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_tile.comp",
+            name = "road_tile.comp",
+            category = "Vulkan Compute Terrain Tile",
+            lines = 82,
+            description = "Compute shader generating terrain-conforming Quadtree road tile heightfields, V-ditch cut/fill trenches, and surface state splat masks.",
+            codeSnippet = """#version 460
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+// Generates Cut & Fill terrain heights and RGBA splat masks for road tiles."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_markings_tex.comp",
+            name = "road_markings_tex.comp",
+            category = "Compute Procedural Texture",
+            lines = 68,
+            description = "Procedural compute texture kernel synthesizing double-yellow medians, dashed white lanes, crosswalks, gore chevrons, and glass-bead retroreflection masks.",
+            codeSnippet = """#version 460
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outMarkingAlbedo;
+layout(set = 0, binding = 1, r8) uniform writeonly image2D outRetroMask;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/shaders/road_surface_state_tex.comp",
+            name = "road_surface_state_tex.comp",
+            category = "Compute Procedural Texture",
+            lines = 91,
+            description = "Multi-state road weather & distress texture synthesizer for Dry Asphalt, Wet Puddles, Muddy Ruts, Gravel, Potholes/Cracks, and Black-Ice.",
+            codeSnippet = """#version 460
+#include "include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outStateAlbedo;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D outStateNormalRoughness;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/asphalt/shaders/asphalt_albedo.comp",
+            name = "asphalt_albedo.comp",
+            category = "Compute Asphalt Texture",
+            lines = 48,
+            description = "Procedural Voronoi granite/basalt aggregate & bitumen oxidation albedo compute kernel with wheel-track polish.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outAsphaltAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/asphalt/shaders/asphalt_height.comp",
+            name = "asphalt_height.comp",
+            category = "Compute Asphalt Texture",
+            lines = 44,
+            description = "Compute shader outputting R16F asphalt macro-texture stone heightfield and crocodile crack grooves.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, r16f) uniform writeonly image2D outAsphaltHeight;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/asphalt/shaders/asphalt_normal.comp",
+            name = "asphalt_normal.comp",
+            category = "Compute Asphalt Texture",
+            lines = 55,
+            description = "Central-difference tangent-space normal map compute kernel derived from aggregate chip relief.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outAsphaltNormal;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/asphalt/shaders/asphalt_orm.comp",
+            name = "asphalt_orm.comp",
+            category = "Compute Asphalt Texture",
+            lines = 45,
+            description = "Packed Occlusion / Roughness / Metallic (ORM) compute generator incorporating rain puddles and tire polish.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outAsphaltOrm;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/barriers/shaders/jersey_barrier.comp",
+            name = "jersey_barrier.comp",
+            category = "Compute Barrier Texture",
+            lines = 54,
+            description = "F-Shape precast concrete barrier panel texture generator with tire scrape marks, road grime, and amber delineators.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outBarrierAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/barriers/shaders/guardrail.comp",
+            name = "guardrail.comp",
+            category = "Compute Barrier Texture",
+            lines = 52,
+            description = "Galvanized zinc spangle & corrugated W-beam guardrail texture kernel with splice bolt arrays.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outGuardrailAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/barriers/shaders/bollard.comp",
+            name = "bollard.comp",
+            category = "Compute Barrier Texture",
+            lines = 50,
+            description = "ASTM F2656 brushed steel & safety-yellow bollard generator with retroreflective warning collar.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outBollardAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/shaders/bridge_pbr.vert",
+            name = "bridge_pbr.vert",
+            category = "GLSL Bridge Vertex",
+            lines = 54,
+            description = "Bridge vertex shader evaluating AASHTO HL-93 midspan elastic deflection and stay-cable harmonic vibration.",
+            codeSnippet = """#version 460
+// Evaluates parabolic midspan deflection & wind stay-cable oscillation."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/shaders/bridge_pbr.frag",
+            name = "bridge_pbr.frag",
+            category = "GLSL Bridge Fragment",
+            lines = 60,
+            description = "Bridge GGX PBR fragment shader blending structural steel patina and precast concrete pier textures.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+// Evaluates weathering Corten steel girders and concrete caisson piers."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/shaders/bridge_steel_tex.comp",
+            name = "bridge_steel_tex.comp",
+            category = "Compute Bridge Texture",
+            lines = 52,
+            description = "Compute shader generating structural steel gusset plate rivets, weld seams, and Corten oxidation.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outSteelAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/bridges/shaders/bridge_concrete_tex.comp",
+            name = "bridge_concrete_tex.comp",
+            category = "Compute Bridge Texture",
+            lines = 54,
+            description = "Compute shader generating segmental concrete formwork lift seams, tie-rod cone holes, and tidal stains.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outConcreteAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tunnels/shaders/tunnel_lighting.frag",
+            name = "tunnel_lighting.frag",
+            category = "GLSL Tunnel Fragment",
+            lines = 54,
+            description = "CIE 88 tunnel portal luminance adaptation & sodium-vapor / LED ceiling fixture shader.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+// Computes CIE 88 portal luminance transition and periodic bore fixtures."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tunnels/shaders/tunnel_lining_tex.comp",
+            name = "tunnel_lining_tex.comp",
+            category = "Compute Tunnel Texture",
+            lines = 58,
+            description = "NATM rough shotcrete & TBM segmental ring lining generator with reflective ceramic wainscots.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outLiningAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tolls/shaders/toll_vms_led.frag",
+            name = "toll_vms_led.frag",
+            category = "GLSL Toll LED Shader",
+            lines = 48,
+            description = "64x16 RGB LED dot-matrix canopy Variable Message Sign (VMS) shader with animated open arrows and X indicators.",
+            codeSnippet = """#version 460
+// 64x16 RGB LED pixel matrix with animated green lane-open chevrons."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/tolls/shaders/toll_canopy_tex.comp",
+            name = "toll_canopy_tex.comp",
+            category = "Compute Toll Texture",
+            lines = 52,
+            description = "Toll canopy anodized aluminum panel seams and monocrystalline solar PV roof texture kernel.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outCanopyAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/interchanges/shaders/interchange_gore_tex.comp",
+            name = "interchange_gore_tex.comp",
+            category = "Compute Interchange Texture",
+            lines = 48,
+            description = "Diagonal exit gore chevron markings & skid-worn thermoplastic paint mask generator.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outGoreAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/retaining_walls/shaders/retaining_wall_tex.comp",
+            name = "retaining_wall_tex.comp",
+            category = "Compute Retaining Wall Texture",
+            lines = 60,
+            description = "MSE cruciform panels, hexagonal gabion basalt cage, and weephole shotcrete texture generator.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outWallAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/signage/shaders/retroreflective_sign.frag",
+            name = "retroreflective_sign.frag",
+            category = "GLSL Signage Fragment",
+            lines = 52,
+            description = "ASTM D4956 Type XI microprismatic retroreflective sign face shader responding to headlight observation angles.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+// Computes microprismatic retroreflection gain for MUTCD signs."""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/signage/shaders/signage_atlas_tex.comp",
+            name = "signage_atlas_tex.comp",
+            category = "Compute Signage Texture",
+            lines = 52,
+            description = "Procedural MUTCD green guide, yellow warning, and regulatory sign face border/legend texture atlas kernel.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outSignAlbedo;"""
+        ),
+        NativeFileTreeItem(
+            path = "src/road/roadblocks/shaders/hazard_stripe_tex.comp",
+            name = "hazard_stripe_tex.comp",
+            category = "Compute Roadblock Texture",
+            lines = 46,
+            description = "MUTCD Type IV orange/white & red/white diagonal barricade chevron stripe generator with mud splash.",
+            codeSnippet = """#version 460
+#include "../../shaders/include/road_common.glsl"
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outHazardAlbedo;"""
         )
     )
 

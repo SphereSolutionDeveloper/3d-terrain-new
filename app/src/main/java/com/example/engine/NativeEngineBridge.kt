@@ -218,6 +218,36 @@ object NativeEngineBridge {
         type: Int, roadWidthM: Float, zoneLengthM: Float, unitCount: Int, hasBeacons: Boolean
     ): IntArray
 
+    external fun nativeGenerateRoadNetworkVertices(
+        type: Int, roadWidthM: Float, armSpanM: Float, laneCount: Int,
+        cornerRadiusM: Float, hasSignals: Boolean
+    ): FloatArray
+
+    external fun nativeGenerateRoadNetworkIndices(
+        type: Int, roadWidthM: Float, armSpanM: Float, laneCount: Int,
+        cornerRadiusM: Float, hasSignals: Boolean
+    ): IntArray
+
+    external fun nativeGenerateSplineGraphVertices(
+        type: Int, splineLengthM: Float, roadWidthM: Float, designSpeedKmH: Float,
+        elevationGainM: Float, curvatureIntensity: Float
+    ): FloatArray
+
+    external fun nativeGenerateSplineGraphIndices(
+        type: Int, splineLengthM: Float, roadWidthM: Float, designSpeedKmH: Float,
+        elevationGainM: Float, curvatureIntensity: Float
+    ): IntArray
+
+    external fun nativeGenerateRoadTileVertices(
+        type: Int, tileSizeM: Float, roadWidthM: Float, cutFillHeightM: Float,
+        distressDepthM: Float, hasDrainageAndCurbs: Boolean
+    ): FloatArray
+
+    external fun nativeGenerateRoadTileIndices(
+        type: Int, tileSizeM: Float, roadWidthM: Float, cutFillHeightM: Float,
+        distressDepthM: Float, hasDrainageAndCurbs: Boolean
+    ): IntArray
+
     // ─── MAGADI TOWN 3 KM x 5 KM (1 M GRID RESOLUTION) JNI ───────────────────────
     external fun nativeGetMagadiTownBounds(): DoubleArray
     external fun nativeMagadiTownLatLonToLocalAndUtm(lat: Double, lon: Double): DoubleArray
@@ -273,6 +303,19 @@ object NativeEngineBridge {
     external fun nativeGenerateC581mWindowIndices(
         centerUtmE: Double, centerUtmN: Double, windowCells: Int,
         contourInterval: Float, stepTerracing: Float, verticalExaggeration: Float
+    ): IntArray
+
+    // ─── RUNTIME BUILDING v2 BINARY PARSER & PROCEDURAL ARCHITECTURAL BUILDER ────
+    external fun nativeParseBuildingsFromBinary(binBytes: ByteArray, isC58Corridor: Boolean): IntArray
+    external fun nativeGenerateBuildingByOsmIdVertices(osmId: Long): FloatArray
+    external fun nativeGenerateBuildingByOsmIdIndices(osmId: Long): IntArray
+    external fun nativeGenerateBuildingShowcaseVertices(
+        shapeId: Int, roofId: Int, wallId: Int, windowId: Int, fenceId: Int, gateId: Int,
+        levels: Int, floorHeightM: Float, widthM: Float, depthM: Float
+    ): FloatArray
+    external fun nativeGenerateBuildingShowcaseIndices(
+        shapeId: Int, roofId: Int, wallId: Int, windowId: Int, fenceId: Int, gateId: Int,
+        levels: Int, floorHeightM: Float, widthM: Float, depthM: Float
     ): IntArray
 
     // ─── HIGH-SPEED NATIVE VULKAN MESH BUILDERS (C++ DRIVEN) ─────────────────────
@@ -703,6 +746,142 @@ object NativeEngineBridge {
                 3 -> "MUTCD Workzone Drum Taper & LED Arrow Trailer"
                 4 -> "Staggered Precast Concrete Dragon-Teeth Blocks"
                 else -> "Water-Filled Jersey Barricade & Saw-Horse Line"
+            }
+        )
+    }
+
+    fun mapRoadNetworkTypeKeyToIndex(key: String): Int = when (key) {
+        "SIGNALIZED_4WAY" -> 0
+        "T_JUNCTION_ARTERIAL" -> 1
+        "Y_FORK_BIFURCATION" -> 2
+        "DISTRICT_STREET_GRID" -> 3
+        else -> 0
+    }
+
+    fun mapSplineCurveTypeKeyToIndex(key: String): Int = when (key) {
+        "CLOTHOID_S_CURVE" -> 0
+        "HAIRPIN_SWITCHBACK" -> 1
+        "CATMULL_ROM_CORRIDOR" -> 2
+        "BANKED_SPIRAL_HELIX" -> 3
+        else -> 0
+    }
+
+    fun mapRoadTileTypeKeyToIndex(key: String): Int = when (key) {
+        "CUT_FILL_HILLSIDE" -> 0
+        "QUADTREE_URBAN_TILE" -> 1
+        "WET_PUDDLE_STATE" -> 2
+        "MUDDY_GRAVEL_RUT" -> 3
+        "POTHOLED_CRACKED_TILE" -> 4
+        "SNOWY_ICY_CORRIDOR" -> 5
+        else -> 0
+    }
+
+    fun generateModularRoadNetworkMesh(
+        networkType: String = "SIGNALIZED_4WAY",
+        roadWidthM: Float = 12.0f,
+        armSpanM: Float = 56.0f,
+        laneCount: Int = 3,
+        cornerRadiusM: Float = 8.0f,
+        hasSignals: Boolean = true
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_ROAD_NETWORK, "Modular Road Network")) {
+        val typeInt = mapRoadNetworkTypeKeyToIndex(networkType)
+        val verts = nativeGenerateRoadNetworkVertices(
+            typeInt, roadWidthM, armSpanM, laneCount, cornerRadiusM, hasSignals
+        )
+        val indices = nativeGenerateRoadNetworkIndices(
+            typeInt, roadWidthM, armSpanM, laneCount, cornerRadiusM, hasSignals
+        )
+        val (bbMin, bbMax) = computeVertexAABB(verts)
+
+        NativeVulkanMesh(
+            assetType = CppAssetType.MODULAR_ROAD_NETWORK,
+            vertices = verts,
+            indices = indices,
+            boundingBoxMin = bbMin,
+            boundingBoxMax = bbMax,
+            totalVolumeM3 = roadWidthM * armSpanM * 0.9f,
+            structuralSteelTons = if (hasSignals) 14.2f else 2.5f,
+            deadLoadKn = 1420f,
+            civilStandard = "MUTCD Chapter 4 Signalized Junctions / AASHTO Urban Street Guide",
+            title = when (typeInt) {
+                1 -> "Channelized Arterial T-Junction & Splitter Island"
+                2 -> "Expressway Y-Fork Bifurcation & Gore Nose"
+                3 -> "2×2 Connected Urban Street Network Block"
+                else -> "Signalized 4-Way Urban Intersection & Crosswalks"
+            }
+        )
+    }
+
+    fun generateModularSplineGraphMesh(
+        splineType: String = "CLOTHOID_S_CURVE",
+        splineLengthM: Float = 110.0f,
+        roadWidthM: Float = 10.5f,
+        designSpeedKmH: Float = 80.0f,
+        elevationGainM: Float = 8.0f,
+        curvatureIntensity: Float = 1.0f
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_SPLINE_GRAPH, "Modular Spline Graph")) {
+        val typeInt = mapSplineCurveTypeKeyToIndex(splineType)
+        val verts = nativeGenerateSplineGraphVertices(
+            typeInt, splineLengthM, roadWidthM, designSpeedKmH, elevationGainM, curvatureIntensity
+        )
+        val indices = nativeGenerateSplineGraphIndices(
+            typeInt, splineLengthM, roadWidthM, designSpeedKmH, elevationGainM, curvatureIntensity
+        )
+        val (bbMin, bbMax) = computeVertexAABB(verts)
+
+        NativeVulkanMesh(
+            assetType = CppAssetType.MODULAR_SPLINE_GRAPH,
+            vertices = verts,
+            indices = indices,
+            boundingBoxMin = bbMin,
+            boundingBoxMax = bbMax,
+            totalVolumeM3 = splineLengthM * roadWidthM * 0.85f,
+            structuralSteelTons = if (typeInt == 3) 48.0f else 12.0f,
+            deadLoadKn = splineLengthM * roadWidthM * 18.5f,
+            civilStandard = "AASHTO Table 3-7 Superelevation / C2 Catmull-Rom Splines",
+            title = when (typeInt) {
+                1 -> "180° Ascending Mountain Hairpin Switchback"
+                2 -> "Centripetal Catmull-Rom Undulating Corridor"
+                3 -> "Superelevated 300° Helical Spiral Viaduct"
+                else -> "Reverse Clothoid S-Curve & Roll Transition"
+            }
+        )
+    }
+
+    fun generateModularRoadTileMesh(
+        tileType: String = "CUT_FILL_HILLSIDE",
+        tileSizeM: Float = 36.0f,
+        roadWidthM: Float = 11.0f,
+        cutFillHeightM: Float = 4.5f,
+        distressDepthM: Float = 0.06f,
+        hasDrainageAndCurbs: Boolean = true
+    ): NativeVulkanMesh = safeNativeCall(emptyNativeVulkanMesh(CppAssetType.MODULAR_ROAD_TILE, "Modular Road Tile")) {
+        val typeInt = mapRoadTileTypeKeyToIndex(tileType)
+        val verts = nativeGenerateRoadTileVertices(
+            typeInt, tileSizeM, roadWidthM, cutFillHeightM, distressDepthM, hasDrainageAndCurbs
+        )
+        val indices = nativeGenerateRoadTileIndices(
+            typeInt, tileSizeM, roadWidthM, cutFillHeightM, distressDepthM, hasDrainageAndCurbs
+        )
+        val (bbMin, bbMax) = computeVertexAABB(verts)
+
+        NativeVulkanMesh(
+            assetType = CppAssetType.MODULAR_ROAD_TILE,
+            vertices = verts,
+            indices = indices,
+            boundingBoxMin = bbMin,
+            boundingBoxMax = bbMax,
+            totalVolumeM3 = tileSizeM * tileSizeM * 0.45f,
+            structuralSteelTons = if (typeInt == 1 || typeInt == 5) 4.2f else 1.5f,
+            deadLoadKn = tileSizeM * roadWidthM * 12.0f,
+            civilStandard = "AASHTO Cut/Fill Earthworks / ASTM E274 Skid & Distress State",
+            title = when (typeInt) {
+                1 -> "Quadtree Urban Kerb & Storm Grate Tile"
+                2 -> "Rain-Slicked Wet Puddle State Tile (μ = 0.62)"
+                3 -> "Muddy & Washboard Gravel Haul Tile (μ = 0.34)"
+                4 -> "Potholed & Alligator-Cracked Asphalt State (μ = 0.55)"
+                5 -> "Snowy & Black-Ice Alpine Corridor Tile (μ = 0.18)"
+                else -> "Streaming Cut & Fill Hillside Road Tile"
             }
         )
     }

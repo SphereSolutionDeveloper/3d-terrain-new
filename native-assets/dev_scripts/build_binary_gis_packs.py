@@ -308,6 +308,18 @@ def build_magadi_town_bin() -> None:
       way["highway"]({bbox_str});
       way["building"]({bbox_str});
       relation["building"]({bbox_str});
+      way["amenity"]({bbox_str});
+      relation["amenity"]({bbox_str});
+      way["man_made"]({bbox_str});
+      relation["man_made"]({bbox_str});
+      way["industrial"]({bbox_str});
+      relation["industrial"]({bbox_str});
+      way["landuse"~"industrial|commercial|education|institutional|retail|quarry|military|religious"]({bbox_str});
+      relation["landuse"~"industrial|commercial|education|institutional|retail|quarry|military|religious"]({bbox_str});
+      way["office"]({bbox_str});
+      way["shop"]({bbox_str});
+      way["tourism"]({bbox_str});
+      way["aeroway"]({bbox_str});
       way["natural"~"water|wetland|mud"]({bbox_str});
       relation["natural"~"water|wetland"]({bbox_str});
       way["landuse"~"salt_pond|reservoir"]({bbox_str});
@@ -315,6 +327,9 @@ def build_magadi_town_bin() -> None:
       node["place"]({bbox_str});
       node["amenity"]({bbox_str});
       node["man_made"]({bbox_str});
+      node["industrial"]({bbox_str});
+      node["office"]({bbox_str});
+      node["craft"]({bbox_str});
       node["shop"]({bbox_str});
       node["aeroway"]({bbox_str});
       node["tourism"]({bbox_str});
@@ -362,10 +377,99 @@ def build_magadi_town_bin() -> None:
     node_ll: Dict[int, Tuple[float, float]] = {}
     way_nodes: Dict[int, List[Tuple[float, float, float, float]]] = {}  # (lat, lon, xM, yM)
     pois = []
+    poi_ids = set()
     roads = []
     buildings = []
     waters = []
     seen_bldg_ids = set()
+
+    LANDMARK_LANDUSES = {
+        "industrial", "commercial", "education", "institutional",
+        "retail", "quarry", "military", "religious",
+    }
+
+    def resolve_poi_category(tags: dict) -> str:
+        name_l = (tags.get("name") or "").lower()
+        mm = tags.get("man_made") or ""
+        ind = tags.get("industrial") or ""
+        lu = tags.get("landuse") or ""
+        if mm in ("works", "factory", "plant") or "factory" in name_l or (ind and lu == "industrial"):
+            return "factory"
+        if ind or lu == "industrial":
+            return f"industrial:{ind}" if ind else "industrial"
+        return (
+            tags.get("barrier")
+            or tags.get("highway")
+            or tags.get("place")
+            or tags.get("amenity")
+            or tags.get("office")
+            or tags.get("craft")
+            or mm
+            or tags.get("aeroway")
+            or tags.get("tourism")
+            or tags.get("shop")
+            or lu
+            or "landmark"
+        )
+
+    def resolve_landmark_props(tags: dict) -> Tuple[str, str]:
+        raw_bldg = tags.get("building") or ""
+        ind = tags.get("industrial") or ""
+        mm = tags.get("man_made") or ""
+        lu = tags.get("landuse") or ""
+        am = tags.get("amenity") or ""
+        off = tags.get("office") or ""
+        craft = tags.get("craft") or ""
+        shop = tags.get("shop") or ""
+        tour = tags.get("tourism") or ""
+        aero = tags.get("aeroway") or ""
+        name_l = (tags.get("name") or "").lower()
+
+        if raw_bldg and raw_bldg != "yes":
+            b_type = raw_bldg
+        elif mm in ("works", "factory", "plant") or "factory" in name_l:
+            b_type = "factory"
+        elif ind or lu == "industrial":
+            b_type = "industrial"
+        elif am:
+            b_type = am
+        elif mm:
+            b_type = mm
+        elif off:
+            b_type = f"office:{off}" if off != "yes" else "office"
+        elif craft:
+            b_type = f"craft:{craft}" if craft != "yes" else "craft"
+        elif tour:
+            b_type = tour
+        elif aero:
+            b_type = aero
+        elif shop:
+            b_type = "retail"
+        elif lu:
+            b_type = lu
+        else:
+            b_type = raw_bldg or "yes"
+
+        base_am = am or (f"industrial:{ind}" if ind else "") or mm or lu or off or craft or shop or tour or aero
+        extra_bits = []
+        if base_am and b_type == "factory" and "factory" not in base_am:
+            extra_bits.append("factory")
+        for tk in ("resource", "product", "healthcare"):
+            tv = (tags.get(tk) or "").strip()
+            if tv and tv not in base_am:
+                extra_bits.append(tv)
+        amenity_val = " • ".join([p for p in ([base_am] + extra_bits) if p])
+        return b_type, amenity_val
+
+    def is_landmark_area(tags: dict) -> bool:
+        if any(k in tags for k in ("amenity", "industrial", "man_made", "office", "craft", "aeroway")):
+            return True
+        if tags.get("tourism") or tags.get("shop"):
+            return True
+        lu = tags.get("landuse") or ""
+        if lu in LANDMARK_LANDUSES and ("name" in tags or "resource" in tags or "operator" in tags):
+            return True
+        return False
 
     for el in elements:
         if el.get("type") == "node":
@@ -377,28 +481,25 @@ def build_magadi_town_bin() -> None:
                 tags = el.get("tags") or {}
                 if any(
                     k in tags
-                    for k in ("place", "amenity", "man_made", "aeroway", "tourism", "shop", "name", "barrier")
+                    for k in ("place", "amenity", "man_made", "industrial", "office", "craft", "aeroway", "tourism", "shop", "name", "barrier")
                 ) or tags.get("highway") in ("crossing", "bus_stop", "turning_circle", "mini_roundabout", "traffic_signals"):
                     x_m, y_m = to_local_xy(lat, lon)
-                    cat = (
-                        tags.get("barrier")
-                        or tags.get("highway")
-                        or tags.get("place")
-                        or tags.get("amenity")
-                        or tags.get("man_made")
-                        or tags.get("aeroway")
-                        or tags.get("tourism")
-                        or tags.get("shop")
-                        or "landmark"
-                    )
-                    name = tags.get("name") or cat.replace("_", " ").title()
+                    cat = resolve_poi_category(tags)
+                    name = tags.get("name") or cat.replace("_", " ").replace(":", " ").title()
                     elev = sample_dem_xy(x_m, y_m)
                     pois.append((nid, name, cat, lat, lon, x_m, y_m, elev))
+                    poi_ids.add(nid)
 
-    def process_building(bid: int, pts: List[Tuple[float, float, float, float]], tags: dict) -> None:
+    def has_nearby_poi(name: str, x_m: float, y_m: float, radius_m: float = 220.0) -> bool:
+        nl = name.strip().lower()
+        for _pid, pname, _cat, _la, _lo, px, py, _el in pois:
+            if pname.strip().lower() == nl and math.hypot(px - x_m, py - y_m) <= radius_m:
+                return True
+        return False
+
+    def process_building(bid: int, pts: List[Tuple[float, float, float, float]], tags: dict, is_compound_only: bool = False) -> None:
         if bid in seen_bldg_ids or len(pts) < 3:
             return
-        seen_bldg_ids.add(bid)
         poly = pts[:-1] if (len(pts) > 3 and pts[0][2] == pts[-1][2] and pts[0][3] == pts[-1][3]) else pts
         area_sum = 0.0
         cx = 0.0
@@ -413,6 +514,9 @@ def build_magadi_town_bin() -> None:
             cy += (p0[3] + p1[3]) * cross
             perim += math.hypot(p1[2] - p0[2], p1[3] - p0[3])
         area = max(4.0, abs(area_sum * 0.5))
+        if is_compound_only and area > 3_500_000.0:
+            return
+        seen_bldg_ids.add(bid)
         if abs(area_sum) > 1e-3:
             mx = cx / (3.0 * area_sum)
             my = cy / (3.0 * area_sum)
@@ -424,10 +528,9 @@ def build_magadi_town_bin() -> None:
             c_lat = sum(p[0] for p in poly) / len(poly)
             c_lon = sum(p[1] for p in poly) / len(poly)
 
-        b_type = tags.get("building") or "yes"
-        amenity = tags.get("amenity") or tags.get("shop") or tags.get("industrial") or ""
+        b_type, amenity = resolve_landmark_props(tags)
         b_name = tags.get("name") or (
-            amenity.replace("_", " ").title()
+            amenity.split(" • ")[0].replace("_", " ").replace(":", " ").title()
             if amenity
             else (f"{b_type.replace('_', ' ').title()} #{bid}" if b_type != "yes" else f"Building #{bid}")
         )
@@ -437,11 +540,18 @@ def build_magadi_town_bin() -> None:
             levels = 1
         try:
             h_raw = tags.get("height", "").replace("m", "").strip()
-            height_m = float(h_raw) if h_raw else levels * 3.4
+            height_m = float(h_raw) if h_raw else (levels * 3.4 if not is_compound_only else 6.0)
         except ValueError:
             height_m = levels * 3.4
         elev = sample_dem_xy(mx, my)
         buildings.append((bid, b_name, b_type, amenity, levels, height_m, elev, area, perim, (c_lat, c_lon, mx, my), pts))
+
+        if (is_compound_only or is_landmark_area(tags)) and tags.get("name"):
+            synth_id = 100_000_000_000 + abs(bid)
+            if synth_id not in poi_ids and not has_nearby_poi(b_name, mx, my):
+                cat = resolve_poi_category(tags)
+                pois.append((synth_id, b_name, cat, c_lat, c_lon, mx, my, elev))
+                poi_ids.add(synth_id)
 
     for el in elements:
         if el.get("type") != "way":
@@ -483,19 +593,21 @@ def build_magadi_town_bin() -> None:
             flags = (1 if one_way else 0) | (2 if is_bridge else 0) | (4 if is_roundabout else 0)
             roads.append((wid, rname, ref, htype, surface, lanes, flags, width_road, length_m, pts))
         elif "building" in tags and len(pts) >= 3:
-            process_building(wid, pts, tags)
+            process_building(wid, pts, tags, is_compound_only=False)
         elif (tags.get("natural") in ("water", "wetland", "mud") or tags.get("landuse") in ("salt_pond", "reservoir")) and len(pts) >= 3:
             wtype = tags.get("water") or tags.get("landuse") or tags.get("natural") or "water"
             wname = tags.get("name") or (f"Magadi Salt Pan #{wid}" if wtype == "salt_pond" else f"Lake Magadi Basin #{wid}")
             mean_e = sum(sample_dem_xy(p[2], p[3]) for p in pts) / len(pts)
             waters.append((wid, wname, wtype, mean_e, pts))
+        elif is_landmark_area(tags) and len(pts) >= 3:
+            process_building(wid, pts, tags, is_compound_only=True)
 
     for el in elements:
         if el.get("type") != "relation":
             continue
         rid = el["id"]
         tags = el.get("tags") or {}
-        if "building" in tags:
+        if "building" in tags or is_landmark_area(tags):
             outer_pts = []
             for m in el.get("members") or []:
                 if m.get("type") == "way" and m.get("role") != "inner":
@@ -504,7 +616,7 @@ def build_magadi_town_bin() -> None:
                         outer_pts = wpts
                         break
             if outer_pts:
-                process_building(rid + 9_000_000_000, outer_pts, tags)
+                process_building(rid + 9_000_000_000, outer_pts, tags, is_compound_only=("building" not in tags))
         elif tags.get("natural") in ("water", "wetland") or tags.get("landuse") in ("salt_pond", "reservoir"):
             wname = tags.get("name") or f"Lake Magadi #{rid}"
             wtype = tags.get("water") or tags.get("landuse") or tags.get("natural") or "lake"
@@ -1086,7 +1198,102 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
                 lons.append(lo)
         bbox_jobs.append((label, (min(lats) - 0.0028, min(lons) - 0.0028, max(lats) + 0.0028, max(lons) + 0.0028)))
 
-    def add_c58_house(hid: int, coords_raw, tags: dict) -> None:
+    C58_LANDMARK_LANDUSES = {
+        "industrial", "commercial", "education", "institutional",
+        "retail", "quarry", "military", "religious",
+    }
+
+    def resolve_c58_poi_cat(tags: dict) -> str:
+        name_l = (tags.get("name") or "").lower()
+        mm = tags.get("man_made") or ""
+        ind = tags.get("industrial") or ""
+        lu = tags.get("landuse") or ""
+        if mm in ("works", "factory", "plant") or "factory" in name_l or (ind and lu == "industrial"):
+            return "factory"
+        if ind or lu == "industrial":
+            return f"industrial:{ind}" if ind else "industrial"
+        return (
+            tags.get("barrier")
+            or tags.get("highway")
+            or tags.get("place")
+            or tags.get("amenity")
+            or tags.get("office")
+            or tags.get("craft")
+            or mm
+            or tags.get("aeroway")
+            or tags.get("tourism")
+            or tags.get("shop")
+            or lu
+            or "landmark"
+        )
+
+    def resolve_c58_house_props(tags: dict) -> Tuple[str, str]:
+        raw_bldg = tags.get("building") or ""
+        ind = tags.get("industrial") or ""
+        mm = tags.get("man_made") or ""
+        lu = tags.get("landuse") or ""
+        am = tags.get("amenity") or ""
+        off = tags.get("office") or ""
+        craft = tags.get("craft") or ""
+        shop = tags.get("shop") or ""
+        tour = tags.get("tourism") or ""
+        aero = tags.get("aeroway") or ""
+        name_l = (tags.get("name") or "").lower()
+
+        if raw_bldg and raw_bldg != "yes":
+            b_type = raw_bldg
+        elif mm in ("works", "factory", "plant") or "factory" in name_l:
+            b_type = "factory"
+        elif ind or lu == "industrial":
+            b_type = "industrial"
+        elif am:
+            b_type = am
+        elif mm:
+            b_type = mm
+        elif off:
+            b_type = f"office:{off}" if off != "yes" else "office"
+        elif craft:
+            b_type = f"craft:{craft}" if craft != "yes" else "craft"
+        elif tour:
+            b_type = tour
+        elif aero:
+            b_type = aero
+        elif shop:
+            b_type = "retail"
+        elif lu:
+            b_type = lu
+        else:
+            b_type = raw_bldg or "house"
+
+        base_am = am or (f"industrial:{ind}" if ind else "") or mm or lu or off or craft or shop or tour or aero
+        extra_bits = []
+        if base_am and b_type == "factory" and "factory" not in base_am:
+            extra_bits.append("factory")
+        for tk in ("resource", "product", "healthcare"):
+            tv = (tags.get(tk) or "").strip()
+            if tv and tv not in base_am:
+                extra_bits.append(tv)
+        amenity_val = " • ".join([p for p in ([base_am] + extra_bits) if p])
+        return b_type, amenity_val
+
+    def is_c58_landmark_area(tags: dict) -> bool:
+        if any(k in tags for k in ("amenity", "industrial", "man_made", "office", "craft", "aeroway")):
+            return True
+        if tags.get("tourism") or tags.get("shop"):
+            return True
+        lu = tags.get("landuse") or ""
+        if lu in C58_LANDMARK_LANDUSES and ("name" in tags or "resource" in tags or "operator" in tags):
+            return True
+        return False
+
+    def c58_has_nearby_poi(name: str, ue: float, un: float, radius_m: float = 220.0) -> bool:
+        nl = name.strip().lower()
+        for existing in poi_map.values():
+            if existing[1].strip().lower() == nl and math.hypot(existing[5] - ue, existing[6] - un) <= radius_m:
+                return True
+        return False
+
+    def add_c58_house(hid: int, coords_raw, tags: dict, is_compound_only: bool = False) -> None:
         if hid in house_map or len(coords_raw) < 3:
             return
         poly = coords_raw[:-1] if (
@@ -1107,6 +1314,8 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
             cn_sum += (y0 + y1) * cross
             perim += math.hypot(x1 - x0, y1 - y0)
         area = max(4.0, abs(area_sum * 0.5))
+        if is_compound_only and area > 3_500_000.0:
+            return
         if abs(area_sum) > 1e-3:
             cent_e = ref_e + ce_sum / (3.0 * area_sum)
             cent_n = ref_n + cn_sum / (3.0 * area_sum)
@@ -1117,10 +1326,9 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
         if not cent_in or abs(cent_off) > 1500.0:
             return
         cent_lat, cent_lon = utm37s_to_latlon(cent_e, cent_n)
-        b_type = tags.get("building") or "house"
-        amenity = tags.get("amenity") or tags.get("shop") or tags.get("industrial") or ""
+        b_type, amenity = resolve_c58_house_props(tags)
         h_name = tags.get("name") or (
-            amenity.replace("_", " ").title()
+            amenity.split(" • ")[0].replace("_", " ").replace(":", " ").title()
             if amenity
             else (f"{b_type.replace('_', ' ').title()} #{hid}" if b_type != "yes" else f"House #{hid}")
         )
@@ -1130,7 +1338,7 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
             levels = 1
         try:
             hr = tags.get("height", "").replace("m", "").strip()
-            height_m = float(hr) if hr else levels * 3.2
+            height_m = float(hr) if hr else (levels * 3.2 if not is_compound_only else 5.5)
         except ValueError:
             height_m = levels * 3.2
         elev = sample_dem_at_chain(cent_ch, cent_off)
@@ -1149,24 +1357,52 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
             (cent_lat, cent_lon, cent_e, cent_n, cent_ch, cent_off),
             coords_raw,
         )
+        if (is_compound_only or is_c58_landmark_area(tags)) and tags.get("name"):
+            synth_id = 100_000_000_000 + abs(hid)
+            if synth_id not in poi_map and not c58_has_nearby_poi(h_name, cent_e, cent_n):
+                cat = resolve_c58_poi_cat(tags)
+                poi_map[synth_id] = (synth_id, h_name, cat, cent_lat, cent_lon, cent_e, cent_n, cent_ch, cent_off, elev, sec_i)
 
     for job_label, bbox_tuple in bbox_jobs:
         min_la, min_lo, max_la, max_lo = bbox_tuple
         bbox_s = f"{min_la:.5f},{min_lo:.5f},{max_la:.5f},{max_lo:.5f}"
         print(f"Querying Overpass {job_label} ({bbox_s})...", flush=True)
         q = f"""
-        [out:json][timeout:35][maxsize:134217728];
+        [out:json][timeout:40][maxsize:134217728];
         (
           way["highway"]({bbox_s});
           way["building"]({bbox_s});
+          relation["building"]({bbox_s});
+          way["amenity"]({bbox_s});
+          relation["amenity"]({bbox_s});
+          way["man_made"]({bbox_s});
+          relation["man_made"]({bbox_s});
+          way["industrial"]({bbox_s});
+          relation["industrial"]({bbox_s});
+          way["landuse"~"industrial|commercial|education|institutional|retail|quarry|military|religious"]({bbox_s});
+          relation["landuse"~"industrial|commercial|education|institutional|retail|quarry|military|religious"]({bbox_s});
+          way["office"]({bbox_s});
+          way["tourism"]({bbox_s});
+          way["shop"]({bbox_s});
+          way["aeroway"]({bbox_s});
+          way["natural"~"water|wetland|mud"]({bbox_s});
+          way["landuse"~"salt_pond|reservoir"]({bbox_s});
           node["place"]({bbox_s});
           node["amenity"]({bbox_s});
-          node["highway"~"crossing|turning_circle|mini_roundabout|traffic_signals"]({bbox_s});
+          node["man_made"]({bbox_s});
+          node["industrial"]({bbox_s});
+          node["office"]({bbox_s});
+          node["craft"]({bbox_s});
+          node["tourism"]({bbox_s});
+          node["shop"]({bbox_s});
+          node["aeroway"]({bbox_s});
+          node["barrier"]({bbox_s});
+          node["highway"~"crossing|bus_stop|turning_circle|mini_roundabout|traffic_signals"]({bbox_s});
         );
         out geom;
         """.strip()
         try:
-            obj, ep = query_overpass(q, timeout_s=42)
+            obj, ep = query_overpass(q, timeout_s=45)
             els = obj.get("elements", [])
             last_ep = ep
             print(f"  Fetched {len(els)} elements from {ep}", flush=True)
@@ -1184,22 +1420,14 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
                     continue
                 tags = el.get("tags") or {}
                 if (
-                    any(k in tags for k in ("place", "amenity", "tourism", "shop", "name", "barrier"))
+                    any(k in tags for k in ("place", "amenity", "man_made", "industrial", "office", "craft", "aeroway", "tourism", "shop", "name", "barrier"))
                     or tags.get("highway") in ("crossing", "bus_stop", "turning_circle", "mini_roundabout", "traffic_signals")
                 ):
                     ue, un = latlon_to_utm37s(lat, lon)
                     ch, off, inside = project_utm(ue, un)
                     if inside and abs(off) <= 1500.0:
-                        cat = (
-                            tags.get("barrier")
-                            or tags.get("highway")
-                            or tags.get("place")
-                            or tags.get("amenity")
-                            or tags.get("tourism")
-                            or tags.get("shop")
-                            or "landmark"
-                        )
-                        pname = tags.get("name") or cat.replace("_", " ").title()
+                        cat = resolve_c58_poi_cat(tags)
+                        pname = tags.get("name") or cat.replace("_", " ").replace(":", " ").title()
                         elev = sample_dem_at_chain(ch, off)
                         poi_map[nid] = (nid, pname, cat, lat, lon, ue, un, ch, off, elev, sector_from_chainage(ch))
             elif etype == "way":
@@ -1247,7 +1475,34 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
                     sec_i = sector_from_chainage(mid[4])
                     road_map[wid] = (wid, rname, ref, htype, surface, lanes, flags, width_r, length_m, sec_i, mid, in_pts)
                 elif "building" in tags and len(pts) >= 3:
-                    add_c58_house(wid, pts, tags)
+                    add_c58_house(wid, pts, tags, is_compound_only=False)
+                elif (tags.get("natural") in ("water", "wetland", "mud") or tags.get("landuse") in ("salt_pond", "reservoir")) and len(pts) >= 3:
+                    if wid not in water_map and any(p[6] and abs(p[5]) <= 1500.0 for p in pts):
+                        wtype = tags.get("water") or tags.get("landuse") or tags.get("natural") or "water"
+                        wname = tags.get("name") or f"Water #{wid}"
+                        mean_e = sum(sample_dem_at_chain(p[4], p[5]) for p in pts) / len(pts)
+                        water_map[wid] = (wid, wname, wtype, mean_e, pts)
+                elif is_c58_landmark_area(tags) and len(pts) >= 3:
+                    add_c58_house(wid, pts, tags, is_compound_only=True)
+            elif etype == "relation":
+                rid = el["id"]
+                tags = el.get("tags") or {}
+                if "building" in tags or is_c58_landmark_area(tags):
+                    for idx_m, m in enumerate(el.get("members") or []):
+                        if m.get("type") == "way" and m.get("role") != "inner":
+                            geom = m.get("geometry") or []
+                            pts = []
+                            for g in geom:
+                                lat = g.get("lat")
+                                lon = g.get("lon")
+                                if lat is None or lon is None:
+                                    continue
+                                ue, un = latlon_to_utm37s(lat, lon)
+                                ch, off, inside = project_utm(ue, un)
+                                pts.append((lat, lon, ue, un, ch, off, inside))
+                            if len(pts) >= 3:
+                                add_c58_house(rid + 9_000_000_000 + idx_m, pts, tags, is_compound_only=("building" not in tags))
+                                break
 
     all_roads = sorted(road_map.values(), key=lambda r: r[10][4])
     all_houses = sorted(house_map.values(), key=lambda h: h[10][4])
@@ -1354,7 +1609,10 @@ def build_c58_corridor_bin(extend_south: bool = False) -> None:
 if __name__ == "__main__":
     c58_only = "--c58-only" in sys.argv
     extend_south = "--extend-south" in sys.argv
+    import enrich_binary_gis_v2
     if not c58_only:
         build_magadi_town_bin()
+        enrich_binary_gis_v2.upgrade_magt_to_v2(MAGADI_BIN_PATH)
     build_c58_corridor_bin(extend_south=extend_south)
-    print("\nBinary GIS asset pack generation complete.", flush=True)
+    enrich_binary_gis_v2.upgrade_c58_to_v2(C58_BIN_PATH)
+    print("\nBinary GIS asset pack generation (v2 enriched) complete.", flush=True)

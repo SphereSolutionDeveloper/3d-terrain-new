@@ -136,6 +136,9 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
     private val _overlayRoadSymbols3D = MutableStateFlow<List<TerrainRoadSymbol3D>>(emptyList())
     val overlayRoadSymbols3D: StateFlow<List<TerrainRoadSymbol3D>> = _overlayRoadSymbols3D.asStateFlow()
 
+    private val _overlayBridges3D = MutableStateFlow<List<TerrainBridge3D>>(emptyList())
+    val overlayBridges3D: StateFlow<List<TerrainBridge3D>> = _overlayBridges3D.asStateFlow()
+
     // Data Explorer State
     val dataTabIndex = MutableStateFlow(0) // 0=Metadata, 1=Roads, 2=Houses, 3=POIs
     val searchQuery = MutableStateFlow("")
@@ -349,19 +352,21 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
 
         val bundle = activeBundle()
         val hitRadiusM = max(6.0, wM * 0.025)
-        val prePad = hitRadiusM + 120.0
-        val hitHouse = bundle.houses.firstOrNull { h ->
-            if (abs(h.centroid.utmEast - utmE) > prePad || abs(h.centroid.utmNorth - utmN) > prePad) {
-                false
-            } else {
-                val minHe = h.polygon.minOfOrNull { it.utmEast } ?: h.centroid.utmEast
-                val maxHe = h.polygon.maxOfOrNull { it.utmEast } ?: h.centroid.utmEast
-                val minHn = h.polygon.minOfOrNull { it.utmNorth } ?: h.centroid.utmNorth
-                val maxHn = h.polygon.maxOfOrNull { it.utmNorth } ?: h.centroid.utmNorth
-                utmE in (minHe - hitRadiusM * 0.4)..(maxHe + hitRadiusM * 0.4) &&
-                    utmN in (minHn - hitRadiusM * 0.4)..(maxHn + hitRadiusM * 0.4)
+        val hitHouse = bundle.houses
+            .filter { h ->
+                val prePad = max(120.0, hitRadiusM + h.perimeterM * 0.5)
+                if (abs(h.centroid.utmEast - utmE) > prePad || abs(h.centroid.utmNorth - utmN) > prePad) {
+                    false
+                } else {
+                    val minHe = h.polygon.minOfOrNull { it.utmEast } ?: h.centroid.utmEast
+                    val maxHe = h.polygon.maxOfOrNull { it.utmEast } ?: h.centroid.utmEast
+                    val minHn = h.polygon.minOfOrNull { it.utmNorth } ?: h.centroid.utmNorth
+                    val maxHn = h.polygon.maxOfOrNull { it.utmNorth } ?: h.centroid.utmNorth
+                    utmE in (minHe - hitRadiusM * 0.4)..(maxHe + hitRadiusM * 0.4) &&
+                        utmN in (minHn - hitRadiusM * 0.4)..(maxHn + hitRadiusM * 0.4)
+                }
             }
-        }
+            .minByOrNull { it.footprintAreaM2 }
         if (hitHouse != null) {
             _selectedHouse.value = hitHouse
             _selectedRoad.value = null
@@ -594,7 +599,7 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
                     tr?.getOrNull(4)?.toFloat()?.takeIf { it.isFinite() } ?: floor(minRawElev - 18f)
                 }
 
-                val (houses3d, roads3d, symbols3d) = build3dFeatureOverlays(
+                val overlays = build3dFeatureOverlays(
                     mode = mode,
                     centerE = trCenterE,
                     centerN = trCenterN,
@@ -612,9 +617,10 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
                 _sceneUnitsPerMeter3D.value = trYScale
                 _groundDatumAslM.value = baseDatum
                 _terrainMesh3D.value = mesh
-                _overlayHouses3D.value = houses3d
-                _overlayRoads3D.value = roads3d
-                _overlayRoadSymbols3D.value = symbols3d
+                _overlayHouses3D.value = overlays.buildings
+                _overlayRoads3D.value = overlays.roads
+                _overlayRoadSymbols3D.value = overlays.symbols
+                _overlayBridges3D.value = overlays.bridges
             } catch (ce: CancellationException) {
                 throw ce
             } catch (_: Throwable) {
@@ -642,6 +648,13 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
         return a + (b - a) * tv
     }
 
+    private data class FeatureOverlays3D(
+        val buildings: List<TerrainBuilding3D>,
+        val roads: List<TerrainRoadSeg3D>,
+        val symbols: List<TerrainRoadSymbol3D>,
+        val bridges: List<TerrainBridge3D>
+    )
+
     private fun build3dFeatureOverlays(
         mode: String,
         centerE: Double,
@@ -655,7 +668,7 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
         bundle: C58CorridorBundle,
         selectedHouseId: Long?,
         selectedRoadId: Long?
-    ): Triple<List<TerrainBuilding3D>, List<TerrainRoadSeg3D>, List<TerrainRoadSymbol3D>> {
+    ): FeatureOverlays3D {
         val isWindow = mode == "WINDOW_1M"
         fun toSceneXZ(utmE: Double, utmN: Double): Pair<Float, Float> {
             return ((utmE - centerE) * scaleXZ).toFloat() to ((utmN - centerN) * scaleXZ).toFloat()
@@ -664,6 +677,7 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
 
         val roadsOut = ArrayList<TerrainRoadSeg3D>()
         val symbolsOut = ArrayList<TerrainRoadSymbol3D>()
+        val bridgesOut = ArrayList<TerrainBridge3D>()
         val halfWin = 33.5
         val candidateRoads = bundle.roads
             .filter { sectorFilter == null || it.midCoord.chainageM in (sStartM - 400.0)..(sEndM + 400.0) }
@@ -684,6 +698,32 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
         for (road in candidateRoads) {
             val isPrimary = road.highwayType in setOf("trunk", "primary", "secondary", "tertiary")
             val isSel = road.osmId == selectedRoadId
+            if (road.isBridge && road.nodes.size >= 2) {
+                val visible = if (isWindow) {
+                    road.nodes.any { abs(it.utmEast - centerE) <= halfWin && abs(it.utmNorth - centerN) <= halfWin }
+                } else true
+                if (visible) {
+                    val bridgePtsXZ = road.nodes.map { n -> toSceneXZ(n.utmEast, n.utmNorth) }
+                    val groundElevs = road.nodes.map { n ->
+                        if (isWindow) repo.inspectAtUtm(n.utmEast, n.utmNorth).elevM else sampleDemElevFast(bundle, n)
+                    }
+                    buildScaledTerrainBridge3D(
+                        osmId = road.osmId,
+                        name = road.name,
+                        highwayType = road.highwayType,
+                        lanes = road.lanes,
+                        widthM = road.widthM,
+                        lengthM = road.lengthM,
+                        isSelected = isSel,
+                        scenePointsXZ = bridgePtsXZ,
+                        groundElevationsM = groundElevs,
+                        baseDatumElevM = baseDatumElev,
+                        scaleXZ = scaleXZ,
+                        scaleYPerM = scaleYPerM,
+                        roadElevationOffsetScene = if (isWindow) 0.14f else 0.16f
+                    )?.let { bridgesOut.add(it) }
+                }
+            }
             var midAdded = false
             for (k in 0 until road.nodes.size - 1) {
                 val n0 = road.nodes[k]
@@ -701,14 +741,16 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
                 val (sx1, sz1) = toSceneXZ(n1.utmEast, n1.utmNorth)
                 val sy0 = elevToY(e0) + if (isWindow) 0.14f else 0.16f
                 val sy1 = elevToY(e1) + if (isWindow) 0.14f else 0.16f
-                roadsOut.add(
-                    TerrainRoadSeg3D(
-                        x0 = sx0, y0 = sy0, z0 = sz0,
-                        x1 = sx1, y1 = sy1, z1 = sz1,
-                        isPrimary = isPrimary,
-                        isSelected = isSel
+                if (!road.isBridge) {
+                    roadsOut.add(
+                        TerrainRoadSeg3D(
+                            x0 = sx0, y0 = sy0, z0 = sz0,
+                            x1 = sx1, y1 = sy1, z1 = sz1,
+                            isPrimary = isPrimary,
+                            isSelected = isSel
+                        )
                     )
-                )
+                }
                 if (!midAdded && k == (road.nodes.size - 1) / 2) {
                     midAdded = true
                     val mx = (sx0 + sx1) * 0.5f
@@ -756,14 +798,16 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         val housesOut = ArrayList<TerrainBuilding3D>()
+        val extrudableHouses = bundle.houses.filterNot { it.footprintAreaM2 > 18_000f && it.levels <= 1 }
         val candidateHouses = if (isWindow) {
-            bundle.houses.filter {
+            extrudableHouses.filter {
                 abs(it.centroid.utmEast - centerE) <= 36.0 && abs(it.centroid.utmNorth - centerN) <= 36.0
             }
         } else {
             val houseComparator = compareByDescending<C58ExtractedHouse> { it.osmId == selectedHouseId }
+                .thenByDescending { it.amenity.isNotBlank() || (it.buildingType.isNotBlank() && it.buildingType !in setOf("yes", "house", "residential", "hut", "shed", "roof")) }
                 .thenByDescending { it.footprintAreaM2 }
-            val filtered = bundle.houses
+            val filtered = extrudableHouses
                 .filter { sectorFilter == null || it.centroid.chainageM in (sStartM - 300.0)..(sEndM + 300.0) }
             if (sectorFilter == null) {
                 (1..10).flatMap { sec ->
@@ -775,7 +819,7 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         for (h in candidateHouses) {
-            val poly = if (h.polygon.size > 3 && abs(h.polygon.first().utmEast - h.polygon.last().utmEast) < 0.01) {
+            val poly = if (h.polygon.size > 3 && abs(h.polygon.first().utmEast - h.polygon.last().utmEast) < 0.01 && abs(h.polygon.first().utmNorth - h.polygon.last().utmNorth) < 0.01) {
                 h.polygon.dropLast(1)
             } else h.polygon
             if (poly.size < 3) continue
@@ -786,6 +830,22 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
             } else {
                 max(0.75f, h.heightM * scaleYPerM * 1.55f)
             }
+            val fencePolyRaw = if (h.hasFence && h.fencePolygon.size >= 3) {
+                if (h.fencePolygon.size > 3 && abs(h.fencePolygon.first().utmEast - h.fencePolygon.last().utmEast) < 0.01 && abs(h.fencePolygon.first().utmNorth - h.fencePolygon.last().utmNorth) < 0.01) {
+                    h.fencePolygon.dropLast(1)
+                } else h.fencePolygon
+            } else emptyList()
+            val fenceCornersXZ = fencePolyRaw.map { pt -> toSceneXZ(pt.utmEast, pt.utmNorth) }
+            val fenceHeightSceneY = if (h.hasFence && h.fenceHeightM > 0f) {
+                if (isWindow) h.fenceHeightM.coerceIn(0.8f, 4.0f) * scaleYPerM
+                else max(0.28f, h.fenceHeightM * scaleYPerM * 1.45f)
+            } else 0f
+            val gatePosXZ = if (h.hasGate && h.gateCoord != null) {
+                toSceneXZ(h.gateCoord.utmEast, h.gateCoord.utmNorth)
+            } else null
+            val gateWidthScene = if (h.hasGate && h.gateWidthM > 0f) {
+                (h.gateWidthM * scaleXZ).coerceAtLeast(if (isWindow) 0.8f else 0.12f)
+            } else 0f
             housesOut.add(
                 TerrainBuilding3D(
                     id = h.osmId,
@@ -793,11 +853,29 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
                     baseCornersXZ = cornersXZ,
                     baseY = baseY,
                     roofY = baseY + heightUnits,
-                    isSelected = (h.osmId == selectedHouseId)
+                    isSelected = (h.osmId == selectedHouseId),
+                    levels = h.levels,
+                    shapeType = h.shapeType,
+                    roofType = h.roofType,
+                    roofPitchDeg = h.roofPitchDeg,
+                    roofMaterial = h.roofMaterial,
+                    wallType = h.wallType,
+                    windowType = h.windowType,
+                    windowToWallRatio = h.windowToWallRatio,
+                    parentCompoundName = h.parentCompoundName,
+                    hasFence = h.hasFence && fenceCornersXZ.size >= 3,
+                    fenceType = h.fenceType,
+                    fenceHeightSceneY = fenceHeightSceneY,
+                    fenceCornersXZ = fenceCornersXZ,
+                    hasGate = h.hasGate && gatePosXZ != null,
+                    gateType = h.gateType,
+                    gatePosXZ = gatePosXZ,
+                    gateWidthScene = gateWidthScene,
+                    gateAngleRad = h.gateAngleRad
                 )
             )
         }
-        return Triple(housesOut, roadsOut, symbolsOut.take(120))
+        return FeatureOverlays3D(housesOut, roadsOut, symbolsOut.take(120), bridgesOut)
     }
 
     fun exportAndShareGeoJson(context: Context) {
@@ -824,12 +902,15 @@ class C58CorridorViewModel(application: Application) : AndroidViewModel(applicat
             val file = withContext(Dispatchers.IO) {
                 val out = File(context.cacheDir, "route_c58_houses_coords.csv")
                 val sb = StringBuilder()
-                sb.appendLine("osm_id,name,building_type,amenity,levels,height_m,area_m2,elev_asl_m,sector,chainage_km,lateral_offset_m,corridor_side,lat,lon,utm37s_east,utm37s_north,grid_1m_easting_col,grid_1m_northing_row")
+                sb.appendLine("osm_id,name,building_type,amenity,levels,floor_height_m,height_m,shape_type,roof_type,roof_pitch_deg,roof_material,wall_type,window_type,window_wall_ratio,parent_compound,fence_type,fence_height_m,gate_type,gate_width_m,gate_lat,gate_lon,area_m2,elev_asl_m,sector,chainage_km,lateral_offset_m,corridor_side,lat,lon,utm37s_east,utm37s_north,grid_1m_easting_col,grid_1m_northing_row")
                 for (h in bundle.houses) {
                     val safeName = h.name.replace("\"", "\"\"")
+                    val safeParent = h.parentCompoundName.replace("\"", "\"\"")
+                    val gLat = h.gateCoord?.lat?.let { "%.7f".format(it) } ?: ""
+                    val gLon = h.gateCoord?.lon?.let { "%.7f".format(it) } ?: ""
                     val c = h.centroid
                     sb.appendLine(
-                        "${h.osmId},\"$safeName\",${h.buildingType},${h.amenity},${h.levels},${"%.1f".format(h.heightM)},${"%.1f".format(h.footprintAreaM2)},${"%.2f".format(h.elevM)},S${h.sectorIndex},${"%.3f".format(c.chainageKm)},${"%.1f".format(c.lateralOffsetM)},\"${c.corridorSide}\",${"%.7f".format(c.lat)},${"%.7f".format(c.lon)},${"%.2f".format(c.utmEast)},${"%.2f".format(c.utmNorth)},${c.cellCol1m},${c.cellRow1m}"
+                        "${h.osmId},\"$safeName\",${h.buildingType},${h.amenity},${h.levels},${"%.2f".format(h.floorHeightM)},${"%.1f".format(h.heightM)},${h.shapeType},${h.roofType},${"%.1f".format(h.roofPitchDeg)},${h.roofMaterial},${h.wallType},${h.windowType},${"%.2f".format(h.windowToWallRatio)},\"$safeParent\",${h.fenceType},${"%.2f".format(h.fenceHeightM)},${h.gateType},${"%.2f".format(h.gateWidthM)},$gLat,$gLon,${"%.1f".format(h.footprintAreaM2)},${"%.2f".format(h.elevM)},S${h.sectorIndex},${"%.3f".format(c.chainageKm)},${"%.1f".format(c.lateralOffsetM)},\"${c.corridorSide}\",${"%.7f".format(c.lat)},${"%.7f".format(c.lon)},${"%.2f".format(c.utmEast)},${"%.2f".format(c.utmNorth)},${c.cellCol1m},${c.cellRow1m}"
                     )
                 }
                 out.writeText(sb.toString())

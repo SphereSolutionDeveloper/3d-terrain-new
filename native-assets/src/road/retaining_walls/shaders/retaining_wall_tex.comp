@@ -1,0 +1,66 @@
+// ==============================================================================
+// Geotechnical MSE Cruciform Panels & Rock Gabion Texture Kernel (.comp)
+// Path: src/road/retaining_walls/shaders/retaining_wall_tex.comp
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "../../shaders/include/road_common.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outWallAlbedo;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D outWallNormalRough;
+
+layout(push_constant) uniform RetainingWallTexPC {
+    uint texSize;
+    uint wallStyle;       // 0 = MSE Cruciform Panels, 1 = Rock Gabion Basket, 2 = Shotcrete
+    float panelScale;
+    float moistureSeepage;
+} pc;
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.texSize) || px.y >= int(pc.texSize)) {
+        return;
+    }
+
+    vec2 uv = vec2(px) / float(max(pc.texSize - 1u, 1u));
+    vec3 albedo = vec3(0.60);
+    vec3 normalTS = vec3(0.0, 0.0, 1.0);
+    float roughness = 0.88;
+
+    if (pc.wallStyle == 0u) {
+        // MSE precast architectural panel grid + bevelled relief ribs
+        vec2 pUv = fract(uv * max(pc.panelScale, 4.0)) - 0.5;
+        float joint = max(1.0 - smoothstep(0.45, 0.495, abs(pUv.x)), 1.0 - smoothstep(0.45, 0.495, abs(pUv.y)));
+        float rib = sin(uv.x * 160.0) * 0.04;
+        albedo = mix(vec3(0.64, 0.63, 0.60) + rib, vec3(0.24, 0.25, 0.26), joint);
+        normalTS = normalize(vec3(cos(uv.x * 160.0) * 0.25, joint * 0.45, 1.0));
+        roughness = 0.85;
+    } else if (pc.wallStyle == 1u) {
+        // Angular Voronoi basalt stones trapped behind hexagonal wire cage
+        vec2 cid;
+        float edge = roadVoronoiEdgeDist(uv * max(pc.panelScale, 12.0), cid);
+        float stoneColor = 0.30 + 0.24 * roadHash21(cid);
+        float wire = 1.0 - smoothstep(0.04, 0.09, min(abs(fract(uv.x * 18.0 + uv.y * 18.0) - 0.5), abs(fract(uv.x * 18.0 - uv.y * 18.0) - 0.5)));
+        vec3 rock = vec3(stoneColor * 1.04, stoneColor * 0.98, stoneColor * 0.90) * smoothstep(0.0, 0.14, edge);
+        albedo = mix(rock, vec3(0.54, 0.58, 0.62), wire * 0.7);
+        normalTS = normalize(vec3((roadHash21(cid) - 0.5) * 0.6, (roadHash21(cid + 9.0) - 0.5) * 0.6, 1.0));
+        roughness = mix(0.92, 0.36, wire);
+    } else {
+        // Soil-nail shotcrete finish with PVC weep drainage ports
+        float rough = roadFbm(uv * 22.0);
+        vec2 wUv = fract(uv * 3.0) - 0.5;
+        float weepPipe = 1.0 - smoothstep(0.045, 0.065, length(wUv));
+        albedo = mix(vec3(0.56, 0.55, 0.53) * (0.85 + 0.3 * rough), vec3(0.20, 0.22, 0.24), weepPipe);
+        roughness = 0.90;
+    }
+
+    float seep = clamp(pc.moistureSeepage, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.4, uv.y)) * roadFbm(uv * 6.0);
+    albedo = mix(albedo, albedo * 0.48, seep);
+    roughness = mix(roughness, 0.28, seep * 0.7);
+
+    imageStore(outWallAlbedo, px, vec4(albedo, 1.0));
+    imageStore(outWallNormalRough, px, vec4(normalTS * 0.5 + 0.5, roughness));
+}

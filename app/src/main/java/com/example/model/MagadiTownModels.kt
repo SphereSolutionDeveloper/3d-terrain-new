@@ -60,8 +60,68 @@ data class ExtractedBuilding(
     val footprintAreaM2: Float,
     val perimeterM: Float,
     val polygon: List<MagadiGeoCoord>,
-    val tags: Map<String, String> = emptyMap()
+    val tags: Map<String, String> = emptyMap(),
+    // v2 Architectural Envelope & Compound Containment
+    val floorHeightM: Float = if (levels > 0) heightM / levels else heightM,
+    val shapeType: String = "RECTANGULAR",
+    val roofType: String = "GABLED",
+    val roofPitchDeg: Float = 20f,
+    val roofMaterial: String = "CORRUGATED_IRON_MABATI",
+    val wallType: String = "CONCRETE_BLOCK_PLASTER",
+    val windowType: String = "SLIDING_ALUMINUM",
+    val windowToWallRatio: Float = 0.20f,
+    val parentCompoundId: Long = 0L,
+    val parentCompoundName: String = "",
+    // v2 Road-Collision-Free Perimeter Fence & Gate Coordinates
+    val hasFence: Boolean = false,
+    val fenceType: String = "NONE",
+    val fenceHeightM: Float = 0f,
+    val fencePolygon: List<MagadiGeoCoord> = emptyList(),
+    val hasGate: Boolean = false,
+    val gateType: String = "NONE",
+    val gateWidthM: Float = 0f,
+    val gateAngleRad: Float = 0f,
+    val gateCoord: MagadiGeoCoord? = null
 )
+
+object BuildingV2Catalog {
+    val SHAPE_TYPES = arrayOf(
+        "SQUARE", "RECTANGULAR", "L_SHAPE", "U_SHAPE",
+        "T_SHAPE", "STAR_CROSS", "CIRCULAR_SILO", "POLYGON_IRREGULAR"
+    )
+    val ROOF_TYPES = arrayOf(
+        "GABLED", "HIPPED", "FLAT_PARAPET", "SAW_TOOTH_INDUSTRIAL",
+        "MONO_PITCH_SHED", "ARCHED_TRUSS", "CONICAL_DOME"
+    )
+    val ROOF_MATERIALS = arrayOf(
+        "CORRUGATED_IRON_MABATI", "STONE_COATED_TILE", "REINFORCED_CONCRETE",
+        "GALVANIZED_TRUSS_SHEET", "CLAY_TILE", "THATCH_MAASAI"
+    )
+    val WALL_TYPES = arrayOf(
+        "CONCRETE_BLOCK_PLASTER", "CORRUGATED_IRON_CLADDING", "DRESSED_MASONRY_STONE",
+        "PRECAST_INDUSTRIAL_PANEL", "TIMBER_PLANK", "BRICK_MASONRY"
+    )
+    val WINDOW_TYPES = arrayOf(
+        "SLIDING_ALUMINUM", "STEEL_CASEMENT", "INDUSTRIAL_CLERESTORY",
+        "LOUVERED_VENT", "CURTAIN_WALL", "NARROW_SLIT"
+    )
+    val FENCE_TYPES = arrayOf(
+        "NONE", "CHAIN_LINK_POSTS", "MASONRY_BLOCK_WALL",
+        "TIMBER_POST_RAIL", "LIVE_THORN_HEDGE", "PALISADE_SECURITY_STEEL"
+    )
+    val GATE_TYPES = arrayOf(
+        "NONE", "SLIDING_STEEL_GATE", "DOUBLE_SWING_TIMBER",
+        "SECURITY_BOOM_BARRIER", "PEDESTRIAN_WICKET"
+    )
+
+    fun shapeAt(idx: Int): String = SHAPE_TYPES[idx.coerceIn(0, SHAPE_TYPES.lastIndex)]
+    fun roofAt(idx: Int): String = ROOF_TYPES[idx.coerceIn(0, ROOF_TYPES.lastIndex)]
+    fun roofMatAt(idx: Int): String = ROOF_MATERIALS[idx.coerceIn(0, ROOF_MATERIALS.lastIndex)]
+    fun wallAt(idx: Int): String = WALL_TYPES[idx.coerceIn(0, WALL_TYPES.lastIndex)]
+    fun windowAt(idx: Int): String = WINDOW_TYPES[idx.coerceIn(0, WINDOW_TYPES.lastIndex)]
+    fun fenceAt(idx: Int): String = FENCE_TYPES[idx.coerceIn(0, FENCE_TYPES.lastIndex)]
+    fun gateAt(idx: Int): String = GATE_TYPES[idx.coerceIn(0, GATE_TYPES.lastIndex)]
+}
 
 data class ExtractedPoiMetadata(
     val osmId: Long,

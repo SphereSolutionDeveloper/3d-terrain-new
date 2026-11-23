@@ -143,6 +143,33 @@ enum class CppAssetType(
         accentColorHex = "#FFD600",
         category = "Temporary Control / Anti-Ram Checkpoints",
         dimensionsLabel = "12m (W) × 3.2m (H) × 34m (L)"
+    ),
+    MODULAR_ROAD_NETWORK(
+        id = "modular_road_network",
+        title = "Modular Road Network & Intersections",
+        subtitle = "Signalized 4-Way Crossroad, Arterial T-Junction, Y-Fork Gore & 2×2 District Street Grid",
+        primaryColorHex = "#29B6F6",
+        accentColorHex = "#FFCA28",
+        category = "Urban Engineering / Signalized Junctions",
+        dimensionsLabel = "56m (W) × 7.5m (H) × 56m (L)"
+    ),
+    MODULAR_SPLINE_GRAPH(
+        id = "modular_spline_graph",
+        title = "Clothoid Spline & Superelevation",
+        subtitle = "Euler Spiral S-Curve, 180° Switchback Hairpin, Catmull-Rom Corridor & Banked Helix",
+        primaryColorHex = "#AB47BC",
+        accentColorHex = "#00E5FF",
+        category = "Geometric Alignment / Banking Physics",
+        dimensionsLabel = "64m (W) × 16m (H) × 120m (L)"
+    ),
+    MODULAR_ROAD_TILE(
+        id = "modular_road_tile",
+        title = "Terrain-Conforming Road & Surface State",
+        subtitle = "Hillside Cut/Fill, Quadtree Urban Tile, Wet Puddles, Muddy Ruts, Potholes & Icy Corridor",
+        primaryColorHex = "#FFA726",
+        accentColorHex = "#26C6DA",
+        category = "Road Weather & Distress Simulation",
+        dimensionsLabel = "48m (W) × 6.5m (H) × 48m (L)"
     )
 }
 

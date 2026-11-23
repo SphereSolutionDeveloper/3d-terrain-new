@@ -84,6 +84,7 @@ fun C58CorridorScreen(
     val houses3d by c58ViewModel.overlayHouses3D.collectAsStateWithLifecycle()
     val roads3d by c58ViewModel.overlayRoads3D.collectAsStateWithLifecycle()
     val symbols3d by c58ViewModel.overlayRoadSymbols3D.collectAsStateWithLifecycle()
+    val bridges3d by c58ViewModel.overlayBridges3D.collectAsStateWithLifecycle()
 
     val dataTabIndex by c58ViewModel.dataTabIndex.collectAsStateWithLifecycle()
     val searchQuery by c58ViewModel.searchQuery.collectAsStateWithLifecycle()
@@ -380,6 +381,7 @@ fun C58CorridorScreen(
                         overlayBuildings3D = houses3d,
                         overlayRoadSegments3D = roads3d,
                         overlayRoadSymbols3D = symbols3d,
+                        overlayBridges3D = bridges3d,
                         onRotateDrag = { dx, dy ->
                             c58ViewModel.yaw3d.value += dx * 0.007f
                             c58ViewModel.pitch3d.value = (c58ViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -451,6 +453,7 @@ fun C58CorridorScreen(
                         overlayBuildings3D = houses3d,
                         overlayRoadSegments3D = roads3d,
                         overlayRoadSymbols3D = symbols3d,
+                        overlayBridges3D = bridges3d,
                         onRotateDrag = { dx, dy ->
                             c58ViewModel.yaw3d.value += dx * 0.007f
                             c58ViewModel.pitch3d.value = (c58ViewModel.pitch3d.value - dy * 0.007f).coerceIn(0.06f, 1.46f)
@@ -894,7 +897,11 @@ private fun C58CellTelemetryCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 val secondLine = when {
-                    selectedHouse != null -> "HOUSE: ${selectedHouse.name} (${"%.0f".format(selectedHouse.footprintAreaM2)}m²)"
+                    selectedHouse != null -> {
+                        val h = selectedHouse
+                        val comp = if (h.parentCompoundName.isNotBlank()) " [${h.parentCompoundName.take(18)}]" else ""
+                        "${h.name}$comp • ${h.shapeType} • ${h.levels}F (${"%.1f".format(h.heightM)}m) • ${h.roofType}/${h.wallType}"
+                    }
                     selectedRoad != null -> "ROAD: ${selectedRoad.name} (${selectedRoad.highwayType})"
                     inspectedCell.isWater -> "WATER • Depth -${"%.2f".format(inspectedCell.waterDepthM)}m (${"%.1f".format(lakeLevelAslM)}m)"
                     else -> "${inspectedCell.utmEast.roundToInt()}E, ${inspectedCell.utmNorth.roundToInt()}N • ${"%.4f".format(inspectedCell.lat)}, ${"%.4f".format(inspectedCell.lon)}"
@@ -907,6 +914,18 @@ private fun C58CellTelemetryCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (selectedHouse != null && (selectedHouse.hasFence || selectedHouse.hasGate)) {
+                    val gc = selectedHouse.gateCoord
+                    val gTxt = if (gc != null) " @ ${"%.5f".format(gc.lat)}, ${"%.5f".format(gc.lon)}" else ""
+                    Text(
+                        text = "FENCE: ${selectedHouse.fenceType} (${"%.1f".format(selectedHouse.fenceHeightM)}m) • GATE: ${selectedHouse.gateType}$gTxt",
+                        fontSize = 8.5.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = CyberCyan,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(6.dp))
             Button(

@@ -94,6 +94,9 @@ fun SpecsBlueprintTab(
                 CppAssetType.MODULAR_SIGNPOST -> "Galvanized Warren Trusses, Retroreflective Signs & LED Matrix"
                 CppAssetType.MODULAR_BARRIER -> "MASH Concrete F-Shape, W-Beam Steel & EVA Safety Rollers"
                 CppAssetType.MODULAR_ROAD_BLOCK -> "Safety Orange Barricades, K12 Stainless Bollards & Beacons"
+                CppAssetType.MODULAR_ROAD_NETWORK -> "Urban Intersection Asphalt, Crosswalks & Cantilever Signal Masts"
+                CppAssetType.MODULAR_SPLINE_GRAPH -> "Superelevated Clothoid Deck, Double Yellow Median & RC Piers"
+                CppAssetType.MODULAR_ROAD_TILE -> "Hillside Cut/Fill Earthworks, Wet/Ice/Mud/Pothole Surface States"
             })
         }
     }

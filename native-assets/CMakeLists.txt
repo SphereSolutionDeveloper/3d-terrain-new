@@ -36,7 +36,11 @@ add_library(apex_vulkan SHARED
     src/road/barriers/BarrierKit.cpp
     src/road/signage/SignpostGenerator.cpp
     src/road/roadblocks/RoadBlockGenerator.cpp
+    src/road/RoadNetwork.cpp
+    src/road/RoadSplineGraph.cpp
+    src/road/RoadTileGen.cpp
     src/road/vulkan/VulkanRoadScene.cpp
+    src/buildings/BuildingSystem.cpp
 )
 
 target_include_directories(apex_vulkan PRIVATE
@@ -44,6 +48,7 @@ target_include_directories(apex_vulkan PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/include
     ${CMAKE_CURRENT_SOURCE_DIR}/base
     ${CMAKE_CURRENT_SOURCE_DIR}/src/road
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/buildings
 )
 
 target_link_libraries(apex_vulkan PRIVATE

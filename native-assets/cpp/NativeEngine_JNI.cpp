@@ -8,10 +8,13 @@
 #include "GlbParserEngine.h"
 #include "Math3D.h"
 #include "vulkan_road_components.h"
+#include "BuildingSystem.h"
 #include <vector>
 #include <string>
 
 using namespace custom_vulkan;
+
+static ApexAssets::BuildingSystem s_buildingSystem;
 
 extern "C" {
 
@@ -1049,6 +1052,168 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadBlockIndices(
     return result;
 }
 
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadNetworkVertices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat roadWidthM, jfloat armSpanM, jint laneCount,
+    jfloat cornerRadiusM, jboolean hasSignals) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateRoadNetwork(
+        static_cast<ApexAssets::Road::RoadNetworkType>(type),
+        roadWidthM, armSpanM, static_cast<uint32_t>(laneCount), cornerRadiusM, hasSignals, verts, indices);
+
+    jsize floatCount = static_cast<jsize>(verts.size() * 12);
+    std::vector<jfloat> packed(floatCount);
+    for (size_t i = 0; i < verts.size(); ++i) {
+        size_t b = i * 12;
+        packed[b + 0] = verts[i].pos[0];
+        packed[b + 1] = verts[i].pos[1];
+        packed[b + 2] = verts[i].pos[2];
+        packed[b + 3] = verts[i].normal[0];
+        packed[b + 4] = verts[i].normal[1];
+        packed[b + 5] = verts[i].normal[2];
+        packed[b + 6] = verts[i].uv[0];
+        packed[b + 7] = verts[i].uv[1];
+        packed[b + 8] = verts[i].color[0];
+        packed[b + 9] = verts[i].color[1];
+        packed[b + 10] = verts[i].color[2];
+        packed[b + 11] = verts[i].color[3];
+    }
+    jfloatArray result = env->NewFloatArray(floatCount);
+    env->SetFloatArrayRegion(result, 0, floatCount, packed.data());
+    return result;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadNetworkIndices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat roadWidthM, jfloat armSpanM, jint laneCount,
+    jfloat cornerRadiusM, jboolean hasSignals) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateRoadNetwork(
+        static_cast<ApexAssets::Road::RoadNetworkType>(type),
+        roadWidthM, armSpanM, static_cast<uint32_t>(laneCount), cornerRadiusM, hasSignals, verts, indices);
+
+    jsize idxCount = static_cast<jsize>(indices.size());
+    std::vector<jint> intIndices(idxCount);
+    for (size_t i = 0; i < indices.size(); ++i) {
+        intIndices[i] = static_cast<jint>(indices[i]);
+    }
+    jintArray result = env->NewIntArray(idxCount);
+    env->SetIntArrayRegion(result, 0, idxCount, intIndices.data());
+    return result;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateSplineGraphVertices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat splineLengthM, jfloat roadWidthM, jfloat designSpeedKmH,
+    jfloat elevationGainM, jfloat curvatureIntensity) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateSplineGraph(
+        static_cast<ApexAssets::Road::SplineCurveType>(type),
+        splineLengthM, roadWidthM, designSpeedKmH, elevationGainM, curvatureIntensity, verts, indices);
+
+    jsize floatCount = static_cast<jsize>(verts.size() * 12);
+    std::vector<jfloat> packed(floatCount);
+    for (size_t i = 0; i < verts.size(); ++i) {
+        size_t b = i * 12;
+        packed[b + 0] = verts[i].pos[0];
+        packed[b + 1] = verts[i].pos[1];
+        packed[b + 2] = verts[i].pos[2];
+        packed[b + 3] = verts[i].normal[0];
+        packed[b + 4] = verts[i].normal[1];
+        packed[b + 5] = verts[i].normal[2];
+        packed[b + 6] = verts[i].uv[0];
+        packed[b + 7] = verts[i].uv[1];
+        packed[b + 8] = verts[i].color[0];
+        packed[b + 9] = verts[i].color[1];
+        packed[b + 10] = verts[i].color[2];
+        packed[b + 11] = verts[i].color[3];
+    }
+    jfloatArray result = env->NewFloatArray(floatCount);
+    env->SetFloatArrayRegion(result, 0, floatCount, packed.data());
+    return result;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateSplineGraphIndices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat splineLengthM, jfloat roadWidthM, jfloat designSpeedKmH,
+    jfloat elevationGainM, jfloat curvatureIntensity) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateSplineGraph(
+        static_cast<ApexAssets::Road::SplineCurveType>(type),
+        splineLengthM, roadWidthM, designSpeedKmH, elevationGainM, curvatureIntensity, verts, indices);
+
+    jsize idxCount = static_cast<jsize>(indices.size());
+    std::vector<jint> intIndices(idxCount);
+    for (size_t i = 0; i < indices.size(); ++i) {
+        intIndices[i] = static_cast<jint>(indices[i]);
+    }
+    jintArray result = env->NewIntArray(idxCount);
+    env->SetIntArrayRegion(result, 0, idxCount, intIndices.data());
+    return result;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadTileVertices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat tileSizeM, jfloat roadWidthM, jfloat cutFillHeightM,
+    jfloat distressDepthM, jboolean hasDrainageAndCurbs) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateRoadTile(
+        static_cast<ApexAssets::Road::RoadTileType>(type),
+        tileSizeM, roadWidthM, cutFillHeightM, distressDepthM, hasDrainageAndCurbs, verts, indices);
+
+    jsize floatCount = static_cast<jsize>(verts.size() * 12);
+    std::vector<jfloat> packed(floatCount);
+    for (size_t i = 0; i < verts.size(); ++i) {
+        size_t b = i * 12;
+        packed[b + 0] = verts[i].pos[0];
+        packed[b + 1] = verts[i].pos[1];
+        packed[b + 2] = verts[i].pos[2];
+        packed[b + 3] = verts[i].normal[0];
+        packed[b + 4] = verts[i].normal[1];
+        packed[b + 5] = verts[i].normal[2];
+        packed[b + 6] = verts[i].uv[0];
+        packed[b + 7] = verts[i].uv[1];
+        packed[b + 8] = verts[i].color[0];
+        packed[b + 9] = verts[i].color[1];
+        packed[b + 10] = verts[i].color[2];
+        packed[b + 11] = verts[i].color[3];
+    }
+    jfloatArray result = env->NewFloatArray(floatCount);
+    env->SetFloatArrayRegion(result, 0, floatCount, packed.data());
+    return result;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateRoadTileIndices(
+    JNIEnv* env, jobject /* this */,
+    jint type, jfloat tileSizeM, jfloat roadWidthM, jfloat cutFillHeightM,
+    jfloat distressDepthM, jboolean hasDrainageAndCurbs) {
+    std::vector<RoadEngineVertex> verts;
+    std::vector<uint32_t> indices;
+    s_roadEngine.GenerateRoadTile(
+        static_cast<ApexAssets::Road::RoadTileType>(type),
+        tileSizeM, roadWidthM, cutFillHeightM, distressDepthM, hasDrainageAndCurbs, verts, indices);
+
+    jsize idxCount = static_cast<jsize>(indices.size());
+    std::vector<jint> intIndices(idxCount);
+    for (size_t i = 0; i < indices.size(); ++i) {
+        intIndices[i] = static_cast<jint>(indices[i]);
+    }
+    jintArray result = env->NewIntArray(idxCount);
+    env->SetIntArrayRegion(result, 0, idxCount, intIndices.data());
+    return result;
+}
+
 // ----------------------------------------------------------------------------
 // Magadi Town 3 km x 5 km (1 m Grid Resolution) JNI Bindings
 // ----------------------------------------------------------------------------
@@ -1504,6 +1669,146 @@ Java_com_example_engine_NativeEngineBridge_nativeGenerateC581mWindowIndices(
     jsize count = static_cast<jsize>(mesh.indices.size());
     jintArray res = env->NewIntArray(count);
     if (res && count > 0) env->SetIntArrayRegion(res, 0, count, reinterpret_cast<const jint*>(mesh.indices.data()));
+    return res;
+}
+
+// ─── RUNTIME BUILDING v2 BINARY PARSER & PROCEDURAL 3D ARCHITECTURAL BUILDER ──
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeParseBuildingsFromBinary(
+    JNIEnv* env, jobject /* this */,
+    jbyteArray binBytes, jboolean isC58Corridor) {
+    if (!env || !binBytes) return env->NewIntArray(0);
+    jsize len = env->GetArrayLength(binBytes);
+    std::vector<uint8_t> buf(static_cast<size_t>(std::max<jsize>(0, len)));
+    if (len > 0) {
+        env->GetByteArrayRegion(binBytes, 0, len, reinterpret_cast<jbyte*>(buf.data()));
+    }
+    if (isC58Corridor) {
+        s_buildingSystem.LoadFromC58Buffer(buf.data(), buf.size());
+    } else {
+        s_buildingSystem.LoadFromMagtBuffer(buf.data(), buf.size());
+    }
+    const auto& sum = s_buildingSystem.GetLastSummary();
+    jint out[7] = {
+        static_cast<jint>(sum.formatVersion),
+        static_cast<jint>(sum.totalBuildings),
+        static_cast<jint>(sum.compoundChildren),
+        static_cast<jint>(sum.fencedBuildings),
+        static_cast<jint>(sum.gatedBuildings),
+        static_cast<jint>(sum.multiStoreyBuildings),
+        static_cast<jint>(std::lround(sum.maxHeightM * 10.0f))
+    };
+    jintArray res = env->NewIntArray(7);
+    if (res) env->SetIntArrayRegion(res, 0, 7, out);
+    return res;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateBuildingByOsmIdVertices(
+    JNIEnv* env, jobject /* this */,
+    jlong osmId) {
+    const auto* rec = s_buildingSystem.FindByOsmId(static_cast<int64_t>(osmId));
+    if (!rec) return env->NewFloatArray(0);
+    std::vector<ApexAssets::ArchVertex> verts;
+    std::vector<uint32_t> indices;
+    ApexAssets::BuildingSystem::GenerateBuildingAndPerimeterMesh(*rec, verts, indices);
+    jsize floatCount = static_cast<jsize>(verts.size() * 12);
+    std::vector<jfloat> packed(floatCount);
+    for (size_t i = 0; i < verts.size(); ++i) {
+        size_t b = i * 12;
+        packed[b + 0] = verts[i].pos[0];
+        packed[b + 1] = verts[i].pos[1];
+        packed[b + 2] = verts[i].pos[2];
+        packed[b + 3] = verts[i].normal[0];
+        packed[b + 4] = verts[i].normal[1];
+        packed[b + 5] = verts[i].normal[2];
+        packed[b + 6] = verts[i].uv[0];
+        packed[b + 7] = verts[i].uv[1];
+        packed[b + 8] = verts[i].color[0];
+        packed[b + 9] = verts[i].color[1];
+        packed[b + 10] = verts[i].color[2];
+        packed[b + 11] = verts[i].color[3];
+    }
+    jfloatArray res = env->NewFloatArray(floatCount);
+    if (res && floatCount > 0) env->SetFloatArrayRegion(res, 0, floatCount, packed.data());
+    return res;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateBuildingByOsmIdIndices(
+    JNIEnv* env, jobject /* this */,
+    jlong osmId) {
+    const auto* rec = s_buildingSystem.FindByOsmId(static_cast<int64_t>(osmId));
+    if (!rec) return env->NewIntArray(0);
+    std::vector<ApexAssets::ArchVertex> verts;
+    std::vector<uint32_t> indices;
+    ApexAssets::BuildingSystem::GenerateBuildingAndPerimeterMesh(*rec, verts, indices);
+    jsize idxCount = static_cast<jsize>(indices.size());
+    std::vector<jint> intIdx(idxCount);
+    for (size_t i = 0; i < indices.size(); ++i) intIdx[i] = static_cast<jint>(indices[i]);
+    jintArray res = env->NewIntArray(idxCount);
+    if (res && idxCount > 0) env->SetIntArrayRegion(res, 0, idxCount, intIdx.data());
+    return res;
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateBuildingShowcaseVertices(
+    JNIEnv* env, jobject /* this */,
+    jint shapeId, jint roofId, jint wallId, jint windowId, jint fenceId, jint gateId,
+    jint levels, jfloat floorHeightM, jfloat widthM, jfloat depthM) {
+    std::vector<ApexAssets::ArchVertex> verts;
+    std::vector<uint32_t> indices;
+    ApexAssets::BuildingSystem::GenerateCatalogShowcaseMesh(
+        static_cast<ApexAssets::BuildingShapeType>(shapeId),
+        static_cast<ApexAssets::RoofType>(roofId),
+        static_cast<ApexAssets::WallType>(wallId),
+        static_cast<ApexAssets::WindowType>(windowId),
+        static_cast<ApexAssets::FenceType>(fenceId),
+        static_cast<ApexAssets::GateType>(gateId),
+        levels, floorHeightM, widthM, depthM, verts, indices);
+    jsize floatCount = static_cast<jsize>(verts.size() * 12);
+    std::vector<jfloat> packed(floatCount);
+    for (size_t i = 0; i < verts.size(); ++i) {
+        size_t b = i * 12;
+        packed[b + 0] = verts[i].pos[0];
+        packed[b + 1] = verts[i].pos[1];
+        packed[b + 2] = verts[i].pos[2];
+        packed[b + 3] = verts[i].normal[0];
+        packed[b + 4] = verts[i].normal[1];
+        packed[b + 5] = verts[i].normal[2];
+        packed[b + 6] = verts[i].uv[0];
+        packed[b + 7] = verts[i].uv[1];
+        packed[b + 8] = verts[i].color[0];
+        packed[b + 9] = verts[i].color[1];
+        packed[b + 10] = verts[i].color[2];
+        packed[b + 11] = verts[i].color[3];
+    }
+    jfloatArray res = env->NewFloatArray(floatCount);
+    if (res && floatCount > 0) env->SetFloatArrayRegion(res, 0, floatCount, packed.data());
+    return res;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_example_engine_NativeEngineBridge_nativeGenerateBuildingShowcaseIndices(
+    JNIEnv* env, jobject /* this */,
+    jint shapeId, jint roofId, jint wallId, jint windowId, jint fenceId, jint gateId,
+    jint levels, jfloat floorHeightM, jfloat widthM, jfloat depthM) {
+    std::vector<ApexAssets::ArchVertex> verts;
+    std::vector<uint32_t> indices;
+    ApexAssets::BuildingSystem::GenerateCatalogShowcaseMesh(
+        static_cast<ApexAssets::BuildingShapeType>(shapeId),
+        static_cast<ApexAssets::RoofType>(roofId),
+        static_cast<ApexAssets::WallType>(wallId),
+        static_cast<ApexAssets::WindowType>(windowId),
+        static_cast<ApexAssets::FenceType>(fenceId),
+        static_cast<ApexAssets::GateType>(gateId),
+        levels, floorHeightM, widthM, depthM, verts, indices);
+    jsize idxCount = static_cast<jsize>(indices.size());
+    std::vector<jint> intIdx(idxCount);
+    for (size_t i = 0; i < indices.size(); ++i) intIdx[i] = static_cast<jint>(indices[i]);
+    jintArray res = env->NewIntArray(idxCount);
+    if (res && idxCount > 0) env->SetIntArrayRegion(res, 0, idxCount, intIdx.data());
     return res;
 }
 

@@ -152,6 +152,12 @@ fun MagadiTownDataPanel(
                     q.isEmpty() || it.name.lowercase().contains(q) ||
                         it.buildingType.lowercase().contains(q) ||
                         it.amenity.lowercase().contains(q) ||
+                        it.shapeType.lowercase().contains(q) ||
+                        it.roofType.lowercase().contains(q) ||
+                        it.wallType.lowercase().contains(q) ||
+                        it.parentCompoundName.lowercase().contains(q) ||
+                        it.fenceType.lowercase().contains(q) ||
+                        it.gateType.lowercase().contains(q) ||
                         it.osmId.toString().contains(q)
                 }
                 if (buildings.isEmpty()) {
@@ -227,6 +233,12 @@ private fun MetadataSummaryList(
                 KeyValLine("Lake Water Level", "${"%.2f".format(meta?.lakeLevelAslM ?: 602.5f)} m ASL")
                 KeyValLine("DEM Native Res", "${"%.1f".format(meta?.demResolutionM ?: 9.5f)} m/px")
                 KeyValLine("DEM Grid", bundle?.demGrid?.let { "${it.cols}×${it.rows} ${it.source}" } ?: "C++ Basin Baseline")
+                val v2Bldgs = bundle?.buildings ?: emptyList()
+                val fencedCount = v2Bldgs.count { it.hasFence }
+                val gatedCount = v2Bldgs.count { it.hasGate }
+                val compoundChildren = v2Bldgs.count { it.parentCompoundId != 0L }
+                val multiStorey = v2Bldgs.count { it.levels > 1 }
+                KeyValLine("v2 Arch & Fences", "$compoundChildren compound inner • $multiStorey multi-storey • $fencedCount fenced / $gatedCount gated")
                 KeyValLine("Extracted At", meta?.extractedAtIso?.ifBlank { "Pending live fetch" } ?: "Pending")
             }
         }
@@ -285,14 +297,42 @@ private fun BuildingMetadataCard(
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(building.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                Text(building.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = CyberCyan, modifier = Modifier.weight(1f))
                 Text("OSM #${building.osmId}", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = TextSecondary)
             }
+            if (building.parentCompoundName.isNotBlank()) {
+                val sharedNote = if (!building.hasFence) " • Shares compound fence & gate" else ""
+                Text(
+                    "COMPOUND: ${building.parentCompoundName}$sharedNote",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = LaserOrange
+                )
+            }
             Text(
-                "Type: ${building.buildingType}${if (building.amenity.isNotBlank()) " (${building.amenity})" else ""} • ${building.levels} lvl (${"%.1f".format(building.heightM)}m) • Area: ${"%.1f".format(building.footprintAreaM2)} m²",
+                "Type: ${building.buildingType}${if (building.amenity.isNotBlank()) " (${building.amenity})" else ""} • Shape: ${building.shapeType} • ${building.levels}F × ${"%.2f".format(building.floorHeightM)}m = ${"%.1f".format(building.heightM)}m • Area: ${"%.1f".format(building.footprintAreaM2)} m²",
                 fontSize = 11.sp,
                 color = TextPrimary
             )
+            Text(
+                "Envelope: Roof ${building.roofType} (${building.roofPitchDeg.toInt()}°, ${building.roofMaterial}) • Wall: ${building.wallType} • Win: ${building.windowType} (${(building.windowToWallRatio * 100).toInt()}%)",
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+                color = TextSecondary
+            )
+            if (building.hasFence || building.hasGate) {
+                val gc = building.gateCoord
+                val gatePosTxt = if (gc != null) {
+                    " @ ${"%.5f".format(gc.lat)}, ${"%.5f".format(gc.lon)} (${gc.utmEast.toInt()}E, ${gc.utmNorth.toInt()}N)"
+                } else ""
+                Text(
+                    "Perimeter: ${building.fenceType} (${"%.1f".format(building.fenceHeightM)}m) • Gate: ${building.gateType} (${"%.1f".format(building.gateWidthM)}m)$gatePosTxt",
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = CyberCyan
+                )
+            }
             Text(
                 "WGS84: ${"%.6f".format(c.lat)}, ${"%.6f".format(c.lon)} | 1m Cell: [${c.cellCol}, ${c.cellRow}] | ASL: ${"%.1f".format(building.elevM)}m",
                 fontSize = 10.sp,

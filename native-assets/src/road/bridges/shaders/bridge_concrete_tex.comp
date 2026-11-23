@@ -1,0 +1,49 @@
+// ==============================================================================
+// Bridge Precast Segmental Box & Caisson Pier Concrete Texture Kernel (.comp)
+// Path: src/road/bridges/shaders/bridge_concrete_tex.comp
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "../../shaders/include/road_common.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D outConcreteAlbedo;
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D outConcreteNormalRough;
+
+layout(push_constant) uniform BridgeConcretePC {
+    uint texSize;
+    float tieHoleSpacing;
+    float watermarkHeight;
+    float microPoreScale;
+} pc;
+
+void main() {
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(pc.texSize) || px.y >= int(pc.texSize)) {
+        return;
+    }
+
+    vec2 uv = vec2(px) / float(max(pc.texSize - 1u, 1u));
+    float baseFbm = roadFbm(uv * max(pc.microPoreScale, 20.0));
+    float streakNoise = roadValueNoise(vec2(uv.x * 24.0, uv.y * 4.0));
+
+    // Formwork lift joint horizontal bands & tie-rod cone holes
+    float liftJoint = 1.0 - smoothstep(0.0, 0.012, abs(fract(uv.y * 4.0) - 0.5));
+    vec2 tieUv = fract(uv * max(pc.tieHoleSpacing, 4.0)) - 0.5;
+    float tieHole = 1.0 - smoothstep(0.035, 0.055, length(tieUv));
+
+    // Pier tidal / stormwater drip stain
+    float waterStain = (1.0 - smoothstep(0.0, clamp(pc.watermarkHeight, 0.15, 0.55), uv.y)) * (0.55 + 0.45 * streakNoise);
+
+    vec3 concrete = mix(vec3(0.64, 0.65, 0.64), vec3(0.76, 0.77, 0.74), baseFbm);
+    concrete = mix(concrete, vec3(0.32, 0.34, 0.31), waterStain * 0.55);
+    concrete *= (1.0 - liftJoint * 0.28 - tieHole * 0.55);
+
+    vec3 normalTS = normalize(vec3(tieUv.x * tieHole * 2.0, (baseFbm - 0.5) * 0.25 + liftJoint * 0.3, 1.0));
+    float roughness = clamp(0.84 + tieHole * 0.10 - waterStain * 0.18, 0.45, 0.96);
+
+    imageStore(outConcreteAlbedo, px, vec4(concrete, 1.0));
+    imageStore(outConcreteNormalRough, px, vec4(normalTS * 0.5 + 0.5, roughness));
+}

@@ -1,0 +1,61 @@
+// ==============================================================================
+// Streaming Quadtree Road Tile Conformance & Drainage Compute Shader
+// Path: src/road/shaders/road_tile.comp
+// ==============================================================================
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "include/road_types.glsl"
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, r32f) uniform readonly image2D terrainHeightmap;
+layout(set = 0, binding = 1, r32f) uniform writeonly image2D outConformedTileHeight;
+layout(set = 0, binding = 2, rgba8) uniform writeonly image2D outTileSplatMask;
+
+layout(push_constant) uniform TileComputePC {
+    vec2 tileOriginXZ;
+    float tileSizeM;
+    float roadHalfWidthM;
+    float cutFillSlopeRatio;
+    float ditchDepthM;
+    uint resolution;
+    uint surfaceState;
+} pc;
+
+void main() {
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.resolution) || coord.y >= int(pc.resolution)) {
+        return;
+    }
+
+    vec2 uv = vec2(coord) / float(max(pc.resolution - 1u, 1u));
+    float lateralDist = abs(uv.x - 0.5) * pc.tileSizeM;
+    float terrainH = imageLoad(terrainHeightmap, coord).r;
+
+    // Roadway prism datum sampled along tile centerline (u = 0.5)
+    ivec2 centerCoord = ivec2(int(pc.resolution / 2u), coord.y);
+    float roadDatumH = imageLoad(terrainHeightmap, centerCoord).r;
+
+    float outH = terrainH;
+    vec4 splat = vec4(0.0, 0.0, 0.0, 1.0); // r=asphalt, g=shoulder/gravel, b=drainage ditch, a=terrain
+
+    if (lateralDist <= pc.roadHalfWidthM) {
+        float crown = 0.08 * (1.0 - pow(lateralDist / max(pc.roadHalfWidthM, 0.1), 2.0));
+        outH = roadDatumH + crown;
+        splat = vec4(1.0, 0.0, 0.0, 0.0);
+    } else if (lateralDist <= pc.roadHalfWidthM + 2.0) {
+        // V-shaped concrete drainage ditch beside cut/fill bench
+        float ditchT = (lateralDist - pc.roadHalfWidthM) / 2.0;
+        outH = roadDatumH - sin(ditchT * 3.14159) * pc.ditchDepthM;
+        splat = vec4(0.0, 0.25, 0.75, 0.0);
+    } else {
+        float shoulderDist = lateralDist - (pc.roadHalfWidthM + 2.0);
+        float blendT = smoothstep(0.0, 6.0 * pc.cutFillSlopeRatio, shoulderDist);
+        outH = mix(roadDatumH, terrainH, blendT);
+        splat = vec4(0.0, 1.0 - blendT, 0.0, blendT);
+    }
+
+    imageStore(outConformedTileHeight, coord, vec4(outH, 0.0, 0.0, 1.0));
+    imageStore(outTileSplatMask, coord, splat);
+}

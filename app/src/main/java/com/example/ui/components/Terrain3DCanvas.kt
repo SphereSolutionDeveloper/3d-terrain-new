@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.RoadSymbolType3D
+import com.example.model.TerrainBridge3D
 import com.example.model.TerrainBuilding3D
 import com.example.model.TerrainMesh3D
 import com.example.model.TerrainRenderMode
@@ -83,6 +84,7 @@ fun Terrain3DCanvas(
     overlayBuildings3D: List<TerrainBuilding3D> = emptyList(),
     overlayRoadSegments3D: List<TerrainRoadSeg3D> = emptyList(),
     overlayRoadSymbols3D: List<TerrainRoadSymbol3D> = emptyList(),
+    overlayBridges3D: List<TerrainBridge3D> = emptyList(),
     onRotateDrag: (Float, Float) -> Unit,
     onPanDrag: (Float, Float) -> Unit,
     onZoomChange: (Float) -> Unit,
@@ -1028,14 +1030,406 @@ fun Terrain3DCanvas(
                 }
             }
 
-            // 7. Render Depth-Sorted 3D Extruded Building Volumes
+            // 6b. Render True-Scale 3D Physical Bridge Structures (Columns, Footings, Pier Caps, Steel Girders, Decks, Abutments, Expansion Detents)
+            if (overlayBridges3D.isNotEmpty()) {
+                data class BridgeDrawFace(
+                    val pts: List<Offset>,
+                    val fillColor: Color,
+                    val strokeColor: Color,
+                    val strokeWidth: Float,
+                    val dist: Float,
+                    val isLineOnly: Boolean = false
+                )
+
+                fun projectBridgePt(wx: Float, wy: Float, wz: Float): Triple<Float, Float, Float> {
+                    val sx = wx.finiteOr(0f)
+                    val sy = wy.finiteOr(0f)
+                    val sz = wz.finiteOr(0f)
+                    val rx = sx * cosY - sz * sinY
+                    val ry = sy - midH
+                    val rz = sx * sinY + sz * cosY
+                    val cy = ry * cosP + rz * sinP
+                    val cz = -ry * sinP + rz * cosP
+                    val ez = (cameraDist + cz).finiteOr(cameraDist).coerceAtLeast(8f)
+                    return Triple(
+                        (centerX + (rx / ez) * effectiveFocal).finiteOr(centerX),
+                        (centerY - (cy / ez) * effectiveFocal).finiteOr(centerY),
+                        ez
+                    )
+                }
+
+                val bridgeFaces = ArrayList<BridgeDrawFace>(overlayBridges3D.size * 48)
+
+                fun addBridgeQuad(
+                    p0: Triple<Float, Float, Float>,
+                    p1: Triple<Float, Float, Float>,
+                    p2: Triple<Float, Float, Float>,
+                    p3: Triple<Float, Float, Float>,
+                    fill: Color,
+                    stroke: Color,
+                    strokeW: Float = 0.8f,
+                    depthBias: Float = 0f
+                ) {
+                    val avgD = ((p0.third + p1.third + p2.third + p3.third) * 0.25f + depthBias).finiteOr(1000f)
+                    bridgeFaces.add(
+                        BridgeDrawFace(
+                            pts = listOf(
+                                Offset(p0.first, p0.second),
+                                Offset(p1.first, p1.second),
+                                Offset(p2.first, p2.second),
+                                Offset(p3.first, p3.second)
+                            ),
+                            fillColor = fill,
+                            strokeColor = stroke,
+                            strokeWidth = strokeW,
+                            dist = avgD
+                        )
+                    )
+                }
+
+                fun addOrientedBoxFaces(
+                    cx: Float, cz: Float,
+                    yBot: Float, yTop: Float,
+                    nx: Float, nz: Float,
+                    tx: Float, tz: Float,
+                    halfW: Float, halfT: Float,
+                    sideColor: Color,
+                    topColor: Color,
+                    edgeColor: Color,
+                    strokeW: Float = 0.7f
+                ) {
+                    val safeY0 = yBot.finiteOr(0f)
+                    val safeY1 = max(safeY0 + 0.01f, yTop.finiteOr(safeY0 + 0.05f))
+                    val c0x = cx - nx * halfW - tx * halfT; val c0z = cz - nz * halfW - tz * halfT
+                    val c1x = cx + nx * halfW - tx * halfT; val c1z = cz + nz * halfW - tz * halfT
+                    val c2x = cx + nx * halfW + tx * halfT; val c2z = cz + nz * halfW + tz * halfT
+                    val c3x = cx - nx * halfW + tx * halfT; val c3z = cz - nz * halfW + tz * halfT
+
+                    val b0 = projectBridgePt(c0x, safeY0, c0z)
+                    val b1 = projectBridgePt(c1x, safeY0, c1z)
+                    val b2 = projectBridgePt(c2x, safeY0, c2z)
+                    val b3 = projectBridgePt(c3x, safeY0, c3z)
+                    val t0 = projectBridgePt(c0x, safeY1, c0z)
+                    val t1 = projectBridgePt(c1x, safeY1, c1z)
+                    val t2 = projectBridgePt(c2x, safeY1, c2z)
+                    val t3 = projectBridgePt(c3x, safeY1, c3z)
+
+                    addBridgeQuad(b0, b1, t1, t0, sideColor, edgeColor, strokeW)
+                    addBridgeQuad(b1, b2, t2, t1, sideColor, edgeColor, strokeW)
+                    addBridgeQuad(b2, b3, t3, t2, sideColor, edgeColor, strokeW)
+                    addBridgeQuad(b3, b0, t0, t3, sideColor, edgeColor, strokeW)
+                    addBridgeQuad(t0, t1, t2, t3, topColor, edgeColor, strokeW, depthBias = -0.02f)
+                }
+
+                for (bridge in overlayBridges3D) {
+                    val cl = bridge.centerlineXYZ
+                    if (cl.size < 2) continue
+
+                    val hw = bridge.halfWidthScene.finiteOr(0.15f).coerceAtLeast(0.06f)
+                    val girderD = bridge.girderDepthScene.finiteOr(0.08f).coerceAtLeast(0.02f)
+                    val slabT = bridge.deckThicknessScene.finiteOr(0.04f).coerceAtLeast(0.015f)
+                    val gCount = bridge.girderCount.coerceIn(2, 10)
+                    val parapetH = (slabT * 2.5f).coerceAtLeast(0.03f)
+
+                    val deckSurfaceColor = if (bridge.isSelected) Color(0xFF00ACC1) else Color(0xFF28303D)
+                    val fasciaColor = if (bridge.isSelected) Color(0xFF80F3FF) else Color(0xFF90A4AE)
+                    val steelGirderColor = if (bridge.isSelected) Color(0xFF4DD0E1) else Color(0xFF5D6D7E)
+                    val concreteColor = Color(0xFF78909C)
+                    val concreteDarkColor = Color(0xFF455A64)
+                    val bearingColor = Color(0xFF1C2630)
+                    val deckEdgeColor = if (bridge.isSelected) Color.White else Color(0xFFB0BEC5)
+
+                    // A. Grounded Footing Plinths, Structural Columns / Abutments, Wing Walls, Pier Caps & Pot Bearings
+                    for ((pIdx, pier) in bridge.piers.withIndex()) {
+                        val ptLen = hypot(pier.dirX, pier.dirZ).finiteOr(1f).coerceAtLeast(1e-4f)
+                        val tx = pier.dirX / ptLen
+                        val tz = pier.dirZ / ptLen
+                        val nx = -tz
+                        val nz = tx
+
+                        val isEndAbutment = (pIdx == 0 || pIdx == bridge.piers.lastIndex)
+                        val groundY = pier.groundY.finiteOr(0f)
+                        val seatY = pier.seatY.finiteOr(groundY + 0.1f)
+                        val spanHeight = (seatY - groundY).coerceAtLeast(0.08f)
+
+                        val baseEmbedY = min(groundY, seatY - 0.06f) - 0.03f
+                        val footTopY = min(seatY - 0.03f, groundY + (pier.capHalfThickScene * 0.9f).coerceAtMost(spanHeight * 0.22f))
+
+                        // Footing Plinth Box anchored into DEM terrain
+                        addOrientedBoxFaces(
+                            cx = pier.x, cz = pier.z,
+                            yBot = baseEmbedY, yTop = footTopY,
+                            nx = nx, nz = nz, tx = tx, tz = tz,
+                            halfW = pier.footingHalfWidthScene.coerceAtLeast(0.05f),
+                            halfT = (pier.capHalfThickScene * 1.25f).coerceAtLeast(0.04f),
+                            sideColor = concreteDarkColor,
+                            topColor = concreteColor,
+                            edgeColor = Color(0xFF101820)
+                        )
+
+                        val capH = (pier.capHalfThickScene * 0.78f).coerceIn(0.02f, (spanHeight * 0.28f).coerceAtLeast(0.02f))
+                        val bearingH = (slabT * 0.65f).coerceIn(0.015f, (spanHeight * 0.18f).coerceAtLeast(0.015f))
+                        val capBotY = (seatY - bearingH - capH).coerceAtLeast(footTopY)
+
+                        if (isEndAbutment) {
+                            // Solid concrete abutment stem wall + 35° splayed approach wing walls
+                            addOrientedBoxFaces(
+                                cx = pier.x, cz = pier.z,
+                                yBot = footTopY, yTop = seatY - bearingH,
+                                nx = nx, nz = nz, tx = tx, tz = tz,
+                                halfW = pier.capHalfWidthScene * 0.96f,
+                                halfT = pier.capHalfThickScene * 0.85f,
+                                sideColor = Color(0xFF607D8B),
+                                topColor = Color(0xFF90A4AE),
+                                edgeColor = Color(0xFF00E5FF)
+                            )
+                            val signOut = if (pIdx == 0) -1f else 1f
+                            val wingCos = 0.819f
+                            val wingSin = 0.574f
+                            val wingLen = (pier.capHalfWidthScene * 1.15f).coerceAtLeast(0.12f)
+                            val wingTopY = seatY + girderD + slabT
+                            for (side in intArrayOf(-1, 1)) {
+                                val wallAnchorX = pier.x + nx * (pier.capHalfWidthScene * 0.92f * side)
+                                val wallAnchorZ = pier.z + nz * (pier.capHalfWidthScene * 0.92f * side)
+                                val dirWingX = tx * signOut * wingCos + nx * (wingSin * side)
+                                val dirWingZ = tz * signOut * wingCos + nz * (wingSin * side)
+                                val wingEndX = wallAnchorX + dirWingX * wingLen
+                                val wingEndZ = wallAnchorZ + dirWingZ * wingLen
+                                val wb0 = projectBridgePt(wallAnchorX, footTopY, wallAnchorZ)
+                                val wb1 = projectBridgePt(wingEndX, groundY, wingEndZ)
+                                val wt1 = projectBridgePt(wingEndX, groundY + (wingTopY - footTopY) * 0.45f, wingEndZ)
+                                val wt0 = projectBridgePt(wallAnchorX, wingTopY, wallAnchorZ)
+                                addBridgeQuad(wb0, wb1, wt1, wt0, Color(0xFF546E7A), Color(0xFF00E5FF), 1.1f)
+                            }
+                        } else {
+                            // Structural cylindrical/faceted columns reaching cleanly from footing to pier cap
+                            val colCount = pier.colCount.coerceIn(1, 4)
+                            val colR = pier.colRadiusScene.coerceAtLeast(0.025f)
+                            if (capBotY > footTopY + 0.01f) {
+                                for (c in 0 until colCount) {
+                                    val cFrac = if (colCount == 1) 0f else (c.toFloat() / (colCount - 1)) * 2f - 1f
+                                    val colCx = pier.x + nx * (hw * 0.56f * cFrac)
+                                    val colCz = pier.z + nz * (hw * 0.56f * cFrac)
+                                    addOrientedBoxFaces(
+                                        cx = colCx, cz = colCz,
+                                        yBot = footTopY, yTop = capBotY,
+                                        nx = nx, nz = nz, tx = tx, tz = tz,
+                                        halfW = colR, halfT = colR,
+                                        sideColor = Color(0xFF8D9DA8),
+                                        topColor = Color(0xFFB0BEC5),
+                                        edgeColor = Color(0xFF00E5FF).copy(alpha = 0.65f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Hammerhead Pier Cap Crossbeam
+                        addOrientedBoxFaces(
+                            cx = pier.x, cz = pier.z,
+                            yBot = capBotY, yTop = seatY - bearingH,
+                            nx = nx, nz = nz, tx = tx, tz = tz,
+                            halfW = pier.capHalfWidthScene.coerceAtLeast(hw * 0.9f),
+                            halfT = pier.capHalfThickScene.coerceAtLeast(0.03f),
+                            sideColor = Color(0xFF90A4AE),
+                            topColor = Color(0xFFCFD8DC),
+                            edgeColor = Color(0xFF263238)
+                        )
+
+                        // Steel Pot Bearings beneath each Longitudinal Girder Line
+                        for (g in 1..gCount) {
+                            val gFrac = (g.toFloat() / (gCount + 1)) * 2f - 1f
+                            val bOff = hw * 0.84f * gFrac
+                            val padHalf = (hw * 0.10f).coerceAtLeast(0.02f)
+                            addOrientedBoxFaces(
+                                cx = pier.x + nx * bOff, cz = pier.z + nz * bOff,
+                                yBot = seatY - bearingH, yTop = seatY,
+                                nx = nx, nz = nz, tx = tx, tz = tz,
+                                halfW = padHalf, halfT = padHalf,
+                                sideColor = bearingColor,
+                                topColor = Color(0xFF455A64),
+                                edgeColor = Color(0xFF00E5FF)
+                            )
+                        }
+                    }
+
+                    // B. Longitudinal Steel I-Girders, Cross-Diaphragms, Composite Slab Deck & Steel Parapet Rails
+                    for (s in 0 until cl.size - 1) {
+                        val a = cl[s]
+                        val b = cl[s + 1]
+                        val dx = b.first - a.first
+                        val dz = b.third - a.third
+                        val segLen = hypot(dx, dz).finiteOr(1f).coerceAtLeast(1e-4f)
+                        val tx = dx / segLen
+                        val tz = dz / segLen
+                        val nx = -tz
+                        val nz = tx
+
+                        val topA = a.second.finiteOr(0f)
+                        val topB = b.second.finiteOr(0f)
+                        val soffitA = topA - slabT
+                        val soffitB = topB - slabT
+                        val girderBotA = soffitA - girderD
+                        val girderBotB = soffitB - girderD
+
+                        // 1. Underside Longitudinal Steel I-Girder Webs (shaded rusty weathering-steel / slate metallic)
+                        for (g in 1..gCount) {
+                            val gFrac = (g.toFloat() / (gCount + 1)) * 2f - 1f
+                            val lat = hw * 0.84f * gFrac
+                            val gtA = projectBridgePt(a.first + nx * lat, soffitA, a.third + nz * lat)
+                            val gbA = projectBridgePt(a.first + nx * lat, girderBotA, a.third + nz * lat)
+                            val gbB = projectBridgePt(b.first + nx * lat, girderBotB, b.third + nz * lat)
+                            val gtB = projectBridgePt(b.first + nx * lat, soffitB, b.third + nz * lat)
+                            addBridgeQuad(
+                                gtA, gbA, gbB, gtB,
+                                fill = steelGirderColor,
+                                stroke = Color(0xFF263238),
+                                strokeW = 1.0f,
+                                depthBias = 0.04f
+                            )
+                        }
+
+                        // 2. Transverse Steel Cross-Diaphragm Bracing between outer girders
+                        if (s % 2 == 0) {
+                            val outLat = hw * 0.84f
+                            val dLA = projectBridgePt(a.first - nx * outLat, soffitA - girderD * 0.15f, a.third - nz * outLat)
+                            val dLB = projectBridgePt(a.first - nx * outLat, girderBotA + girderD * 0.15f, a.third - nz * outLat)
+                            val dRB = projectBridgePt(a.first + nx * outLat, girderBotA + girderD * 0.15f, a.third + nz * outLat)
+                            val dRA = projectBridgePt(a.first + nx * outLat, soffitA - girderD * 0.15f, a.third + nz * outLat)
+                            addBridgeQuad(
+                                dLA, dLB, dRB, dRA,
+                                fill = Color(0xFF455A64).copy(alpha = 0.90f),
+                                stroke = Color(0xFF90A4AE),
+                                strokeW = 0.8f,
+                                depthBias = 0.03f
+                            )
+                        }
+
+                        // 3. Concrete Deck Fascia Side Walls + Asphalt Top Roadway Deck
+                        val alTop = projectBridgePt(a.first - nx * hw, topA, a.third - nz * hw)
+                        val arTop = projectBridgePt(a.first + nx * hw, topA, a.third + nz * hw)
+                        val brTop = projectBridgePt(b.first + nx * hw, topB, b.third + nz * hw)
+                        val blTop = projectBridgePt(b.first - nx * hw, topB, b.third - nz * hw)
+
+                        val alSoff = projectBridgePt(a.first - nx * hw, soffitA, a.third - nz * hw)
+                        val arSoff = projectBridgePt(a.first + nx * hw, soffitA, a.third + nz * hw)
+                        val brSoff = projectBridgePt(b.first + nx * hw, soffitB, b.third + nz * hw)
+                        val blSoff = projectBridgePt(b.first - nx * hw, soffitB, b.third - nz * hw)
+
+                        addBridgeQuad(alTop, alSoff, blSoff, blTop, fasciaColor, Color(0xFF263238), 0.7f, depthBias = 0.01f)
+                        addBridgeQuad(arTop, brTop, brSoff, arSoff, fasciaColor, Color(0xFF263238), 0.7f, depthBias = 0.01f)
+
+                        // Asphalt roadway deck surface
+                        addBridgeQuad(
+                            alTop, arTop, brTop, blTop,
+                            fill = deckSurfaceColor,
+                            stroke = deckEdgeColor,
+                            strokeW = if (bridge.isSelected) 1.5f else 0.9f,
+                            depthBias = -0.04f
+                        )
+
+                        // 4. Brushed-Steel Guardrail / Parapet Rails along left & right edges
+                        val alPar = projectBridgePt(a.first - nx * hw, topA + parapetH, a.third - nz * hw)
+                        val arPar = projectBridgePt(a.first + nx * hw, topA + parapetH, a.third + nz * hw)
+                        val brPar = projectBridgePt(b.first + nx * hw, topB + parapetH, b.third + nz * hw)
+                        val blPar = projectBridgePt(b.first - nx * hw, topB + parapetH, b.third - nz * hw)
+                        addBridgeQuad(
+                            alPar, blPar, blTop, alTop,
+                            fill = Color(0xFFB0BEC5).copy(alpha = 0.78f),
+                            stroke = Color(0xFFECEFF1),
+                            strokeW = 1.1f,
+                            depthBias = -0.05f
+                        )
+                        addBridgeQuad(
+                            arPar, arTop, brTop, brPar,
+                            fill = Color(0xFFB0BEC5).copy(alpha = 0.78f),
+                            stroke = Color(0xFFECEFF1),
+                            strokeW = 1.1f,
+                            depthBias = -0.05f
+                        )
+
+                        // Centerline highway stripe on deck
+                        if (s % 2 == 0) {
+                            val clMidA = projectBridgePt(a.first, topA + 0.004f, a.third)
+                            val clMidB = projectBridgePt(b.first, topB + 0.004f, b.third)
+                            bridgeFaces.add(
+                                BridgeDrawFace(
+                                    pts = listOf(Offset(clMidA.first, clMidA.second), Offset(clMidB.first, clMidB.second)),
+                                    fillColor = Color(0xFFFFD54F),
+                                    strokeColor = Color(0xFFFFD54F),
+                                    strokeWidth = 1.6f,
+                                    dist = ((clMidA.third + clMidB.third) * 0.5f - 0.06f).finiteOr(1000f),
+                                    isLineOnly = true
+                                )
+                            )
+                        }
+                    }
+
+                    // C. Steel Expansion Joint Detents across deck at abutments and pier joints
+                    for (expFrac in bridge.expansionFractions) {
+                        val idxF = (expFrac.coerceIn(0f, 1f) * (cl.size - 1))
+                        val i0 = floor(idxF).toInt().coerceIn(0, cl.size - 2)
+                        val i1 = (i0 + 1).coerceAtMost(cl.size - 1)
+                        val u = (idxF - i0).coerceIn(0f, 1f)
+                        val pa = cl[i0]
+                        val pb = cl[i1]
+                        val px = pa.first + (pb.first - pa.first) * u
+                        val py = pa.second + (pb.second - pa.second) * u
+                        val pz = pa.third + (pb.third - pa.third) * u
+                        val dx = pb.first - pa.first
+                        val dz = pb.third - pa.third
+                        val dLen = hypot(dx, dz).finiteOr(1f).coerceAtLeast(1e-4f)
+                        val nx = -dz / dLen
+                        val nz = dx / dLen
+                        val jL = projectBridgePt(px - nx * hw, py + 0.008f, pz - nz * hw)
+                        val jR = projectBridgePt(px + nx * hw, py + 0.008f, pz + nz * hw)
+                        bridgeFaces.add(
+                            BridgeDrawFace(
+                                pts = listOf(Offset(jL.first, jL.second), Offset(jR.first, jR.second)),
+                                fillColor = Color(0xFF141C24),
+                                strokeColor = Color(0xFF00E5FF),
+                                strokeWidth = 2.4f,
+                                dist = ((jL.third + jR.third) * 0.5f - 0.08f).finiteOr(1000f),
+                                isLineOnly = true
+                            )
+                        )
+                    }
+                }
+
+                // Painter's Algorithm sort from farthest to nearest
+                bridgeFaces.sortByDescending { it.dist }
+                val brPath = Path()
+                for (bf in bridgeFaces) {
+                    if (bf.pts.any { !it.x.isFinite() || !it.y.isFinite() }) continue
+                    if (bf.isLineOnly && bf.pts.size >= 2) {
+                        drawLine(
+                            color = bf.strokeColor,
+                            start = bf.pts[0],
+                            end = bf.pts[1],
+                            strokeWidth = bf.strokeWidth,
+                            cap = androidx.compose.ui.graphics.StrokeCap.Butt
+                        )
+                    } else if (bf.pts.size >= 3) {
+                        brPath.reset()
+                        brPath.moveTo(bf.pts[0].x, bf.pts[0].y)
+                        for (pi in 1 until bf.pts.size) {
+                            brPath.lineTo(bf.pts[pi].x, bf.pts[pi].y)
+                        }
+                        brPath.close()
+                        drawPath(brPath, color = bf.fillColor)
+                        drawPath(brPath, color = bf.strokeColor, style = Stroke(width = bf.strokeWidth))
+                    }
+                }
+            }
+
+            // 7. Render Depth-Sorted 3D Extruded Building Volumes, Roofs, Windows, Fences & Gates
             if (overlayBuildings3D.isNotEmpty()) {
                 data class BuildingDrawFace(
                     val pts: List<Offset>,
                     val fillColor: Color,
                     val strokeColor: Color,
                     val strokeWidth: Float,
-                    val dist: Float
+                    val dist: Float,
+                    val isLineOnly: Boolean = false
                 )
 
                 fun project3D(wx: Float, wy: Float, wz: Float): Triple<Float, Float, Float> {
@@ -1055,38 +1449,84 @@ fun Terrain3DCanvas(
                     )
                 }
 
-                val bldgFaces = ArrayList<BuildingDrawFace>(overlayBuildings3D.size * 5)
+                fun wallToneFor(wallType: String, isSelected: Boolean): Color {
+                    if (isSelected) return Color(0xFF00E5FF).copy(alpha = 0.92f)
+                    return when (wallType) {
+                        "CORRUGATED_IRON_CLADDING" -> Color(0xFF8FA1AD).copy(alpha = 0.92f)
+                        "DRESSED_MASONRY_STONE" -> Color(0xFFC79F74).copy(alpha = 0.92f)
+                        "PRECAST_INDUSTRIAL_PANEL" -> Color(0xFFA7B3BE).copy(alpha = 0.92f)
+                        "TIMBER_PLANK" -> Color(0xFF9C6338).copy(alpha = 0.92f)
+                        "BRICK_MASONRY" -> Color(0xFFBC5A3A).copy(alpha = 0.92f)
+                        else -> Color(0xFFD6C8B8).copy(alpha = 0.92f) // CONCRETE_BLOCK_PLASTER
+                    }
+                }
+
+                fun roofToneFor(roofMaterial: String, isSelected: Boolean): Color {
+                    if (isSelected) return Color(0xFF80F3FF)
+                    return when (roofMaterial) {
+                        "STONE_COATED_TILE" -> Color(0xFF455A64)
+                        "REINFORCED_CONCRETE" -> Color(0xFFB0BEC5)
+                        "GALVANIZED_TRUSS_SHEET" -> Color(0xFF78909C)
+                        "CLAY_TILE" -> Color(0xFFD96932)
+                        "THATCH_MAASAI" -> Color(0xFFC59B43)
+                        else -> Color(0xFFC8583C) // CORRUGATED_IRON_MABATI
+                    }
+                }
+
+                fun windowToneFor(windowType: String): Color = when (windowType) {
+                    "CURTAIN_WALL" -> Color(0xFF64B5F6).copy(alpha = 0.92f)
+                    "INDUSTRIAL_CLERESTORY" -> Color(0xFF80DEEA).copy(alpha = 0.88f)
+                    "STEEL_CASEMENT" -> Color(0xFF2B4150).copy(alpha = 0.90f)
+                    "LOUVERED_VENT" -> Color(0xFF455A64).copy(alpha = 0.88f)
+                    "NARROW_SLIT" -> Color(0xFF1F2D38).copy(alpha = 0.90f)
+                    else -> Color(0xFF4FC3F7).copy(alpha = 0.88f) // SLIDING_ALUMINUM
+                }
+
+                fun fenceToneFor(fenceType: String, isSelected: Boolean): Color {
+                    if (isSelected) return Color(0xFF69F0AE).copy(alpha = 0.92f)
+                    return when (fenceType) {
+                        "MASONRY_BLOCK_WALL" -> Color(0xFFBFB09A).copy(alpha = 0.90f)
+                        "PALISADE_SECURITY_STEEL" -> Color(0xFF546E7A).copy(alpha = 0.90f)
+                        "TIMBER_POST_RAIL" -> Color(0xFF8D6E63).copy(alpha = 0.90f)
+                        "LIVE_THORN_HEDGE" -> Color(0xFF4D7C3E).copy(alpha = 0.90f)
+                        else -> Color(0xFF78909C).copy(alpha = 0.72f) // CHAIN_LINK_POSTS
+                    }
+                }
+
+                val bldgFaces = ArrayList<BuildingDrawFace>(overlayBuildings3D.size * 10)
                 for (bldg in overlayBuildings3D) {
                     val corners = bldg.baseCornersXZ
                     if (corners.size < 3) continue
                     val safeBaseY = bldg.baseY.finiteOr(0f)
                     val safeRoofY = bldg.roofY.finiteOr(safeBaseY + 3f)
+                    val wallH = (safeRoofY - safeBaseY).coerceAtLeast(0.4f)
                     val n = corners.size
                     val baseProj = ArrayList<Triple<Float, Float, Float>>(n)
                     val roofProj = ArrayList<Triple<Float, Float, Float>>(n)
                     var invalidCorner = false
+                    var minBx = Float.MAX_VALUE; var maxBx = -Float.MAX_VALUE
+                    var minBz = Float.MAX_VALUE; var maxBz = -Float.MAX_VALUE
+                    var sumBx = 0f; var sumBz = 0f
                     for ((bx, bz) in corners) {
                         if (!bx.isFinite() || !bz.isFinite()) {
                             invalidCorner = true
                             break
                         }
+                        if (bx < minBx) minBx = bx; if (bx > maxBx) maxBx = bx
+                        if (bz < minBz) minBz = bz; if (bz > maxBz) maxBz = bz
+                        sumBx += bx; sumBz += bz
                         baseProj.add(project3D(bx, safeBaseY, bz))
                         roofProj.add(project3D(bx, safeRoofY, bz))
                     }
                     if (invalidCorner || baseProj.size < 3 || roofProj.size < 3) continue
+                    val bCx = sumBx / n
+                    val bCz = sumBz / n
 
-                    val wallColor = if (bldg.isSelected) {
-                        Color(0xFF00E5FF).copy(alpha = 0.90f)
-                    } else {
-                        Color(0xFFD97736).copy(alpha = 0.88f)
-                    }
-                    val roofColor = if (bldg.isSelected) {
-                        Color(0xFF80F3FF)
-                    } else {
-                        Color(0xFFFFB74D)
-                    }
-                    val edgeColor = if (bldg.isSelected) Color.White else Color(0xFF2B1B12)
-                    val edgeWidth = if (bldg.isSelected) 2.0f else 1.0f
+                    val wallColor = wallToneFor(bldg.wallType, bldg.isSelected)
+                    val roofColor = roofToneFor(bldg.roofMaterial, bldg.isSelected)
+                    val winColor = windowToneFor(bldg.windowType)
+                    val edgeColor = if (bldg.isSelected) Color.White else Color(0xFF231812)
+                    val edgeWidth = if (bldg.isSelected) 2.0f else 0.95f
 
                     val minRoofX = roofProj.minOf { it.first }
                     val maxRoofX = roofProj.maxOf { it.first }
@@ -1101,7 +1541,6 @@ fun Terrain3DCanvas(
                         val by = baseProj.map { it.second }.average().toFloat().finiteOr(cy + 4f)
                         val halfW = if (bldg.isSelected) 4.2f else 2.8f
                         val hH = max(3.6f, by - cy).finiteOr(3.6f)
-                        // Visible extruded front wall
                         bldgFaces.add(
                             BuildingDrawFace(
                                 pts = listOf(
@@ -1116,15 +1555,23 @@ fun Terrain3DCanvas(
                                 dist = avgBaseDist
                             )
                         )
-                        // Visible roof cap
+                        val roofTopPts = if (bldg.roofType == "GABLED" || bldg.roofType == "HIPPED" || bldg.roofType == "CONICAL_DOME") {
+                            listOf(
+                                Offset(cx - halfW, cy),
+                                Offset(cx + halfW, cy),
+                                Offset(cx, cy - 3.0f)
+                            )
+                        } else {
+                            listOf(
+                                Offset(cx - halfW, cy),
+                                Offset(cx + halfW, cy),
+                                Offset(cx + halfW * 0.7f, cy - 2.2f),
+                                Offset(cx - halfW * 1.1f, cy - 2.2f)
+                            )
+                        }
                         bldgFaces.add(
                             BuildingDrawFace(
-                                pts = listOf(
-                                    Offset(cx - halfW, cy),
-                                    Offset(cx + halfW, cy),
-                                    Offset(cx + halfW * 0.7f, cy - 2.2f),
-                                    Offset(cx - halfW * 1.1f, cy - 2.2f)
-                                ),
+                                pts = roofTopPts,
                                 fillColor = roofColor,
                                 strokeColor = edgeColor,
                                 strokeWidth = 0.9f,
@@ -1134,12 +1581,29 @@ fun Terrain3DCanvas(
                         continue
                     }
 
+                    // 7a. Extruded Facade Walls + Floor-Tier Window Glazing Bays
+                    val floors = bldg.levels.coerceIn(1, 14)
+                    val floorH = wallH / floors
                     for (k in 0 until n) {
                         val next = (k + 1) % n
                         val p0 = baseProj[k]
                         val p1 = baseProj[next]
                         val p2 = roofProj[next]
                         val p3 = roofProj[k]
+                        val (bx0, bz0) = corners[k]
+                        val (bx1, bz1) = corners[next]
+                        val ex = bx1 - bx0
+                        val ez = bz1 - bz0
+                        val edgeLenWorld = hypot(ex, ez).coerceAtLeast(1e-4f)
+                        val enx = ez / edgeLenWorld
+                        val enz = -ex / edgeLenWorld
+                        val sunShade = (0.86f + 0.14f * (enx * 0.6f + enz * 0.8f)).coerceIn(0.70f, 1.06f)
+                        val shadedWall = Color(
+                            red = (wallColor.red * sunShade).coerceIn(0f, 1f),
+                            green = (wallColor.green * sunShade).coerceIn(0f, 1f),
+                            blue = (wallColor.blue * sunShade).coerceIn(0f, 1f),
+                            alpha = wallColor.alpha
+                        )
                         val dist = ((p0.third + p1.third + p2.third + p3.third) * 0.25f).finiteOr(1000f)
                         bldgFaces.add(
                             BuildingDrawFace(
@@ -1149,35 +1613,331 @@ fun Terrain3DCanvas(
                                     Offset(p2.first, p2.second),
                                     Offset(p3.first, p3.second)
                                 ),
-                                fillColor = wallColor,
+                                fillColor = shadedWall,
                                 strokeColor = edgeColor,
                                 strokeWidth = edgeWidth,
                                 dist = dist
                             )
                         )
+
+                        // Floor-tier window quads when wall edge projects visibly on screen
+                        val screenEdgeLen = hypot(p1.first - p0.first, p1.second - p0.second)
+                        val screenWallH = hypot(p3.first - p0.first, p3.second - p0.second)
+                        if (screenEdgeLen >= 13f && screenWallH >= 6f && bldg.windowToWallRatio > 0.04f) {
+                            val bays = (screenEdgeLen / 11f).toInt().coerceIn(1, 5)
+                            val winFrac = (bldg.windowToWallRatio * 2.1f).coerceIn(0.28f, 0.72f)
+                            val bayHalf = (0.5f / bays) * winFrac
+                            val winOffWorld = (edgeLenWorld * 0.015f).coerceIn(0.02f, 0.14f)
+                            for (fl in 0 until floors) {
+                                val wyBot = safeBaseY + fl * floorH + floorH * 0.28f
+                                val wyTop = safeBaseY + fl * floorH + floorH * 0.78f
+                                for (bay in 0 until bays) {
+                                    val tc = (bay + 0.5f) / bays
+                                    val tA = (tc - bayHalf).coerceAtLeast(0.06f)
+                                    val tB = (tc + bayHalf).coerceAtMost(0.94f)
+                                    val w0 = project3D(bx0 + ex * tA + enx * winOffWorld, wyBot, bz0 + ez * tA + enz * winOffWorld)
+                                    val w1 = project3D(bx0 + ex * tB + enx * winOffWorld, wyBot, bz0 + ez * tB + enz * winOffWorld)
+                                    val w2 = project3D(bx0 + ex * tB + enx * winOffWorld, wyTop, bz0 + ez * tB + enz * winOffWorld)
+                                    val w3 = project3D(bx0 + ex * tA + enx * winOffWorld, wyTop, bz0 + ez * tA + enz * winOffWorld)
+                                    val wDist = ((w0.third + w1.third + w2.third + w3.third) * 0.25f - 0.03f).finiteOr(dist)
+                                    bldgFaces.add(
+                                        BuildingDrawFace(
+                                            pts = listOf(
+                                                Offset(w0.first, w0.second),
+                                                Offset(w1.first, w1.second),
+                                                Offset(w2.first, w2.second),
+                                                Offset(w3.first, w3.second)
+                                            ),
+                                            fillColor = winColor,
+                                            strokeColor = Color(0xFF102027),
+                                            strokeWidth = 0.65f,
+                                            dist = wDist
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    var roofDistSum = 0f
-                    val roofPts = ArrayList<Offset>(n)
-                    for (rp in roofProj) {
-                        roofPts.add(Offset(rp.first, rp.second))
-                        roofDistSum += rp.third
+                    // 7b. Architectural Roof Volume Geometry matching BuildingSystem.cpp RoofType
+                    val spanX = (maxBx - minBx).coerceAtLeast(0.05f)
+                    val spanZ = (maxBz - minBz).coerceAtLeast(0.05f)
+                    val pitchRad = (bldg.roofPitchDeg.coerceIn(3f, 42f) * (PI / 180.0)).toFloat()
+                    val rawRise = (min(spanX, spanZ) * 0.45f * tan(pitchRad))
+                        .coerceIn(wallH * 0.16f, wallH * 0.72f)
+                    val apex = project3D(bCx, safeRoofY + rawRise, bCz)
+
+                    when (bldg.roofType) {
+                        "CONICAL_DOME" -> {
+                            for (k in 0 until n) {
+                                val next = (k + 1) % n
+                                val r0 = roofProj[k]
+                                val r1 = roofProj[next]
+                                val shade = if (k % 2 == 0) 1.0f else 0.88f
+                                bldgFaces.add(
+                                    BuildingDrawFace(
+                                        pts = listOf(Offset(r0.first, r0.second), Offset(r1.first, r1.second), Offset(apex.first, apex.second)),
+                                        fillColor = Color(roofColor.red * shade, roofColor.green * shade, roofColor.blue * shade, roofColor.alpha),
+                                        strokeColor = edgeColor,
+                                        strokeWidth = edgeWidth,
+                                        dist = ((r0.third + r1.third + apex.third) / 3f - 0.05f).finiteOr(1000f)
+                                    )
+                                )
+                            }
+                        }
+                        "GABLED", "HIPPED", "ARCHED_TRUSS" -> {
+                            val longIsX = spanX >= spanZ
+                            val ridgeInset = if (bldg.roofType == "HIPPED") 0.30f else 0.06f
+                            val rA = if (longIsX) {
+                                project3D(minBx + spanX * ridgeInset, safeRoofY + rawRise, bCz)
+                            } else {
+                                project3D(bCx, safeRoofY + rawRise, minBz + spanZ * ridgeInset)
+                            }
+                            val rB = if (longIsX) {
+                                project3D(maxBx - spanX * ridgeInset, safeRoofY + rawRise, bCz)
+                            } else {
+                                project3D(bCx, safeRoofY + rawRise, maxBz - spanZ * ridgeInset)
+                            }
+                            for (k in 0 until n) {
+                                val next = (k + 1) % n
+                                val (bx0, bz0) = corners[k]
+                                val (bx1, bz1) = corners[next]
+                                val mx = (bx0 + bx1) * 0.5f
+                                val mz = (bz0 + bz1) * 0.5f
+                                val useA = if (longIsX) mx < bCx else mz < bCz
+                                val r0 = roofProj[k]
+                                val r1 = roofProj[next]
+                                // Side slopes join to ridge segment [rA, rB]; end gables connect to rA or rB
+                                val rStart = if (longIsX) {
+                                    if (abs(bx0 - bx1) > spanX * 0.35f) (if (bx0 < bCx) rA else rB) else (if (useA) rA else rB)
+                                } else {
+                                    if (abs(bz0 - bz1) > spanZ * 0.35f) (if (bz0 < bCz) rA else rB) else (if (useA) rA else rB)
+                                }
+                                val rEnd = if (longIsX) {
+                                    if (abs(bx0 - bx1) > spanX * 0.35f) (if (bx1 < bCx) rA else rB) else (if (useA) rA else rB)
+                                } else {
+                                    if (abs(bz0 - bz1) > spanZ * 0.35f) (if (bz1 < bCz) rA else rB) else (if (useA) rA else rB)
+                                }
+                                val slopeShade = if (k % 2 == 0) 0.96f else 0.85f
+                                val ptsPoly = if (rStart == rEnd) {
+                                    listOf(Offset(r0.first, r0.second), Offset(r1.first, r1.second), Offset(rStart.first, rStart.second))
+                                } else {
+                                    listOf(Offset(r0.first, r0.second), Offset(r1.first, r1.second), Offset(rEnd.first, rEnd.second), Offset(rStart.first, rStart.second))
+                                }
+                                val distAvg = ((r0.third + r1.third + rStart.third + rEnd.third) * 0.25f - 0.05f).finiteOr(1000f)
+                                bldgFaces.add(
+                                    BuildingDrawFace(
+                                        pts = ptsPoly,
+                                        fillColor = Color(roofColor.red * slopeShade, roofColor.green * slopeShade, roofColor.blue * slopeShade, roofColor.alpha),
+                                        strokeColor = edgeColor,
+                                        strokeWidth = edgeWidth,
+                                        dist = distAvg
+                                    )
+                                )
+                            }
+                        }
+                        "SAW_TOOTH_INDUSTRIAL" -> {
+                            // Draw base roof deck plus 2 raised saw-tooth clerestory bays
+                            val bays = 2
+                            val bayW = spanX / bays
+                            for (bIdx in 0 until bays) {
+                                val x0 = minBx + bIdx * bayW
+                                val x1 = x0 + bayW
+                                val peakX = x0 + bayW * 0.22f
+                                val s0 = project3D(x0, safeRoofY, minBz)
+                                val s1 = project3D(peakX, safeRoofY + rawRise, minBz)
+                                val s2 = project3D(peakX, safeRoofY + rawRise, maxBz)
+                                val s3 = project3D(x0, safeRoofY, maxBz)
+                                val e1 = project3D(x1, safeRoofY, minBz)
+                                val e2 = project3D(x1, safeRoofY, maxBz)
+                                bldgFaces.add(
+                                    BuildingDrawFace(
+                                        pts = listOf(Offset(s0.first, s0.second), Offset(s1.first, s1.second), Offset(s2.first, s2.second), Offset(s3.first, s3.second)),
+                                        fillColor = winColor,
+                                        strokeColor = edgeColor,
+                                        strokeWidth = edgeWidth,
+                                        dist = ((s0.third + s1.third + s2.third + s3.third) * 0.25f - 0.04f).finiteOr(1000f)
+                                    )
+                                )
+                                bldgFaces.add(
+                                    BuildingDrawFace(
+                                        pts = listOf(Offset(s1.first, s1.second), Offset(e1.first, e1.second), Offset(e2.first, e2.second), Offset(s2.first, s2.second)),
+                                        fillColor = roofColor,
+                                        strokeColor = edgeColor,
+                                        strokeWidth = edgeWidth,
+                                        dist = ((s1.third + e1.third + e2.third + s2.third) * 0.25f - 0.05f).finiteOr(1000f)
+                                    )
+                                )
+                            }
+                        }
+                        "MONO_PITCH_SHED" -> {
+                            val monoProj = corners.map { (bx, bz) ->
+                                val tTilt = ((bx - minBx) / spanX).coerceIn(0f, 1f)
+                                project3D(bx, safeRoofY + rawRise * tTilt, bz)
+                            }
+                            for (k in 0 until n) {
+                                val next = (k + 1) % n
+                                val r0 = roofProj[k]; val r1 = roofProj[next]
+                                val m1 = monoProj[next]; val m0 = monoProj[k]
+                                bldgFaces.add(
+                                    BuildingDrawFace(
+                                        pts = listOf(Offset(r0.first, r0.second), Offset(r1.first, r1.second), Offset(m1.first, m1.second), Offset(m0.first, m0.second)),
+                                        fillColor = wallColor,
+                                        strokeColor = edgeColor,
+                                        strokeWidth = edgeWidth,
+                                        dist = ((r0.third + r1.third + m1.third + m0.third) * 0.25f - 0.03f).finiteOr(1000f)
+                                    )
+                                )
+                            }
+                            val mPts = monoProj.map { Offset(it.first, it.second) }
+                            val mDist = (monoProj.map { it.third }.average().toFloat() - 0.06f).finiteOr(1000f)
+                            bldgFaces.add(BuildingDrawFace(mPts, roofColor, edgeColor, edgeWidth, mDist))
+                        }
+                        else -> {
+                            // FLAT_PARAPET
+                            var roofDistSum = 0f
+                            val roofPts = ArrayList<Offset>(n)
+                            for (rp in roofProj) {
+                                roofPts.add(Offset(rp.first, rp.second))
+                                roofDistSum += rp.third
+                            }
+                            bldgFaces.add(
+                                BuildingDrawFace(
+                                    pts = roofPts,
+                                    fillColor = roofColor,
+                                    strokeColor = edgeColor,
+                                    strokeWidth = if (bldg.isSelected) 2.2f else 1.4f,
+                                    dist = ((roofDistSum / n) - 0.05f).finiteOr(1000f)
+                                )
+                            )
+                        }
                     }
-                    bldgFaces.add(
-                        BuildingDrawFace(
-                            pts = roofPts,
-                            fillColor = roofColor,
-                            strokeColor = edgeColor,
-                            strokeWidth = edgeWidth,
-                            dist = ((roofDistSum / n) - 0.05f).finiteOr(1000f)
+
+                    // 7c. Road-Collision-Free Perimeter Fence Geometry (leaving gate bay open)
+                    if (bldg.hasFence && bldg.fenceCornersXZ.size >= 3 && bldg.fenceHeightSceneY > 0.05f) {
+                        val fc = bldg.fenceCornersXZ
+                        val nf = fc.size
+                        val fH = bldg.fenceHeightSceneY
+                        val fColor = fenceToneFor(bldg.fenceType, bldg.isSelected)
+                        val fEdgeColor = if (bldg.isSelected) Color.White else Color(0xFF1A242B)
+                        val gx = bldg.gatePosXZ?.first ?: Float.NaN
+                        val gz = bldg.gatePosXZ?.second ?: Float.NaN
+                        val gateHalfSq = (max(0.16f, bldg.gateWidthScene * 0.52f)).let { it * it }
+                        val fBaseProj = fc.map { (fx, fz) -> project3D(fx, safeBaseY, fz) }
+                        val fTopProj = fc.map { (fx, fz) -> project3D(fx, safeBaseY + fH, fz) }
+                        for (k in 0 until nf) {
+                            val next = (k + 1) % nf
+                            val (fx0, fz0) = fc[k]
+                            val (fx1, fz1) = fc[next]
+                            val mx = (fx0 + fx1) * 0.5f
+                            val mz = (fz0 + fz1) * 0.5f
+                            if (bldg.hasGate && gx.isFinite() && gz.isFinite()) {
+                                val dxG = mx - gx
+                                val dzG = mz - gz
+                                if (dxG * dxG + dzG * dzG < gateHalfSq) continue
+                            }
+                            val p0 = fBaseProj[k]
+                            val p1 = fBaseProj[next]
+                            val p2 = fTopProj[next]
+                            val p3 = fTopProj[k]
+                            val dist = ((p0.third + p1.third + p2.third + p3.third) * 0.25f).finiteOr(1000f)
+                            bldgFaces.add(
+                                BuildingDrawFace(
+                                    pts = listOf(
+                                        Offset(p0.first, p0.second),
+                                        Offset(p1.first, p1.second),
+                                        Offset(p2.first, p2.second),
+                                        Offset(p3.first, p3.second)
+                                    ),
+                                    fillColor = fColor,
+                                    strokeColor = fEdgeColor,
+                                    strokeWidth = 0.85f,
+                                    dist = dist
+                                )
+                            )
+                        }
+                    }
+
+                    // 7d. Road-Facing Gate Pillars & Leaf / Security Boom
+                    if (bldg.hasGate && bldg.gatePosXZ != null) {
+                        val (gx, gz) = bldg.gatePosXZ
+                        val hw = (bldg.gateWidthScene * 0.5f).coerceAtLeast(0.10f)
+                        val gh = max(0.32f, bldg.fenceHeightSceneY * 1.12f)
+                        val tx = cos(bldg.gateAngleRad)
+                        val tz = sin(bldg.gateAngleRad)
+                        val g0x = gx - tx * hw; val g0z = gz - tz * hw
+                        val g1x = gx + tx * hw; val g1z = gz + tz * hw
+                        val pb0 = project3D(g0x, safeBaseY, g0z)
+                        val pb1 = project3D(g1x, safeBaseY, g1z)
+                        val pt1 = project3D(g1x, safeBaseY + gh, g1z)
+                        val pt0 = project3D(g0x, safeBaseY + gh, g0z)
+                        val gDist = ((pb0.third + pb1.third + pt1.third + pt0.third) * 0.25f - 0.04f).finiteOr(1000f)
+                        val leafColor = when (bldg.gateType) {
+                            "SECURITY_BOOM_BARRIER" -> Color(0xFFFF9800).copy(alpha = 0.94f)
+                            "DOUBLE_SWING_TIMBER" -> Color(0xFF8D5524).copy(alpha = 0.94f)
+                            "PEDESTRIAN_WICKET" -> Color(0xFF69F0AE).copy(alpha = 0.90f)
+                            else -> Color(0xFF00E5FF).copy(alpha = 0.90f) // SLIDING_STEEL_GATE
+                        }
+                        if (bldg.gateType == "SECURITY_BOOM_BARRIER") {
+                            bldgFaces.add(
+                                BuildingDrawFace(
+                                    pts = listOf(Offset(pt0.first, pt0.second), Offset(pt1.first, pt1.second)),
+                                    fillColor = leafColor,
+                                    strokeColor = leafColor,
+                                    strokeWidth = 3.2f,
+                                    dist = gDist,
+                                    isLineOnly = true
+                                )
+                            )
+                        } else {
+                            bldgFaces.add(
+                                BuildingDrawFace(
+                                    pts = listOf(
+                                        Offset(pb0.first, pb0.second),
+                                        Offset(pb1.first, pb1.second),
+                                        Offset(pt1.first, pt1.second),
+                                        Offset(pt0.first, pt0.second)
+                                    ),
+                                    fillColor = leafColor,
+                                    strokeColor = Color.White,
+                                    strokeWidth = 1.2f,
+                                    dist = gDist
+                                )
+                            )
+                        }
+                        // Gate Pillars
+                        bldgFaces.add(
+                            BuildingDrawFace(
+                                pts = listOf(Offset(pb0.first, pb0.second), Offset(pt0.first, pt0.second)),
+                                fillColor = Color(0xFFE0E0E0),
+                                strokeColor = Color(0xFFE0E0E0),
+                                strokeWidth = 2.6f,
+                                dist = (pb0.third - 0.05f).finiteOr(1000f),
+                                isLineOnly = true
+                            )
                         )
-                    )
+                        bldgFaces.add(
+                            BuildingDrawFace(
+                                pts = listOf(Offset(pb1.first, pb1.second), Offset(pt1.first, pt1.second)),
+                                fillColor = Color(0xFFE0E0E0),
+                                strokeColor = Color(0xFFE0E0E0),
+                                strokeWidth = 2.6f,
+                                dist = (pb1.third - 0.05f).finiteOr(1000f),
+                                isLineOnly = true
+                            )
+                        )
+                    }
                 }
 
                 bldgFaces.sortByDescending { it.dist }
                 val bPath = Path()
                 for (bf in bldgFaces) {
-                    if (bf.pts.size < 3 || bf.pts.any { !it.x.isFinite() || !it.y.isFinite() }) continue
+                    if (bf.pts.any { !it.x.isFinite() || !it.y.isFinite() }) continue
+                    if (bf.isLineOnly && bf.pts.size >= 2) {
+                        drawLine(bf.strokeColor, bf.pts[0], bf.pts[1], strokeWidth = bf.strokeWidth)
+                        continue
+                    }
+                    if (bf.pts.size < 3) continue
                     bPath.reset()
                     bPath.moveTo(bf.pts[0].x, bf.pts[0].y)
                     for (pi in 1 until bf.pts.size) {

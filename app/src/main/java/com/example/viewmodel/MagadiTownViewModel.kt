@@ -130,6 +130,9 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
     private val _overlayRoadSymbols3D = MutableStateFlow<List<TerrainRoadSymbol3D>>(emptyList())
     val overlayRoadSymbols3D: StateFlow<List<TerrainRoadSymbol3D>> = _overlayRoadSymbols3D.asStateFlow()
 
+    private val _overlayBridges3D = MutableStateFlow<List<TerrainBridge3D>>(emptyList())
+    val overlayBridges3D: StateFlow<List<TerrainBridge3D>> = _overlayBridges3D.asStateFlow()
+
     // Data Explorer filter state
     val dataTabIndex = MutableStateFlow(0) // 0=Metadata, 1=Roads, 2=Buildings, 3=POIs
     val searchQuery = MutableStateFlow("")
@@ -265,15 +268,17 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         val bundle = activeBundleOrNull()
         if (bundle != null) {
             val hitRadiusM = max(4f, wM * 0.025f)
-            // Check buildings first (centroid or bbox inside polygon)
-            val hitBldg = bundle.buildings.firstOrNull { b ->
-                val minBx = b.polygon.minOfOrNull { it.xM } ?: b.centroid.xM
-                val maxBx = b.polygon.maxOfOrNull { it.xM } ?: b.centroid.xM
-                val minBy = b.polygon.minOfOrNull { it.yM } ?: b.centroid.yM
-                val maxBy = b.polygon.maxOfOrNull { it.yM } ?: b.centroid.yM
-                xM in (minBx - hitRadiusM * 0.4f)..(maxBx + hitRadiusM * 0.4f) &&
-                    yM in (minBy - hitRadiusM * 0.4f)..(maxBy + hitRadiusM * 0.4f)
-            }
+            // Check buildings first, preferring smaller inner buildings inside larger landmark compounds
+            val hitBldg = bundle.buildings
+                .filter { b ->
+                    val minBx = b.polygon.minOfOrNull { it.xM } ?: b.centroid.xM
+                    val maxBx = b.polygon.maxOfOrNull { it.xM } ?: b.centroid.xM
+                    val minBy = b.polygon.minOfOrNull { it.yM } ?: b.centroid.yM
+                    val maxBy = b.polygon.maxOfOrNull { it.yM } ?: b.centroid.yM
+                    xM in (minBx - hitRadiusM * 0.4f)..(maxBx + hitRadiusM * 0.4f) &&
+                        yM in (minBy - hitRadiusM * 0.4f)..(maxBy + hitRadiusM * 0.4f)
+                }
+                .minByOrNull { it.footprintAreaM2 }
             if (hitBldg != null) {
                 _selectedBuilding.value = hitBldg
                 _selectedRoad.value = null
@@ -466,7 +471,7 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                 }
 
                 val v0 = mesh.vertices.firstOrNull()
-                val (buildings3d, roads3d, symbols3d) = if (v0 != null) {
+                val overlays = if (v0 != null) {
                     build3dFeatureOverlays(
                         mode = mode,
                         centerXM = cX,
@@ -480,21 +485,29 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                         selectedRoadId = _selectedRoad.value?.osmId
                     )
                 } else {
-                    Triple(emptyList<TerrainBuilding3D>(), emptyList<TerrainRoadSeg3D>(), emptyList())
+                    FeatureOverlays3D(emptyList(), emptyList(), emptyList(), emptyList())
                 }
 
                 _sceneUnitsPerMeter3D.value = unitsPerM
                 _groundDatumAslM.value = datumAsl
                 _terrainMesh3D.value = mesh
-                _overlayBuildings3D.value = buildings3d
-                _overlayRoads3D.value = roads3d
-                _overlayRoadSymbols3D.value = symbols3d
+                _overlayBuildings3D.value = overlays.buildings
+                _overlayRoads3D.value = overlays.roads
+                _overlayRoadSymbols3D.value = overlays.symbols
+                _overlayBridges3D.value = overlays.bridges
             } catch (ce: CancellationException) {
                 throw ce
             } catch (_: Throwable) {
             }
         }
     }
+
+    private data class FeatureOverlays3D(
+        val buildings: List<TerrainBuilding3D>,
+        val roads: List<TerrainRoadSeg3D>,
+        val symbols: List<TerrainRoadSymbol3D>,
+        val bridges: List<TerrainBridge3D>
+    )
 
     private fun build3dFeatureOverlays(
         mode: String,
@@ -507,11 +520,12 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         bundle: MagadiTownBundle?,
         selectedBldgId: Long?,
         selectedRoadId: Long?
-    ): Triple<List<TerrainBuilding3D>, List<TerrainRoadSeg3D>, List<TerrainRoadSymbol3D>> {
-        if (bundle == null) return Triple(emptyList(), emptyList(), emptyList())
+    ): FeatureOverlays3D {
+        if (bundle == null) return FeatureOverlays3D(emptyList(), emptyList(), emptyList(), emptyList())
 
         val isWindow = mode == "WINDOW_1M"
         val safeScaleY = scaleYPerM.coerceAtLeast(0.001f)
+        val scaleXZ = if (isWindow) (56.0f / 64.0f) else (48.0f / 3000.0f)
         val baseDatumElev = anchorRawElev - (anchorSceneY / safeScaleY)
 
         fun toSceneXZ(xM: Float, yM: Float): Pair<Float, Float> {
@@ -526,10 +540,41 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
 
         val roadsOut = ArrayList<TerrainRoadSeg3D>()
         val symbolsOut = ArrayList<TerrainRoadSymbol3D>()
+        val bridgesOut = ArrayList<TerrainBridge3D>()
         val halfWin = 33.5f
         for (road in bundle.roads) {
             val isPrimary = road.highwayType in setOf("trunk", "primary", "secondary", "tertiary")
             val isSel = road.osmId == selectedRoadId
+            if (road.isBridge && road.nodes.size >= 2) {
+                val visible = if (isWindow) {
+                    road.nodes.any { abs(it.xM - centerXM) <= halfWin && abs(it.yM - centerYM) <= halfWin }
+                } else {
+                    road.nodes.any { it.xM in -50f..3050f && it.yM in -50f..5050f }
+                }
+                if (visible) {
+                    val bridgePtsXZ = road.nodes.map { n ->
+                        toSceneXZ(n.xM.coerceIn(0f, 3000f), n.yM.coerceIn(0f, 5000f))
+                    }
+                    val groundElevs = road.nodes.map { n ->
+                        repo.inspect1mCell(n.xM.coerceIn(0f, 3000f), n.yM.coerceIn(0f, 5000f)).elevM
+                    }
+                    buildScaledTerrainBridge3D(
+                        osmId = road.osmId,
+                        name = road.name,
+                        highwayType = road.highwayType,
+                        lanes = road.lanes,
+                        widthM = road.widthM,
+                        lengthM = road.lengthM,
+                        isSelected = isSel,
+                        scenePointsXZ = bridgePtsXZ,
+                        groundElevationsM = groundElevs,
+                        baseDatumElevM = baseDatumElev,
+                        scaleXZ = scaleXZ,
+                        scaleYPerM = safeScaleY,
+                        roadElevationOffsetScene = if (isWindow) 0.14f else 0.18f
+                    )?.let { bridgesOut.add(it) }
+                }
+            }
             var midAdded = false
             for (k in 0 until road.nodes.size - 1) {
                 val n0 = road.nodes[k]
@@ -555,14 +600,16 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                 val (sx1, sz1) = toSceneXZ(p1x, p1y)
                 val sy0 = elevToSceneY(e0) + if (isWindow) 0.14f else 0.18f
                 val sy1 = elevToSceneY(e1) + if (isWindow) 0.14f else 0.18f
-                roadsOut.add(
-                    TerrainRoadSeg3D(
-                        x0 = sx0, y0 = sy0, z0 = sz0,
-                        x1 = sx1, y1 = sy1, z1 = sz1,
-                        isPrimary = isPrimary,
-                        isSelected = isSel
+                if (!road.isBridge) {
+                    roadsOut.add(
+                        TerrainRoadSeg3D(
+                            x0 = sx0, y0 = sy0, z0 = sz0,
+                            x1 = sx1, y1 = sy1, z1 = sz1,
+                            isPrimary = isPrimary,
+                            isSelected = isSel
+                        )
                     )
-                )
+                }
                 if (!midAdded && k == (road.nodes.size - 1) / 2) {
                     midAdded = true
                     val mx = (sx0 + sx1) * 0.5f
@@ -608,20 +655,24 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
         }
 
         val bldgOut = ArrayList<TerrainBuilding3D>()
+        val extrudableBldgs = bundle.buildings.filterNot { it.footprintAreaM2 > 18_000f && it.levels <= 1 }
         val candidateBldgs = if (isWindow) {
-            bundle.buildings.filter {
+            extrudableBldgs.filter {
                 abs(it.centroid.xM - centerXM) <= 36f && abs(it.centroid.yM - centerYM) <= 36f
             }
         } else {
-            bundle.buildings
+            extrudableBldgs
                 .filter { it.centroid.xM in 0f..3000f && it.centroid.yM in 0f..5000f }
-                .sortedWith(compareByDescending<ExtractedBuilding> { it.osmId == selectedBldgId }
-                    .thenByDescending { it.footprintAreaM2 })
+                .sortedWith(
+                    compareByDescending<ExtractedBuilding> { it.osmId == selectedBldgId }
+                        .thenByDescending { it.amenity.isNotBlank() || (it.buildingType.isNotBlank() && it.buildingType !in setOf("yes", "house", "residential", "hut", "shed", "roof")) }
+                        .thenByDescending { it.footprintAreaM2 }
+                )
                 .take(400)
         }
 
         for (b in candidateBldgs) {
-            val poly = if (b.polygon.size > 3 && b.polygon.first().xM == b.polygon.last().xM) {
+            val poly = if (b.polygon.size > 3 && b.polygon.first().xM == b.polygon.last().xM && b.polygon.first().yM == b.polygon.last().yM) {
                 b.polygon.dropLast(1)
             } else b.polygon
             if (poly.size < 3) continue
@@ -634,6 +685,24 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
             } else {
                 max(1.05f, b.heightM * 0.20f * min(2.0f, overviewExag * 0.65f))
             }
+            val fencePolyRaw = if (b.hasFence && b.fencePolygon.size >= 3) {
+                if (b.fencePolygon.size > 3 && b.fencePolygon.first().xM == b.fencePolygon.last().xM && b.fencePolygon.first().yM == b.fencePolygon.last().yM) {
+                    b.fencePolygon.dropLast(1)
+                } else b.fencePolygon
+            } else emptyList()
+            val fenceCornersXZ = fencePolyRaw.map { pt ->
+                toSceneXZ(pt.xM.coerceIn(0f, 3000f), pt.yM.coerceIn(0f, 5000f))
+            }
+            val fenceHeightSceneY = if (b.hasFence && b.fenceHeightM > 0f) {
+                if (isWindow) b.fenceHeightM.coerceIn(0.8f, 4.0f) * scaleYPerM
+                else max(0.32f, b.fenceHeightM * 0.16f * min(2.0f, overviewExag * 0.65f))
+            } else 0f
+            val gatePosXZ = if (b.hasGate && b.gateCoord != null) {
+                toSceneXZ(b.gateCoord.xM.coerceIn(0f, 3000f), b.gateCoord.yM.coerceIn(0f, 5000f))
+            } else null
+            val gateWidthScene = if (b.hasGate && b.gateWidthM > 0f) {
+                (b.gateWidthM * scaleXZ).coerceAtLeast(if (isWindow) 0.8f else 0.14f)
+            } else 0f
             bldgOut.add(
                 TerrainBuilding3D(
                     id = b.osmId,
@@ -641,12 +710,30 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
                     baseCornersXZ = cornersXZ,
                     baseY = baseY,
                     roofY = baseY + heightUnits,
-                    isSelected = (b.osmId == selectedBldgId)
+                    isSelected = (b.osmId == selectedBldgId),
+                    levels = b.levels,
+                    shapeType = b.shapeType,
+                    roofType = b.roofType,
+                    roofPitchDeg = b.roofPitchDeg,
+                    roofMaterial = b.roofMaterial,
+                    wallType = b.wallType,
+                    windowType = b.windowType,
+                    windowToWallRatio = b.windowToWallRatio,
+                    parentCompoundName = b.parentCompoundName,
+                    hasFence = b.hasFence && fenceCornersXZ.size >= 3,
+                    fenceType = b.fenceType,
+                    fenceHeightSceneY = fenceHeightSceneY,
+                    fenceCornersXZ = fenceCornersXZ,
+                    hasGate = b.hasGate && gatePosXZ != null,
+                    gateType = b.gateType,
+                    gatePosXZ = gatePosXZ,
+                    gateWidthScene = gateWidthScene,
+                    gateAngleRad = b.gateAngleRad
                 )
             )
         }
 
-        return Triple(bldgOut, roadsOut, symbolsOut)
+        return FeatureOverlays3D(bldgOut, roadsOut, symbolsOut, bridgesOut)
     }
 
     fun exportAndShareGeoJson(context: Context) {
@@ -673,11 +760,14 @@ class MagadiTownViewModel(application: Application) : AndroidViewModel(applicati
             val file = withContext(Dispatchers.IO) {
                 val out = File(context.cacheDir, "magadi_town_buildings_coords.csv")
                 val sb = StringBuilder()
-                sb.appendLine("osm_id,name,building_type,amenity,levels,height_m,area_m2,elev_asl_m,lat,lon,utm37s_easting,utm37s_northing,grid_1m_col,grid_1m_row")
+                sb.appendLine("osm_id,name,building_type,amenity,levels,floor_height_m,height_m,shape_type,roof_type,roof_pitch_deg,roof_material,wall_type,window_type,window_wall_ratio,parent_compound,fence_type,fence_height_m,gate_type,gate_width_m,gate_lat,gate_lon,area_m2,elev_asl_m,lat,lon,utm37s_easting,utm37s_northing,grid_1m_col,grid_1m_row")
                 for (b in bundle.buildings) {
                     val safeName = b.name.replace("\"", "\"\"")
+                    val safeParent = b.parentCompoundName.replace("\"", "\"\"")
+                    val gLat = b.gateCoord?.lat?.let { "%.7f".format(it) } ?: ""
+                    val gLon = b.gateCoord?.lon?.let { "%.7f".format(it) } ?: ""
                     sb.appendLine(
-                        "${b.osmId},\"$safeName\",${b.buildingType},${b.amenity},${b.levels},${"%.1f".format(b.heightM)},${"%.1f".format(b.footprintAreaM2)},${"%.2f".format(b.elevM)},${"%.7f".format(b.centroid.lat)},${"%.7f".format(b.centroid.lon)},${"%.2f".format(b.centroid.utmEast)},${"%.2f".format(b.centroid.utmNorth)},${b.centroid.cellCol},${b.centroid.cellRow}"
+                        "${b.osmId},\"$safeName\",${b.buildingType},${b.amenity},${b.levels},${"%.2f".format(b.floorHeightM)},${"%.1f".format(b.heightM)},${b.shapeType},${b.roofType},${"%.1f".format(b.roofPitchDeg)},${b.roofMaterial},${b.wallType},${b.windowType},${"%.2f".format(b.windowToWallRatio)},\"$safeParent\",${b.fenceType},${"%.2f".format(b.fenceHeightM)},${b.gateType},${"%.2f".format(b.gateWidthM)},$gLat,$gLon,${"%.1f".format(b.footprintAreaM2)},${"%.2f".format(b.elevM)},${"%.7f".format(b.centroid.lat)},${"%.7f".format(b.centroid.lon)},${"%.2f".format(b.centroid.utmEast)},${"%.2f".format(b.centroid.utmNorth)},${b.centroid.cellCol},${b.centroid.cellRow}"
                     )
                 }
                 out.writeText(sb.toString())
